@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 
 class AdminShell extends ConsumerWidget {
@@ -33,27 +34,27 @@ class AdminShell extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(color: AppColors.g100, borderRadius: BorderRadius.circular(99)),
-                  child: Text('إغلاق', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.tx3)))),
-              Text('المزيد من الوحدات', style: TextStyle(fontFamily: 'Cairo',
+                  child: Text('Close'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.tx3)))),
+              Text('More Modules'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.tx1)),
             ]),
             const SizedBox(height: 16),
-            _moreItem(context, '⚙️', 'الإعدادات', 'اللغة والمظهر والحساب', AppColors.g600, '/settings'),
+            _moreItem(context, '⚙️', 'Settings'.tr(context), 'Settings desc'.tr(context), AppColors.g600, '/settings'),
             const SizedBox(height: 12),
-            _sectionHeader('🆕 وحدات إضافية'),
-            _moreItem(context, '🏗', 'إدارة المشاريع',    'المشاريع والمراحل والمتابعة',      AppColors.navyMid,   '/projects'),
-            _moreItem(context, '💰', 'إدارة المصروفات',  'طلبات الصرف والفئات والتحليلات',   AppColors.gold,      '/expenses'),
-            _moreItem(context, '📊', 'تحليلات المشاريع', 'KPIs ومؤشرات أداء المشاريع',       AppColors.teal,      '/project-analytics'),
-            _moreItem(context, '💳', 'اعتماد المصروفات', 'المعلقة والعالية — متابعة فورية',  AppColors.error,     '/expense-follow-up'),
+            _sectionHeader('Additional Modules'.tr(context)),
+            _moreItem(context, '🏗', 'Project Management'.tr(context),    'Projects phases tracking'.tr(context),      AppColors.navyMid,   '/projects'),
+            _moreItem(context, '💰', 'Expense Management'.tr(context),  'Expense requests categories'.tr(context),   AppColors.gold,      '/expenses'),
+            _moreItem(context, '📊', 'Project Analytics'.tr(context), 'KPIs project performance'.tr(context),       AppColors.teal,      '/project-analytics'),
+            _moreItem(context, '💳', 'Expense Approval'.tr(context), 'Pending high follow-up'.tr(context),  AppColors.error,     '/expense-follow-up'),
             const SizedBox(height: 12),
-            _sectionHeader('🏛 وحدات إدارية'),
-            _moreItem(context, '🏢', 'الإدارات',          'نظرة شاملة على الإدارات والأداء',  AppColors.navyLight, '/departments'),
-            _moreItem(context, '👥', 'الموظفون',          'دليل الموظفين وسجلاتهم',           AppColors.navyMid,   '/employees'),
-            _moreItem(context, '⏱', 'إدارة الحضور',      'الحضور والغياب والاستثناءات',      AppColors.teal,      '/attendance'),
-            _moreItem(context, '🌴', 'إدارة الإجازات',   'طلبات الإجازة وإجازات اليوم',     AppColors.success,   '/leave'),
-            _moreItem(context, '📢', 'الإعلانات',         'إدارة ونشر الإعلانات',             AppColors.gold,      '/announcements'),
-            _moreItem(context, '📄', 'المستندات',         'وثائق ومرفقات الموظفين',           AppColors.info,      '/documents'),
-            _moreItem(context, '📋', 'التقارير والـKPIs', 'تحليلات وتقارير الأداء الشاملة',  AppColors.navyDeep,  '/reports'),
+            _sectionHeader('Admin Modules'.tr(context)),
+            _moreItem(context, '🏢', 'Departments'.tr(context),          'Depts overview desc'.tr(context),  AppColors.navyLight, '/departments'),
+            _moreItem(context, '👥', 'Employees'.tr(context),          'Employee directory desc'.tr(context),           AppColors.navyMid,   '/employees'),
+            _moreItem(context, '⏱', 'Attendance Management'.tr(context),      'Attendance desc'.tr(context),      AppColors.teal,      '/attendance'),
+            _moreItem(context, '🌴', 'Leave Management'.tr(context),   'Leave desc'.tr(context),     AppColors.success,   '/leave'),
+            _moreItem(context, '📢', 'Announcements'.tr(context),         'Announcements desc'.tr(context),             AppColors.gold,      '/announcements'),
+            _moreItem(context, '📄', 'Documents'.tr(context),         'Documents desc'.tr(context),           AppColors.info,      '/documents'),
+            _moreItem(context, '📋', 'Reports KPIs'.tr(context), 'Reports desc'.tr(context),  AppColors.navyDeep,  '/reports'),
             const SizedBox(height: 16),
             const Divider(color: AppColors.g200, height: 1),
             const SizedBox(height: 12),
@@ -72,9 +73,9 @@ class AdminShell extends ConsumerWidget {
                 child: Row(children: [
                   const Icon(Icons.chevron_left, color: AppColors.error, size: 18),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                    Text('تسجيل الخروج', style: TextStyle(fontFamily: 'Cairo',
+                    Text('Logout'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.error)),
-                    Text('الخروج من الحساب الحالي', style: TextStyle(fontFamily: 'Cairo',
+                    Text('Logout from account'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 11, color: AppColors.error.withValues(alpha: 0.6))),
                   ])),
                   const SizedBox(width: 10),
@@ -97,18 +98,18 @@ class AdminShell extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            Text('تسجيل الخروج', style: TextStyle(fontFamily: 'Cairo',
+            Text('Logout'.tr(context), style: TextStyle(fontFamily: 'Cairo',
               fontSize: 16, fontWeight: FontWeight.w800)),
             const SizedBox(width: 8),
             const Icon(Icons.logout, color: AppColors.error, size: 22),
           ]),
-          content: Text('هل أنت متأكد من تسجيل الخروج؟\nسيتم إنهاء جلستك الحالية.',
+          content: Text('Logout confirm'.tr(context),
             style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.tx2, height: 1.6),
             textAlign: TextAlign.right),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('إلغاء', style: TextStyle(fontFamily: 'Cairo',
+              child: Text('Cancel'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.tx3))),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -119,7 +120,7 @@ class AdminShell extends ConsumerWidget {
                 await ref.read(authProvider.notifier).logout();
                 if (context.mounted) context.go('/login');
               },
-              child: Text('تسجيل الخروج', style: TextStyle(fontFamily: 'Cairo',
+              child: Text('Logout'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white))),
           ],
         ),
@@ -163,20 +164,17 @@ class AdminShell extends ConsumerWidget {
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Row(children: [
-                _NavItem(icon: '🏠', label: 'الإدارة',  active: navigationShell.currentIndex==0,
+            child: Row(children: [
+                _NavItem(icon: '🏠', label: 'Dashboard'.tr(context),  active: navigationShell.currentIndex==0,
                   onTap: () => navigationShell.goBranch(0, initialLocation: true)),
-                _NavItem(icon: '📋', label: 'الطلبات',  active: navigationShell.currentIndex==1,
+                _NavItem(icon: '📋', label: 'Requests'.tr(context),  active: navigationShell.currentIndex==1,
                   onTap: () => navigationShell.goBranch(1, initialLocation: true)),
-                _NavItem(icon: '✅', label: 'المهام',   active: navigationShell.currentIndex==2,
+                _NavItem(icon: '✅', label: 'Tasks'.tr(context),   active: navigationShell.currentIndex==2,
                   onTap: () => navigationShell.goBranch(2, initialLocation: true)),
-                _NavItem(icon: '🔄', label: 'المتابعة', active: navigationShell.currentIndex==3,
+                _NavItem(icon: '🔄', label: 'Follow up'.tr(context), active: navigationShell.currentIndex==3,
                   onTap: () => navigationShell.goBranch(3, initialLocation: true)),
-                _NavMoreBtn(onTap: () => _showMoreMenu(context, ref)),
+                _NavMoreBtn(label: 'More'.tr(context), onTap: () => _showMoreMenu(context, ref)),
               ]),
-            ),
           ),
         ),
       ),
@@ -206,8 +204,9 @@ class _NavItem extends StatelessWidget {
 }
 
 class _NavMoreBtn extends StatelessWidget {
+  final String label;
   final VoidCallback onTap;
-  const _NavMoreBtn({required this.onTap});
+  const _NavMoreBtn({required this.label, required this.onTap});
   @override
   Widget build(BuildContext context) => Expanded(
     child: GestureDetector(
@@ -220,7 +219,7 @@ class _NavMoreBtn extends StatelessWidget {
           child: Center(child: Text('⋯', style: TextStyle(fontFamily: 'Cairo',
             fontSize: 16, color: Colors.white, fontWeight: FontWeight.w900, height: 1.1)))),
         const SizedBox(height: 2),
-        Text('المزيد', style: TextStyle(fontFamily: 'Cairo',
+        Text(label, style: TextStyle(fontFamily: 'Cairo',
           fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.navyMid)),
       ]),
     ),

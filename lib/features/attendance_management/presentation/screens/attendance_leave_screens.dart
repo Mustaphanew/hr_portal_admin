@@ -6,6 +6,7 @@ import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/providers/admin_providers.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../../data/models/attendance_models.dart';
+import '../../../../core/localization/app_localizations.dart';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ATTENDANCE MANAGEMENT
@@ -49,13 +50,13 @@ class _AttMgmtState extends ConsumerState<AttendanceManagementScreen> {
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 12),
-              Text('حدث خطأ في تحميل البيانات', style: TextStyle(fontFamily: 'Cairo',
+              Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.tx2)),
               const SizedBox(height: 8),
               Text('$e', style: TextStyle(fontFamily: 'Cairo', fontSize: 11,
                 color: AppColors.tx3), textAlign: TextAlign.center),
               const SizedBox(height: 16),
-              PrimaryBtn(text: 'إعادة المحاولة', small: true, fullWidth: false,
+              PrimaryBtn(text: 'Retry'.tr(context), small: true, fullWidth: false,
                 onTap: () => ref.invalidate(adminAttendanceProvider)),
             ]),
           ))),
@@ -78,13 +79,13 @@ class _AttMgmtState extends ConsumerState<AttendanceManagementScreen> {
             Container(color: AppColors.bgCard,
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: Row(children: [
-                _smallStat('${summary.total}', 'إجمالي الموظفين', AppColors.navyMid),
+                _smallStat('${summary.total}', 'Total employees stat'.tr(context), AppColors.navyMid),
                 const SizedBox(width: 10),
-                _smallStat('${summary.late + summary.absent}', 'استثناءات اليوم', AppColors.error),
+                _smallStat('${summary.late + summary.absent}', 'Exceptions today'.tr(context), AppColors.error),
                 const SizedBox(width: 10),
-                _smallStat('$attendancePercent%', 'نسبة الحضور', AppColors.success),
+                _smallStat('$attendancePercent%', 'Attendance rate'.tr(context), AppColors.success),
               ])),
-            FilterBar(tabs: const ['الكل','حاضر','متأخر','غائب','إجازة'],
+            FilterBar(tabs: ['All'.tr(context),'Present'.tr(context),'Late'.tr(context),'Absent'.tr(context),'On Leave'.tr(context)],
               selected: _tab, onSelect: (i) => setState(() => _tab = i)),
             Expanded(child: RefreshIndicator(
               onRefresh: () async {
@@ -95,7 +96,7 @@ class _AttMgmtState extends ConsumerState<AttendanceManagementScreen> {
               child: filtered.isEmpty
                 ? ListView(children: [
                     SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-                    Center(child: Text('لا توجد سجلات', style: TextStyle(
+                    Center(child: Text('No records'.tr(context), style: TextStyle(
                       fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx3))),
                   ])
                 : ListView.builder(
@@ -114,8 +115,8 @@ class _AttMgmtState extends ConsumerState<AttendanceManagementScreen> {
                           child: Row(children: [
                             Column(children: [
                               StatusBadge(
-                                text: r.status == 'present' ? 'حاضر' : r.status == 'late' ? 'متأخر'
-                                  : r.status == 'leave' ? 'إجازة' : 'غائب',
+                                text: r.status == 'present' ? 'Present'.tr(context) : r.status == 'late' ? 'Late'.tr(context)
+                                  : r.status == 'leave' ? 'On Leave'.tr(context) : 'Absent'.tr(context),
                                 type: r.status == 'present' ? 'approved'
                                   : r.status == 'late' ? 'warning'
                                   : r.status == 'leave' ? 'leave' : 'error', dot: true),
@@ -130,10 +131,10 @@ class _AttMgmtState extends ConsumerState<AttendanceManagementScreen> {
                                 Text('${r.checkIn ?? '--:--'} — ${r.checkOut ?? '--:--'}', style: TextStyle(fontFamily: 'Cairo',
                                   fontSize: 11, color: AppColors.tx2, fontWeight: FontWeight.w600)),
                                 if (r.lateMinutes > 0)
-                                  Text('تأخر ${r.lateMinutes}د', style: TextStyle(fontFamily: 'Cairo',
+                                  Text('late_min'.tr(context, params: {'min': '${r.lateMinutes}'}), style: TextStyle(fontFamily: 'Cairo',
                                     fontSize: 10, color: AppColors.warning, fontWeight: FontWeight.w700)),
                                 if (r.overtimeMinutes > 0)
-                                  Text('إضافي ${r.overtimeMinutes}د', style: TextStyle(fontFamily: 'Cairo',
+                                  Text('overtime_min'.tr(context, params: {'min': '${r.overtimeMinutes}'}), style: TextStyle(fontFamily: 'Cairo',
                                     fontSize: 10, color: AppColors.teal, fontWeight: FontWeight.w700)),
                               ])
                             else Text('—', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.g400)),
@@ -165,7 +166,7 @@ class _AttMgmtState extends ConsumerState<AttendanceManagementScreen> {
               decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 17))),
           Expanded(child: Column(children: [
-            Text('إدارة الحضور', style: TextStyle(fontFamily: 'Cairo',
+            Text('Attendance Management'.tr(context), style: TextStyle(fontFamily: 'Cairo',
               fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
             Text(date == '...' ? '...' : 'اليوم — $date', style: TextStyle(fontFamily: 'Cairo',
               fontSize: 11, color: AppColors.goldLight)),
@@ -174,13 +175,13 @@ class _AttMgmtState extends ConsumerState<AttendanceManagementScreen> {
         ]),
         const SizedBox(height: 14),
         Row(children: [
-          _attPill('$present', 'حاضر', AppColors.success),
+          _attPill('$present', 'Present'.tr(context), AppColors.success),
           const SizedBox(width: 6),
-          _attPill('$late_',   'متأخر', AppColors.warning),
+          _attPill('$late_',   'Late'.tr(context), AppColors.warning),
           const SizedBox(width: 6),
-          _attPill('$absent',  'غائب', AppColors.error),
+          _attPill('$absent',  'Absent'.tr(context), AppColors.error),
           const SizedBox(width: 6),
-          _attPill('$onLeave', 'إجازة', AppColors.teal),
+          _attPill('$onLeave', 'On Leave'.tr(context), AppColors.teal),
         ]),
       ]),
     );
@@ -314,9 +315,9 @@ class _LeaveMgmtState extends ConsumerState<LeaveManagementScreen> {
                   decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 17))),
               Expanded(child: Column(children: [
-                Text('إدارة الإجازات', style: TextStyle(fontFamily: 'Cairo',
+                Text('Leave Management'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-                Text('نظرة شاملة على الإجازات', style: TextStyle(fontFamily: 'Cairo',
+                Text('Leave overview'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 11, color: AppColors.goldLight)),
               ])),
               const SizedBox(width: 36),
@@ -328,26 +329,26 @@ class _LeaveMgmtState extends ConsumerState<LeaveManagementScreen> {
                 final pending = all.where((l) => l.status == 'pending').length;
                 final approved = all.where((l) => l.status == 'approved').length;
                 return Row(children: [
-                  _leavePill('${all.length}', 'إجمالي', AppColors.tealLight),
+                  _leavePill('${all.length}', 'Total'.tr(context), AppColors.tealLight),
                   const SizedBox(width: 8),
                   _leavePill('$pending', 'معلق', AppColors.warning),
                   const SizedBox(width: 8),
-                  _leavePill('$approved', 'معتمد', AppColors.goldLight),
+                  _leavePill('$approved', 'Approved'.tr(context), AppColors.goldLight),
                 ]);
               },
               loading: () => Row(children: [
-                _leavePill('...', 'إجمالي', AppColors.tealLight),
+                _leavePill('...', 'Total'.tr(context), AppColors.tealLight),
                 const SizedBox(width: 8),
                 _leavePill('...', 'معلق', AppColors.warning),
                 const SizedBox(width: 8),
-                _leavePill('...', 'معتمد', AppColors.goldLight),
+                _leavePill('...', 'Approved'.tr(context), AppColors.goldLight),
               ]),
               error: (_, __) => Row(children: [
-                _leavePill('—', 'إجمالي', AppColors.tealLight),
+                _leavePill('—', 'Total'.tr(context), AppColors.tealLight),
                 const SizedBox(width: 8),
                 _leavePill('—', 'معلق', AppColors.warning),
                 const SizedBox(width: 8),
-                _leavePill('—', 'معتمد', AppColors.goldLight),
+                _leavePill('—', 'Approved'.tr(context), AppColors.goldLight),
               ]),
             ),
           ]),
@@ -362,21 +363,21 @@ class _LeaveMgmtState extends ConsumerState<LeaveManagementScreen> {
           error: (e, _) => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 12),
-            Text('حدث خطأ في تحميل البيانات', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx2)),
+            Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx2)),
             const SizedBox(height: 4),
             Text('$e', style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: AppColors.tx3), textAlign: TextAlign.center, maxLines: 3),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () => ref.invalidate(managerLeavesProvider),
               icon: const Icon(Icons.refresh, size: 18),
-              label: Text('إعادة المحاولة', style: TextStyle(fontFamily: 'Cairo', fontSize: 13))),
+              label: Text('Retry'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 13))),
           ])),
           data: (data) {
             if (data.leaves.isEmpty) {
               return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.event_available, size: 48, color: AppColors.g300),
                 const SizedBox(height: 12),
-                Text('لا توجد إجازات', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx3)),
+                Text('No leaves'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx3)),
               ]));
             }
             return RefreshIndicator(

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/providers/admin_providers.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../../data/models/report_models.dart';
 
@@ -49,11 +50,11 @@ class ReportsKpiScreen extends ConsumerWidget {
                   child: const Icon(Icons.arrow_forward_ios,
                     color: Colors.white, size: 17))),
               Expanded(child: Column(children: [
-                Text('التقارير ومؤشرات الأداء',
+                Text('Reports KPIs title'.tr(context),
                   style: TextStyle(fontFamily: 'Cairo',
                     fontSize: 16, fontWeight: FontWeight.w800,
                     color: Colors.white)),
-                Text('تحديث يومي',
+                Text('Daily update'.tr(context),
                   style: TextStyle(fontFamily: 'Cairo',
                     fontSize: 11, color: AppColors.goldLight)),
               ])),
@@ -63,7 +64,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: AppColors.gold,
                   borderRadius: BorderRadius.circular(9)),
-                child: Text('📤 تصدير',
+                child: Text('📤 ${'Export'.tr(context)}',
                   style: TextStyle(fontFamily: 'Cairo',
                     fontSize: 12, fontWeight: FontWeight.w700,
                     color: AppColors.navyDeep))),
@@ -85,7 +86,7 @@ class ReportsKpiScreen extends ConsumerWidget {
             child: Column(children: [
 
               // ── KPI Grid ────────────────────────────────────────
-              SectionHeader(title: 'مؤشرات الأداء الرئيسية — الشهر'),
+              SectionHeader(title: 'Monthly KPIs'.tr(context)),
               kpis.when(
                 data: (items) => GridView.count(
                   crossAxisCount: 2, shrinkWrap: true,
@@ -112,12 +113,12 @@ class ReportsKpiScreen extends ConsumerWidget {
                 loading: () => const SizedBox(
                   height: 160,
                   child: Center(child: CircularProgressIndicator())),
-                error: (e, _) => _errorCard('تعذر تحميل مؤشرات الأداء', e),
+                error: (e, _) => _errorCard('KPIs error'.tr(context), e),
               ),
               const SizedBox(height: 16),
 
               // ── Attendance Trend ────────────────────────────────
-              SectionHeader(title: 'اتجاه الحضور — شهري'),
+              SectionHeader(title: 'Attendance Trend'.tr(context)),
               attendance.when(
                 data: (months) => AppCard(
                   mb: 16,
@@ -126,13 +127,13 @@ class ReportsKpiScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(children: [
-                          _legend(AppColors.success, 'حاضر'),
+                          _legend(AppColors.success, 'Present'.tr(context)),
                           const SizedBox(width: 12),
-                          _legend(AppColors.warning, 'متأخر'),
+                          _legend(AppColors.warning, 'Late'.tr(context)),
                           const SizedBox(width: 12),
-                          _legend(AppColors.error, 'غائب'),
+                          _legend(AppColors.error, 'Absent'.tr(context)),
                         ]),
-                        Text('${months.length} شهر',
+                        Text('months_count'.tr(context, params: {'count': '${months.length}'}),
                           style: TextStyle(fontFamily: 'Cairo',
                             fontSize: 11, color: AppColors.tx3)),
                       ]),
@@ -191,11 +192,11 @@ class ReportsKpiScreen extends ConsumerWidget {
                 loading: () => const SizedBox(
                   height: 140,
                   child: Center(child: CircularProgressIndicator())),
-                error: (e, _) => _errorCard('تعذر تحميل بيانات الحضور', e),
+                error: (e, _) => _errorCard('Attendance error'.tr(context), e),
               ),
 
               // ── Leave Analysis ──────────────────────────────────
-              SectionHeader(title: 'تحليل الإجازات — حسب النوع'),
+              SectionHeader(title: 'Leave Analysis'.tr(context)),
               leave.when(
                 data: (data) {
                   final totalDays = data.byType.fold<int>(
@@ -217,12 +218,12 @@ class ReportsKpiScreen extends ConsumerWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _circStat('$totalDays', 'يوم إجازة',
+                          _circStat('$totalDays', 'Leave days'.tr(context),
                             AppColors.navyMid),
-                          _circStat('$totalCount', 'طلب إجازة',
+                          _circStat('$totalCount', 'Leave requests'.tr(context),
                             AppColors.teal),
                           _circStat(
-                            '${data.byType.length}', 'نوع',
+                            '${data.byType.length}', 'Types'.tr(context),
                             AppColors.warning),
                         ]),
                     ),
@@ -245,7 +246,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    '${(ratio * 100).toInt()}% · ${t.totalDays} يوم',
+                                    '${(ratio * 100).toInt()}% · ${t.totalDays} ${'Days'.tr(context)}',
                                     style: TextStyle(fontFamily: 'Cairo',
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
@@ -272,7 +273,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                     // By month
                     if (data.byMonth.isNotEmpty) ...[
                       SectionHeader(
-                        title: 'الإجازات — حسب الشهر'),
+                        title: 'Leave by month'.tr(context)),
                       AppCard(
                         mb: 16,
                         child: Column(
@@ -283,7 +284,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                               child: Row(children: [
                                 SizedBox(
                                   width: 48,
-                                  child: Text('${m.totalDays} يوم',
+                                  child: Text('${m.totalDays} ${'Days'.tr(context)}',
                                     style: TextStyle(
                                       fontFamily: 'Cairo',
                                       fontSize: 10,
@@ -323,11 +324,11 @@ class ReportsKpiScreen extends ConsumerWidget {
                   height: 140,
                   child: Center(child: CircularProgressIndicator())),
                 error: (e, _) =>
-                    _errorCard('تعذر تحميل بيانات الإجازات', e),
+                    _errorCard('Leave error'.tr(context), e),
               ),
 
               // ── Task Completion ─────────────────────────────────
-              SectionHeader(title: 'إنجاز المهام — حسب الإدارة'),
+              SectionHeader(title: 'Task Completion'.tr(context)),
               tasks.when(
                 data: (depts) => Column(
                   children: depts.map((d) {
@@ -378,13 +379,13 @@ class ReportsKpiScreen extends ConsumerWidget {
                             mainAxisAlignment:
                                 MainAxisAlignment.spaceAround,
                             children: [
-                              _taskStat('${d.completed}', 'مكتمل',
+                              _taskStat('${d.completed}', 'Completed'.tr(context),
                                 AppColors.success),
-                              _taskStat('${d.inProgress}', 'قيد التنفيذ',
+                              _taskStat('${d.inProgress}', 'In Progress'.tr(context),
                                 AppColors.warning),
-                              _taskStat('${d.overdue}', 'متأخر',
+                              _taskStat('${d.overdue}', 'Late'.tr(context),
                                 AppColors.error),
-                              _taskStat('${d.total}', 'إجمالي',
+                              _taskStat('${d.total}', 'Total'.tr(context),
                                 AppColors.navyMid),
                             ]),
                         ]),
@@ -395,12 +396,12 @@ class ReportsKpiScreen extends ConsumerWidget {
                   height: 140,
                   child: Center(child: CircularProgressIndicator())),
                 error: (e, _) =>
-                    _errorCard('تعذر تحميل بيانات المهام', e),
+                    _errorCard('Task error'.tr(context), e),
               ),
               const SizedBox(height: 16),
 
               // ── Projects & Expenses ─────────────────────────────
-              SectionHeader(title: 'مؤشرات المشاريع والمصروفات'),
+              SectionHeader(title: 'Projects Expenses indicators'.tr(context)),
               Row(children: [
                 Expanded(child: GestureDetector(
                   onTap: () => context.push('/project-analytics'),
@@ -418,11 +419,11 @@ class ReportsKpiScreen extends ConsumerWidget {
                       children: [
                         const Text('🏗', style: TextStyle(fontSize: 24)),
                         const SizedBox(height: 6),
-                        Text('المشاريع',
+                        Text('Projects'.tr(context),
                           style: TextStyle(fontFamily: 'Cairo',
                             fontSize: 14, fontWeight: FontWeight.w800,
                             color: AppColors.navyMid)),
-                        Text('عرض التفاصيل',
+                        Text('View Details'.tr(context),
                           style: TextStyle(fontFamily: 'Cairo',
                             fontSize: 11, fontWeight: FontWeight.w700,
                             color: AppColors.navyLight)),
@@ -444,11 +445,11 @@ class ReportsKpiScreen extends ConsumerWidget {
                       children: [
                         const Text('💰', style: TextStyle(fontSize: 24)),
                         const SizedBox(height: 6),
-                        Text('المصروفات',
+                        Text('Expenses'.tr(context),
                           style: TextStyle(fontFamily: 'Cairo',
                             fontSize: 14, fontWeight: FontWeight.w800,
                             color: AppColors.gold)),
-                        Text('عرض التفاصيل',
+                        Text('View Details'.tr(context),
                           style: TextStyle(fontFamily: 'Cairo',
                             fontSize: 11, fontWeight: FontWeight.w700,
                             color: AppColors.goldDark)),
@@ -457,9 +458,9 @@ class ReportsKpiScreen extends ConsumerWidget {
               const SizedBox(height: 16),
 
               // ── Export Buttons ──────────────────────────────────
-              SectionHeader(title: 'تصدير التقارير'),
-              ...['تقرير الحضور الشهري', 'تقرير الإجازات',
-                   'تقرير المهام والأداء', 'ملخص الطلبات']
+              SectionHeader(title: 'Export Reports'.tr(context)),
+              ...['Monthly Attendance Report'.tr(context), 'Leave Report'.tr(context),
+                   'Tasks Performance Report'.tr(context), 'Requests Summary'.tr(context)]
                   .map((label) => Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.symmetric(
@@ -472,7 +473,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                   Row(children: [
                     const Text('📤', style: TextStyle(fontSize: 16)),
                     const SizedBox(width: 6),
-                    Text('PDF / Excel',
+                    Text('PDF Excel'.tr(context),
                       style: TextStyle(fontFamily: 'Cairo',
                         fontSize: 11, color: AppColors.g400)),
                   ]),

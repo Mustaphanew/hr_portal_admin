@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/providers/admin_providers.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 
@@ -15,7 +16,7 @@ class TasksDashboardScreen extends ConsumerWidget {
       backgroundColor: AppColors.bg,
       body: tasksAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('حدث خطأ: $e',
+        error: (e, _) => Center(child: Text('${'Error'.tr(context)}: $e',
           style: TextStyle(fontFamily: 'Cairo', fontSize: 14))),
         data: (data) {
           final tasks = data.tasks;
@@ -35,22 +36,22 @@ class TasksDashboardScreen extends ConsumerWidget {
                     onTap: () => context.push('/all-tasks'),
                     child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                      child: Text('عرض الكل', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w600)))),
+                      child: Text('View all'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w600)))),
                   Expanded(child: Column(children: [
-                    Text('إدارة المهام', style: TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-                    Text('${stats.total} مهمة إجمالية', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.goldLight)),
+                    Text('Task Management'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
+                    Text('tasks_total'.tr(context, params: {'count': '${stats.total}'}), style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.goldLight)),
                   ])),
                   const SizedBox(width: 36),
                 ]),
                 const SizedBox(height: 14),
                 Row(children: [
-                  _topStat('${stats.total}', 'الكل',    AppColors.navySoft,    AppColors.goldLight),
+                  _topStat('${stats.total}', 'All'.tr(context),    AppColors.navySoft,    AppColors.goldLight),
                   const SizedBox(width: 8),
-                  _topStat('$inProgress',  'جارية',  AppColors.tealSoft,    AppColors.tealLight),
+                  _topStat('$inProgress',  'In Progress'.tr(context),  AppColors.tealSoft,    AppColors.tealLight),
                   const SizedBox(width: 8),
-                  _topStat('$overdue',     'متأخرة', AppColors.errorSoft,   AppColors.error),
+                  _topStat('$overdue',     'Overdue'.tr(context), AppColors.errorSoft,   AppColors.error),
                   const SizedBox(width: 8),
-                  _topStat('$pending',     'معلقة',  AppColors.warningSoft, AppColors.warning),
+                  _topStat('$pending',     'Pending'.tr(context),  AppColors.warningSoft, AppColors.warning),
                 ]),
               ]),
             ),
@@ -62,22 +63,22 @@ class TasksDashboardScreen extends ConsumerWidget {
                 child: Column(children: [
                   // Overdue alert
                   if (overdue > 0) AlertBanner(
-                    message: '$overdue مهام تجاوزت الموعد النهائي — مراجعة فورية مطلوبة',
+                    message: 'overdue_tasks_review'.tr(context, params: {'count': '$overdue'}),
                     type: 'error'),
-                  SectionHeader(title: 'المهام المتأخرة',
-                    actionLabel: 'عرض الكل', onAction: () => context.push('/all-tasks')),
+                  SectionHeader(title: 'Overdue Tasks'.tr(context),
+                    actionLabel: 'View all'.tr(context), onAction: () => context.push('/all-tasks')),
                   ...tasks.where((t) => t.status == 'overdue').map((t) =>
                     TaskCard(id: t.id.toString(), title: t.title, assignedTo: t.assignedTo.name,
                       dept: t.department.name, dueDate: t.dueDate, status: t.status, priority: t.priority,
                       onTap: () => context.push('/task-detail/${t.id}'))),
                   const SizedBox(height: 10),
-                  SectionHeader(title: 'المهام الجارية'),
+                  SectionHeader(title: 'In Progress Tasks'.tr(context)),
                   ...tasks.where((t) => t.status == 'in_progress').map((t) =>
                     TaskCard(id: t.id.toString(), title: t.title, assignedTo: t.assignedTo.name,
                       dept: t.department.name, dueDate: t.dueDate, status: t.status, priority: t.priority,
                       onTap: () => context.push('/task-detail/${t.id}'))),
                   const SizedBox(height: 10),
-                  SectionHeader(title: 'المهام المعلقة'),
+                  SectionHeader(title: 'Pending Tasks'.tr(context)),
                   ...tasks.where((t) => t.status == 'pending').map((t) =>
                     TaskCard(id: t.id.toString(), title: t.title, assignedTo: t.assignedTo.name,
                       dept: t.department.name, dueDate: t.dueDate, status: t.status, priority: t.priority,
@@ -85,7 +86,7 @@ class TasksDashboardScreen extends ConsumerWidget {
                 ]),
               ),
             )),
-            StickyBar(child: PrimaryBtn(text: '+ إنشاء مهمة جديدة', icon: '✏️',
+            StickyBar(child: PrimaryBtn(text: 'Create New Task'.tr(context), icon: '✏️',
               onTap: () => context.push('/create-task'))),
           ]);
         },
@@ -118,20 +119,20 @@ class _AllTasksState extends ConsumerState<AllTasksScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Column(children: [
-        AdminAppBar(title: 'جميع المهام', onBack: () => context.pop()),
-        FilterBar(tabs: ['الكل','جارية','معلقة','متأخرة','مكتملة'],
+        AdminAppBar(title: 'All Tasks'.tr(context), onBack: () => context.pop()),
+        FilterBar(tabs: ['All'.tr(context),'In Progress'.tr(context),'Pending'.tr(context),'Overdue'.tr(context),'Completed'.tr(context)],
           selected: _tab, onSelect: (i) {
             setState(() => _tab = i);
             ref.read(tasksStatusFilter.notifier).state = _statusValues[i];
           }),
         Expanded(child: tasksAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('حدث خطأ: $e',
+          error: (e, _) => Center(child: Text('${'Error'.tr(context)}: $e',
             style: TextStyle(fontFamily: 'Cairo', fontSize: 14))),
           data: (data) {
             final tasks = data.tasks;
             if (tasks.isEmpty) {
-              return Center(child: Text('لا توجد مهام',
+              return Center(child: Text('No tasks'.tr(context),
                 style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.g400)));
             }
             return RefreshIndicator(
@@ -166,16 +167,16 @@ class TaskDetailScreen extends ConsumerWidget {
       backgroundColor: AppColors.bg,
       body: taskAsync.when(
         loading: () => Column(children: [
-          AdminAppBar(title: 'تفاصيل المهمة', onBack: () => context.pop()),
+          AdminAppBar(title: 'Task Details'.tr(context), onBack: () => context.pop()),
           const Expanded(child: Center(child: CircularProgressIndicator())),
         ]),
         error: (e, _) => Column(children: [
-          AdminAppBar(title: 'تفاصيل المهمة', onBack: () => context.pop()),
-          Expanded(child: Center(child: Text('حدث خطأ: $e',
+          AdminAppBar(title: 'Task Details'.tr(context), onBack: () => context.pop()),
+          Expanded(child: Center(child: Text('${'Error'.tr(context)}: $e',
             style: TextStyle(fontFamily: 'Cairo', fontSize: 14)))),
         ]),
         data: (t) => Column(children: [
-          AdminAppBar(title: 'تفاصيل المهمة', subtitle: t.id.toString(),
+          AdminAppBar(title: 'Task Details'.tr(context), subtitle: t.id.toString(),
             onBack: () => context.pop()),
           Expanded(child: RefreshIndicator(
             onRefresh: () async => ref.invalidate(taskDetailProvider(taskId)),
@@ -186,18 +187,18 @@ class TaskDetailScreen extends ConsumerWidget {
                 AppCard(mb: 14, child: Column(children: [
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                     PriorityBadge(priority: t.priority),
-                    StatusBadge(text: t.status == 'in_progress' ? 'جارية' : t.status == 'overdue' ? 'متأخرة' : t.status == 'completed' ? 'مكتملة' : 'معلقة',
+                    StatusBadge(text: t.status == 'in_progress' ? 'In Progress'.tr(context) : t.status == 'overdue' ? 'Overdue'.tr(context) : t.status == 'completed' ? 'Completed'.tr(context) : 'Pending'.tr(context),
                       type: t.status == 'overdue' ? 'overdue' : t.status == 'in_progress' ? 'teal' : t.status == 'completed' ? 'teal' : 'pending', dot: true),
                   ]),
                   const SizedBox(height: 10),
                   Align(alignment: Alignment.centerRight, child: Text(t.title,
                     style: TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.w800))),
                   const Divider(height: 20, color: AppColors.g100),
-                  InfoRow(label: 'المكلَّف بها',  value: t.assignedTo.name, icon: '👤'),
-                  InfoRow(label: 'الإدارة',       value: t.department.name, icon: '🏢'),
-                  InfoRow(label: 'تاريخ الإنشاء', value: t.createdDate,     icon: '📅'),
-                  InfoRow(label: 'الموعد النهائي', value: t.dueDate,        icon: '⏰'),
-                  if (t.notes != null) InfoRow(label: 'ملاحظات', value: t.notes!, icon: '📝', border: false),
+                  InfoRow(label: 'Assigned To'.tr(context),  value: t.assignedTo.name, icon: '👤'),
+                  InfoRow(label: 'Department'.tr(context),       value: t.department.name, icon: '🏢'),
+                  InfoRow(label: 'Creation Date'.tr(context), value: t.createdDate,     icon: '📅'),
+                  InfoRow(label: 'Deadline'.tr(context), value: t.dueDate,        icon: '⏰'),
+                  if (t.notes != null) InfoRow(label: 'Notes'.tr(context), value: t.notes!, icon: '📝', border: false),
                 ])),
                 AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   Text('متابعة التنفيذ', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w800), textAlign: TextAlign.right),

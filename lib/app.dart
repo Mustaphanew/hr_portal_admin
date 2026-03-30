@@ -25,7 +25,7 @@ class _AdminPortalAppState extends ConsumerState<AdminPortalApp> {
     final isRtl = resolvedLocale.languageCode == 'ar';
 
     return MaterialApp.router(
-      title: 'لوحة إدارة مجموعة الرياض',
+      title: isRtl ? 'الادمن موظفين نيوهورايزون' : 'Admin Employees NH',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

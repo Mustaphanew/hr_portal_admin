@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/providers/admin_providers.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -28,27 +29,27 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
     return '${days[_now.weekday % 7]}، ${_now.day} ${months[_now.month - 1]} ${_now.year}';
   }
 
-  static const _quickActions = [
-    {'l':'مراجعة الطلبات',  'i':'📋', 'r':'/requests',     'c': AppColors.navyMid},
-    {'l':'متابعة المهام',   'i':'✅', 'r':'/tasks',         'c': AppColors.teal},
-    {'l':'اعتماد الطلبات', 'i':'🖊', 'r':'/approvals',     'c': AppColors.gold},
-    {'l':'إدارة الحضور',   'i':'⏱', 'r':'/attendance',    'c': AppColors.info},
-    {'l':'إدارة الإجازات', 'i':'🌴', 'r':'/leave',         'c': AppColors.success},
-    {'l':'الموظفون',        'i':'👥', 'r':'/employees',     'c': AppColors.navyLight},
-    {'l':'الإدارات',        'i':'🏢', 'r':'/departments',   'c': AppColors.warningDark},
-    {'l':'التقارير',        'i':'📊', 'r':'/reports',       'c': AppColors.navyDeep},
-    {'l':'المشاريع',         'i':'🏗', 'r':'/projects',      'c': AppColors.navyLight},
-    {'l':'المصروفات',        'i':'💰', 'r':'/expenses',      'c': AppColors.gold},
-    {'l':'متابعة المشاريع', 'i':'🔄', 'r':'/project-follow-up','c': AppColors.teal},
-    {'l':'اعتماد المصروفات','i':'💳', 'r':'/expense-follow-up','c': AppColors.success},
+  List<Map<String, dynamic>> _getQuickActions(BuildContext context) => [
+    {'l': 'Review Requests'.tr(context),  'i':'📋', 'r':'/requests',     'c': AppColors.navyMid},
+    {'l': 'Track Tasks'.tr(context),   'i':'✅', 'r':'/tasks',         'c': AppColors.teal},
+    {'l': 'Approve Requests'.tr(context), 'i':'🖊', 'r':'/approvals',     'c': AppColors.gold},
+    {'l': 'Attendance Management'.tr(context),   'i':'⏱', 'r':'/attendance',    'c': AppColors.info},
+    {'l': 'Leave Management'.tr(context), 'i':'🌴', 'r':'/leave',         'c': AppColors.success},
+    {'l': 'Employees'.tr(context),        'i':'👥', 'r':'/employees',     'c': AppColors.navyLight},
+    {'l': 'Departments'.tr(context),        'i':'🏢', 'r':'/departments',   'c': AppColors.warningDark},
+    {'l': 'Reports'.tr(context),        'i':'📊', 'r':'/reports',       'c': AppColors.navyDeep},
+    {'l': 'Projects'.tr(context),         'i':'🏗', 'r':'/projects',      'c': AppColors.navyLight},
+    {'l': 'Expenses'.tr(context),        'i':'💰', 'r':'/expenses',      'c': AppColors.gold},
+    {'l': 'Track Projects'.tr(context), 'i':'🔄', 'r':'/project-follow-up','c': AppColors.teal},
+    {'l': 'Expense Approval'.tr(context),'i':'💳', 'r':'/expense-follow-up','c': AppColors.success},
   ];
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final employee = authState.employee;
-    final adminName = employee?.name.split(' ').take(2).join(' ') ?? 'المدير';
-    final adminRole = employee?.jobTitle ?? 'مدير النظام';
+    final adminName = employee?.name.split(' ').take(2).join(' ') ?? 'Admin'.tr(context);
+    final adminRole = employee?.jobTitle ?? 'System Manager'.tr(context);
     final notifCount = ref.watch(notificationsProvider).unreadCount;
     final dashAsync = ref.watch(dashboardProvider);
     final isRtl = Directionality.of(context) == TextDirection.rtl;
@@ -88,7 +89,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
               ]),
               // Greeting — center
               Expanded(child: Column(children: [
-                Text('لوحة الإدارة', style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.white38, letterSpacing: 2)),
+                Text('Admin Panel'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.white38, letterSpacing: 2)),
                 Text(adminName, style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
                 Text(adminRole, style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.goldLight)),
@@ -111,9 +112,9 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                 // Stats — end side
                 dashAsync.when(
                   data: (dash) => Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                    _headerStat('${dash.kpis.presentToday}', 'حاضر', AppColors.goldLight),
-                    _headerStat('${dash.kpis.onLeaveToday}', 'إجازة', AppColors.tealLight),
-                    _headerStat('${dash.kpis.absentToday}', 'غياب', AppColors.error),
+                    _headerStat('${dash.kpis.presentToday}', 'Present'.tr(context), AppColors.goldLight),
+                    _headerStat('${dash.kpis.onLeaveToday}', 'On Leave'.tr(context), AppColors.tealLight),
+                    _headerStat('${dash.kpis.absentToday}', 'Absent'.tr(context), AppColors.error),
                   ]),
                   loading: () => const SizedBox(width: 60, child: Center(
                     child: CircularProgressIndicator(color: Colors.white38, strokeWidth: 2))),
@@ -129,14 +130,14 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
           error: (error, _) => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.cloud_off, size: 48, color: AppColors.g300),
             const SizedBox(height: 12),
-            Text('حدث خطأ في تحميل البيانات', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx2)),
+            Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx2)),
             const SizedBox(height: 4),
             Text('$error', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.tx3), textAlign: TextAlign.center, maxLines: 3),
             const SizedBox(height: 16),
             TextButton.icon(
               onPressed: () => ref.invalidate(dashboardProvider),
               icon: const Icon(Icons.refresh, size: 18),
-              label: Text('إعادة المحاولة', style: TextStyle(fontFamily: 'Cairo', fontSize: 13))),
+              label: Text('Retry'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 13))),
           ])),
           data: (dash) => RefreshIndicator(
             onRefresh: () async => ref.invalidate(dashboardProvider),
@@ -147,69 +148,62 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
 
                 // ── Alerts ────────────────────────────────────────
                 if (dash.kpis.overdueTasks > 0)
-                  AlertBanner(message: '${dash.kpis.overdueTasks} مهام تجاوزت الموعد النهائي — يحتاج متابعة فورية', type: 'error'),
+                  AlertBanner(message: 'overdue_tasks_alert'.tr(context, params: {'count': '${dash.kpis.overdueTasks}'}), type: 'error'),
                 if (dash.kpis.pendingRequests > 0)
-                  AlertBanner(message: '${dash.kpis.pendingRequests} طلب معلق ينتظر اعتمادك', type: 'warning'),
+                  AlertBanner(message: 'pending_requests_alert'.tr(context, params: {'count': '${dash.kpis.pendingRequests}'}), type: 'warning'),
 
                 // ── KPI Grid ──────────────────────────────────────
-                SectionHeader(title: 'المؤشرات التشغيلية'),
-                Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: GridView.count(
+                SectionHeader(title: 'Operational KPIs'.tr(context)),
+                GridView.count(
                   crossAxisCount: 2, shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.35,
                   children: [
-                    KpiCard(label: 'إجمالي الموظفين', value: '${dash.kpis.totalEmployees}', change: '', icon: '👥', isPositive: true, color: AppColors.navyMid, onTap: () => context.push('/employees')),
-                    KpiCard(label: 'الحضور اليوم', value: '${dash.kpis.presentToday}', change: '${dash.kpis.attendanceRate.toStringAsFixed(0)}%', icon: '✅', isPositive: true, color: AppColors.success, onTap: () => context.push('/attendance')),
-                    KpiCard(label: 'الغياب', value: '${dash.kpis.absentToday}', change: '', icon: '🚫', isPositive: false, color: AppColors.error, onTap: () => context.push('/attendance')),
-                    KpiCard(label: 'المتأخرون', value: '${dash.kpis.lateToday}', change: '', icon: '⏰', isPositive: false, color: AppColors.warning, onTap: () => context.push('/attendance')),
-                    KpiCard(label: 'طلبات معلقة', value: '${dash.kpis.pendingRequests}', change: '', icon: '📋', isPositive: false, color: AppColors.gold, onTap: () => context.push('/requests')),
-                    KpiCard(label: 'إجازات معلقة', value: '${dash.kpis.pendingLeaves}', change: '', icon: '🌴', isPositive: false, color: AppColors.teal, onTap: () => context.push('/leave')),
+                    KpiCard(label: 'Total Employees'.tr(context), value: '${dash.kpis.totalEmployees}', change: '', icon: '👥', isPositive: true, color: AppColors.navyMid, onTap: () => context.push('/employees')),
+                    KpiCard(label: 'Present Today'.tr(context), value: '${dash.kpis.presentToday}', change: '${dash.kpis.attendanceRate.toStringAsFixed(0)}%', icon: '✅', isPositive: true, color: AppColors.success, onTap: () => context.push('/attendance')),
+                    KpiCard(label: 'Absent'.tr(context), value: '${dash.kpis.absentToday}', change: '', icon: '🚫', isPositive: false, color: AppColors.error, onTap: () => context.push('/attendance')),
+                    KpiCard(label: 'Late'.tr(context), value: '${dash.kpis.lateToday}', change: '', icon: '⏰', isPositive: false, color: AppColors.warning, onTap: () => context.push('/attendance')),
+                    KpiCard(label: 'Pending Requests'.tr(context), value: '${dash.kpis.pendingRequests}', change: '', icon: '📋', isPositive: false, color: AppColors.gold, onTap: () => context.push('/requests')),
+                    KpiCard(label: 'Pending Leaves'.tr(context), value: '${dash.kpis.pendingLeaves}', change: '', icon: '🌴', isPositive: false, color: AppColors.teal, onTap: () => context.push('/leave')),
                   ],
-                )),
+                ),
                 const SizedBox(height: 18),
 
                 // ── Quick Actions ──────────────────────────────────
-                SectionHeader(title: 'الإجراءات السريعة'),
-                Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: GridView.count(
-                    crossAxisCount: 4, shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.82,
-                    children: _quickActions.map((a) => GestureDetector(
-                      onTap: () => context.push(a['r'] as String),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.bgCard,
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: AppShadows.sm),
-                        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                          Container(width: 44, height: 44,
-                            decoration: BoxDecoration(
-                              color: (a['c'] as Color).withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(13)),
-                            child: Center(child: Text(a['i'] as String, style: const TextStyle(fontSize: 20)))),
-                          const SizedBox(height: 6),
-                          Text(a['l'] as String, style: TextStyle(fontFamily: 'Cairo',
-                            fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.tx2),
-                            textAlign: TextAlign.center, maxLines: 2),
-                        ])),
-                    )).toList(),
-                  ),
+                SectionHeader(title: 'Quick Actions'.tr(context)),
+                GridView.count(
+                  crossAxisCount: 4, shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.82,
+                  children: _getQuickActions(context).map((a) => GestureDetector(
+                    onTap: () => context.push(a['r'] as String),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.bgCard,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: AppShadows.sm),
+                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Container(width: 44, height: 44,
+                          decoration: BoxDecoration(
+                            color: (a['c'] as Color).withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(13)),
+                          child: Center(child: Text(a['i'] as String, style: const TextStyle(fontSize: 20)))),
+                        const SizedBox(height: 6),
+                        Text(a['l'] as String, style: TextStyle(fontFamily: 'Cairo',
+                          fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.tx2),
+                          textAlign: TextAlign.center, maxLines: 2),
+                      ])),
+                  )).toList(),
                 ),
                 const SizedBox(height: 18),
 
                 // ── Departments Summary ────────────────────────────
                 if (dash.departmentSummary.isNotEmpty) ...[
-                  SectionHeader(title: 'نظرة على الإدارات',
-                    actionLabel: 'عرض الكل', onAction: () => context.push('/departments')),
+                  SectionHeader(title: 'Departments Overview'.tr(context),
+                    actionLabel: 'View all'.tr(context), onAction: () => context.push('/departments')),
                   SizedBox(height: 100,
-                    child: Directionality(
-                      textDirection: TextDirection.rtl,
-                      child: ListView.separated(
+                    child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.only(bottom: 6),
                         itemCount: dash.departmentSummary.length,
@@ -254,14 +248,14 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                           );
                         },
                       ),
-                    )),
+                    ),
                   const SizedBox(height: 18),
                 ],
 
                 // ── Pending Approvals ──────────────────────────────
                 if (dash.pendingApprovals.isNotEmpty) ...[
-                  SectionHeader(title: 'الموافقات المعلقة',
-                    actionLabel: 'عرض الكل', onAction: () => context.push('/approvals')),
+                  SectionHeader(title: 'Pending Approvals'.tr(context),
+                    actionLabel: 'View all'.tr(context), onAction: () => context.push('/approvals')),
                   ...dash.pendingApprovals.take(3).map((r) =>
                     RequestCard(
                       id: '${r.id}', empName: r.employeeName, dept: r.employeeCode, type: r.type,

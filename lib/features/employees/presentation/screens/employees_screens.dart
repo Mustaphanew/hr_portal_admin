@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/providers/admin_providers.dart';
 import '../../../../core/widgets/admin_widgets.dart';
+import '../../../../core/localization/app_localizations.dart';
 
 // ── Employees Directory ───────────────────────────────────
 class EmployeesScreen extends ConsumerStatefulWidget {
@@ -28,9 +29,9 @@ class _EmployeesState extends ConsumerState<EmployeesScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Column(children: [
-        AdminAppBar(title: 'الموظفون',
+        AdminAppBar(title: 'Employees'.tr(context),
           subtitle: employeesAsync.whenOrNull(
-            data: (d) => '${d.employees.length} موظف نشط',
+            data: (d) => 'active_employees'.tr(context, params: {'count': '${d.employees.length}'}),
           ),
           onBack: () => context.pop()),
         Container(
@@ -42,14 +43,14 @@ class _EmployeesState extends ConsumerState<EmployeesScreen> {
               onChanged: (v) {
                 ref.read(employeesSearchProvider.notifier).state = v;
               },
-              decoration: fieldDec('ابحث عن موظف أو رقم...').copyWith(
+              decoration: fieldDec('Search employee'.tr(context)).copyWith(
                 prefixIcon: const Icon(Icons.search, color: AppColors.g400, size: 20),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10))),
             const SizedBox(height: 8),
           ]),
         ),
         FilterBar(
-          tabs: const ['الكل','حاضر','متأخر','إجازة','غائب'],
+          tabs: ['All'.tr(context),'Present'.tr(context),'Late'.tr(context),'On Leave'.tr(context),'Absent'.tr(context)],
           selected: _tab,
           onSelect: (i) {
             setState(() => _tab = i);
@@ -60,16 +61,16 @@ class _EmployeesState extends ConsumerState<EmployeesScreen> {
           error: (err, _) => Center(child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('حدث خطأ', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
+              Text('Error'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
               const SizedBox(height: 8),
-              OutlineBtn(text: 'إعادة المحاولة', small: true, fullWidth: false,
+              OutlineBtn(text: 'Retry'.tr(context), small: true, fullWidth: false,
                 onTap: () => ref.invalidate(employeesProvider)),
             ],
           )),
           data: (data) {
             final employees = data.employees;
             if (employees.isEmpty) {
-              return Center(child: Text('لا يوجد موظفون',
+              return Center(child: Text('No employees'.tr(context),
                 style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx3)));
             }
             return RefreshIndicator(
@@ -112,9 +113,9 @@ class EmployeeDetailScreen extends ConsumerWidget {
         error: (err, _) => Center(child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('حدث خطأ', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
+            Text('Error'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
             const SizedBox(height: 8),
-            OutlineBtn(text: 'إعادة المحاولة', small: true, fullWidth: false,
+            OutlineBtn(text: 'Retry'.tr(context), small: true, fullWidth: false,
               onTap: () => ref.invalidate(employeeDetailProvider(employeeId))),
           ],
         )),
@@ -177,7 +178,7 @@ class EmployeeDetailScreen extends ConsumerWidget {
             const SizedBox(height: 14),
             // Work info
             AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              const Text('بيانات التوظيف', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w800)),
+              Text('Employment Info'.tr(context), style: const TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w800)),
               const SizedBox(height: 10),
               InfoRow(label: 'القسم',           value: e.department?.name ?? '-', icon: '🏢'),
               InfoRow(label: 'المسمى الوظيفي', value: e.jobTitle ?? '-',         icon: '💼'),
@@ -187,7 +188,7 @@ class EmployeeDetailScreen extends ConsumerWidget {
             ])),
             // Contact
             AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              const Text('بيانات الاتصال', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w800)),
+              Text('Contact Info'.tr(context), style: const TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w800)),
               const SizedBox(height: 10),
               InfoRow(label: 'البريد الإلكتروني', value: e.email ?? '-',  icon: '✉️'),
               InfoRow(label: 'الجوال',             value: e.mobile ?? '-', icon: '📱', border: false),
@@ -197,7 +198,7 @@ class EmployeeDetailScreen extends ConsumerWidget {
               AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                   GestureDetector(onTap: () => context.push('/attendance'),
-                    child: const Text('عرض السجل', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.navyLight, fontWeight: FontWeight.w700))),
+                    child: Text('View Record'.tr(context), style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.navyLight, fontWeight: FontWeight.w700))),
                   Text('ملخص الحضور — ${att.month}', style: const TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w800)),
                 ]),
                 const SizedBox(height: 12),

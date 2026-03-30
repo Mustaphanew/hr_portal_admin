@@ -5,29 +5,30 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/providers/admin_providers.dart';
 import '../../../../core/providers/core_providers.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../../data/models/request_models.dart';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-String _statusAr(String s) => switch (s) {
-  'pending'  => 'معلق',
-  'approved' => 'معتمد',
-  'rejected' => 'مرفوض',
+String _statusTr(BuildContext context, String s) => switch (s) {
+  'pending'  => 'Pending'.tr(context),
+  'approved' => 'Approved'.tr(context),
+  'rejected' => 'Rejected'.tr(context),
   _          => s,
 };
 
-String _typeAr(String t) => switch (t) {
-  'leave'              => 'طلب إجازة',
-  'attendance'         => 'تصحيح حضور',
-  'permission'         => 'إذن مغادرة',
-  'expense'            => 'مطالبة مصاريف',
-  'salary_advance'     => 'سلفة راتب',
-  'document'           => 'طلب وثيقة',
-  'loan'               => 'طلب قرض',
-  'resignation'        => 'طلب استقالة',
-  'official_mission'   => 'مهمة رسمية',
-  'asset'              => 'طلب أصول',
+String _typeTr(BuildContext context, String t) => switch (t) {
+  'leave'              => 'leave_request'.tr(context),
+  'attendance'         => 'attendance_correction'.tr(context),
+  'permission'         => 'leave_permission'.tr(context),
+  'expense'            => 'expense_claim'.tr(context),
+  'salary_advance'     => 'salary_advance'.tr(context),
+  'document'           => 'document_request'.tr(context),
+  'loan'               => 'loan_request'.tr(context),
+  'resignation'        => 'resignation_request'.tr(context),
+  'official_mission'   => 'official_mission'.tr(context),
+  'asset'              => 'asset_request'.tr(context),
   _                    => t,
 };
 
@@ -52,7 +53,7 @@ class RequestsManagementScreen extends ConsumerWidget {
       backgroundColor: AppColors.bg,
       body: asyncRequests.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('حدث خطأ: $e',
+        error: (e, _) => Center(child: Text('${'Error'.tr(context)}: $e',
             style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.error))),
         data: (data) {
           final all = data.requests;
@@ -78,12 +79,12 @@ class RequestsManagementScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10)),
-                        child: Text('عرض الكل', style: TextStyle(fontFamily: 'Cairo',
+                        child: Text('View all'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                           fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70)))),
                     Expanded(child: Column(children: [
-                      Text('إدارة الطلبات', style: TextStyle(fontFamily: 'Cairo',
+                      Text('Request Management'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                         fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-                      Text('${pending.length} طلب يحتاج مراجعة', style: TextStyle(fontFamily: 'Cairo',
+                      Text('requests_review'.tr(context, params: {'count': '${pending.length}'}), style: TextStyle(fontFamily: 'Cairo',
                         fontSize: 11, color: AppColors.goldLight)),
                     ])),
                     const SizedBox(width: 36),
@@ -93,10 +94,10 @@ class RequestsManagementScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(12)),
                     child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-                      _strip('${pending.length}', 'معلق', AppColors.warning),
-                      _strip('${all.length}', 'الكل', AppColors.goldLight),
-                      _strip('$approved', 'معتمد', AppColors.tealLight),
-                      _strip('$rejected', 'مرفوض', AppColors.error),
+                      _strip('${pending.length}', 'Pending'.tr(context), AppColors.warning),
+                      _strip('${all.length}', 'All'.tr(context), AppColors.goldLight),
+                      _strip('$approved', 'Approved'.tr(context), AppColors.tealLight),
+                      _strip('$rejected', 'Rejected'.tr(context), AppColors.error),
                     ])),
                 ]),
               ),
@@ -106,29 +107,29 @@ class RequestsManagementScreen extends ConsumerWidget {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 child: Column(children: [
-                  SectionHeader(title: 'الطلبات المعلقة',
-                    actionLabel: 'عرض الكل', onAction: () => context.push('/approvals')),
+                  SectionHeader(title: 'Pending requests section'.tr(context),
+                    actionLabel: 'View all'.tr(context), onAction: () => context.push('/approvals')),
                   if (pending.isEmpty)
                     Padding(padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Text('لا توجد طلبات معلقة', style: TextStyle(
+                      child: Text('No pending requests'.tr(context), style: TextStyle(
                         fontFamily: 'Cairo', fontSize: 13, color: AppColors.tx3)))
                   else
                     ...pending.take(5).map((r) => RequestCard(
                       id: '#${r.id}',
                       empName: r.employee?.name ?? '—',
                       dept: r.employee?.code ?? '',
-                      type: _typeAr(r.requestType),
+                      type: _typeTr(context,r.requestType),
                       date: _fmtDate(r.createdAt),
                       status: r.status,
                       priority: 'normal',
                       onTap: () => context.push('/request-detail', extra: r.id))),
                   const SizedBox(height: 8),
-                  SectionHeader(title: 'أحدث الطلبات'),
+                  SectionHeader(title: 'Recent Requests'.tr(context)),
                   ...all.take(10).map((r) => RequestCard(
                     id: '#${r.id}',
                     empName: r.employee?.name ?? '—',
                     dept: r.employee?.code ?? '',
-                    type: _typeAr(r.requestType),
+                    type: _typeTr(context,r.requestType),
                     date: _fmtDate(r.createdAt),
                     status: r.status,
                     priority: 'normal',
@@ -152,32 +153,32 @@ class RequestsManagementScreen extends ConsumerWidget {
 class AllRequestsScreen extends ConsumerWidget {
   const AllRequestsScreen({super.key});
 
-  static const _tabs = ['الكل', 'معلق', 'معتمد', 'مرفوض'];
+  static final _tabKeys = ['All', 'Pending', 'Approved', 'Rejected'];
   static const _statusMap = [null, 'pending', 'approved', 'rejected'];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentFilter = ref.watch(managerRequestsStatusFilter);
-    final selectedIdx = _statusMap.indexOf(currentFilter).clamp(0, _tabs.length - 1);
+    final selectedIdx = _statusMap.indexOf(currentFilter).clamp(0, _tabKeys.length - 1);
     final asyncRequests = ref.watch(managerRequestsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Column(children: [
-        AdminAppBar(title: 'إدارة الطلبات', subtitle: 'جميع الطلبات',
+        AdminAppBar(title: 'Request Management'.tr(context), subtitle: 'All Requests'.tr(context),
           onBack: () => context.pop()),
         FilterBar(
-          tabs: _tabs,
+          tabs: _tabKeys.map((k) => k.tr(context)).toList(),
           selected: selectedIdx,
           onSelect: (i) => ref.read(managerRequestsStatusFilter.notifier).state = _statusMap[i]),
         Expanded(child: asyncRequests.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('حدث خطأ: $e',
+          error: (e, _) => Center(child: Text('${'Error'.tr(context)}: $e',
               style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.error))),
           data: (data) {
             final requests = data.requests;
             if (requests.isEmpty) {
-              return Center(child: Text('لا توجد طلبات', style: TextStyle(
+              return Center(child: Text('No requests'.tr(context), style: TextStyle(
                 fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx3)));
             }
             return RefreshIndicator(
@@ -191,7 +192,7 @@ class AllRequestsScreen extends ConsumerWidget {
                     id: '#${r.id}',
                     empName: r.employee?.name ?? '—',
                     dept: r.employee?.code ?? '',
-                    type: _typeAr(r.requestType),
+                    type: _typeTr(context,r.requestType),
                     date: _fmtDate(r.createdAt),
                     status: r.status,
                     priority: 'normal',
@@ -240,7 +241,7 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
       if (mounted) {
         setState(() => _processing = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('حدث خطأ: $e'), backgroundColor: AppColors.error));
+          SnackBar(content: Text('${'Error'.tr(context)}: $e'), backgroundColor: AppColors.error));
       }
     }
   }
@@ -254,7 +255,7 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
       return Scaffold(
         backgroundColor: AppColors.bg,
         body: Column(children: [
-          AdminAppBar(title: 'تفاصيل الطلب', onBack: () => context.pop()),
+          AdminAppBar(title: 'Request details'.tr(context), onBack: () => context.pop()),
           Expanded(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
             Container(width: 80, height: 80,
               decoration: BoxDecoration(
@@ -264,13 +265,13 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
                 _decision == 'approved' ? Icons.check : Icons.close,
                 color: _decision == 'approved' ? AppColors.success : AppColors.error, size: 40))),
             const SizedBox(height: 16),
-            Text(_decision == 'approved' ? 'تمت الموافقة' : 'تم الرفض',
+            Text(_decision == 'approved' ? 'Approved'.tr(context) : 'Rejected'.tr(context),
               style: TextStyle(fontFamily: 'Cairo', fontSize: 18, fontWeight: FontWeight.w800)),
             const SizedBox(height: 6),
-            Text('تم إشعار الموظف بالقرار',
+            Text('Employee notified'.tr(context),
               style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.tx3)),
             const SizedBox(height: 24),
-            OutlineBtn(text: 'رجوع للطلبات', onTap: () => context.pop(), fullWidth: false),
+            OutlineBtn(text: 'Back to requests'.tr(context), onTap: () => context.pop(), fullWidth: false),
           ]))),
         ]),
       );
@@ -280,17 +281,17 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
       backgroundColor: AppColors.bg,
       body: asyncDetail.when(
         loading: () => Column(children: [
-          AdminAppBar(title: 'تفاصيل الطلب', onBack: () => context.pop()),
+          AdminAppBar(title: 'Request details'.tr(context), onBack: () => context.pop()),
           const Expanded(child: Center(child: CircularProgressIndicator())),
         ]),
         error: (e, _) => Column(children: [
-          AdminAppBar(title: 'تفاصيل الطلب', onBack: () => context.pop()),
-          Expanded(child: Center(child: Text('حدث خطأ: $e',
+          AdminAppBar(title: 'Request details'.tr(context), onBack: () => context.pop()),
+          Expanded(child: Center(child: Text('${'Error'.tr(context)}: $e',
               style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.error)))),
         ]),
         data: (r) {
           return Column(children: [
-            AdminAppBar(title: 'تفاصيل الطلب', subtitle: '#${r.id}',
+            AdminAppBar(title: 'Request details'.tr(context), subtitle: '#${r.id}',
               onBack: () => context.pop()),
             Expanded(child: RefreshIndicator(
               onRefresh: () async => ref.invalidate(managerRequestDetailProvider(widget.requestId)),
@@ -305,7 +306,7 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
                       borderRadius: BorderRadius.circular(18), boxShadow: AppShadows.navy),
                     child: Row(children: [
                       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        StatusBadge(text: _statusAr(r.status), type: r.status, dot: true),
+                        StatusBadge(text: _statusTr(context,r.status), type: r.status, dot: true),
                       ]),
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                         Text(r.employee?.name ?? '—', style: TextStyle(fontFamily: 'Cairo',
@@ -313,7 +314,7 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
                         Text(r.employee?.code ?? '', style: TextStyle(fontFamily: 'Cairo',
                           fontSize: 12, color: Colors.white60)),
                         const SizedBox(height: 6),
-                        Text(_typeAr(r.requestType), style: TextStyle(fontFamily: 'Cairo',
+                        Text(_typeTr(context,r.requestType), style: TextStyle(fontFamily: 'Cairo',
                           fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.goldLight)),
                       ])),
                       const SizedBox(width: 10),
@@ -326,30 +327,30 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
 
                   // ── details card ──
                   AppCard(mb: 14, child: Column(children: [
-                    Align(alignment: Alignment.centerRight, child: Text('تفاصيل الطلب',
+                    Align(alignment: Alignment.centerRight, child: Text('Request details'.tr(context),
                       style: TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w800))),
                     const SizedBox(height: 10),
-                    InfoRow(label: 'رقم الطلب',       value: '#${r.id}',               icon: '🔖'),
-                    InfoRow(label: 'نوع الطلب',       value: _typeAr(r.requestType),   icon: '📋'),
-                    InfoRow(label: 'الموضوع',          value: r.subject,                icon: '📝'),
-                    InfoRow(label: 'تاريخ التقديم',   value: _fmtDate(r.createdAt),    icon: '📅'),
-                    InfoRow(label: 'الموظف',           value: r.employee?.name ?? '—',  icon: '🏢'),
+                    InfoRow(label: 'Request ID'.tr(context),       value: '#${r.id}',               icon: '🔖'),
+                    InfoRow(label: 'Request type'.tr(context),       value: _typeTr(context,r.requestType),   icon: '📋'),
+                    InfoRow(label: 'Subject'.tr(context),          value: r.subject,                icon: '📝'),
+                    InfoRow(label: 'Submission date'.tr(context),   value: _fmtDate(r.createdAt),    icon: '📅'),
+                    InfoRow(label: 'Employee'.tr(context),           value: r.employee?.name ?? '—',  icon: '🏢'),
                     if (r.description != null && r.description!.isNotEmpty)
-                      InfoRow(label: 'التفاصيل', value: r.description!, icon: '📄', border: false),
+                      InfoRow(label: 'Details'.tr(context), value: r.description!, icon: '📄', border: false),
                   ])),
 
                   // ── approval chain ──
                   AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                    Text('مسار الموافقة', style: TextStyle(fontFamily: 'Cairo',
+                    Text('Approval path'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 14, fontWeight: FontWeight.w800), textAlign: TextAlign.right),
                     const SizedBox(height: 14),
                     TimelineWidget(steps: [
-                      TLStep(label: 'تقديم الطلب',
+                      TLStep(label: 'Submit request'.tr(context),
                         sub: '${r.employee?.name ?? ''} — ${_fmtDate(r.createdAt)}', done: true),
-                      TLStep(label: 'مراجعة المدير',
-                        sub: r.status == 'pending' ? 'جارٍ الآن...' : _statusAr(r.status),
+                      TLStep(label: 'Manager review'.tr(context),
+                        sub: r.status == 'pending' ? 'In progress'.tr(context) : _statusTr(context,r.status),
                         done: r.status != 'pending', active: r.status == 'pending'),
-                      TLStep(label: 'إغلاق الطلب',
+                      TLStep(label: 'Close request'.tr(context),
                         done: r.status == 'approved' || r.status == 'rejected'),
                     ]),
                   ])),
@@ -357,7 +358,7 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
                   // ── response notes (if already decided) ──
                   if (r.responseNotes != null && r.responseNotes!.isNotEmpty)
                     AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      Text('ملاحظات الرد', style: TextStyle(fontFamily: 'Cairo',
+                      Text('Response notes'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                         fontSize: 14, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 8),
                       Align(alignment: Alignment.centerRight,
@@ -368,13 +369,13 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
                   // ── note input (only for pending) ──
                   if (r.status == 'pending')
                     AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      Text('تعليق / ملاحظة', style: TextStyle(fontFamily: 'Cairo',
+                      Text('Comment note'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                         fontSize: 14, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 10),
                       TextField(controller: _noteCtrl, maxLines: 3,
                         
                         style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
-                        decoration: fieldDec('أضف تعليقك على الطلب...')),
+                        decoration: fieldDec('Add your comment'.tr(context))),
                     ])),
                 ]),
               ),
@@ -387,10 +388,10 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
                     padding: EdgeInsets.all(8),
                     child: CircularProgressIndicator()))
                 : Row(children: [
-                    Expanded(child: DangerBtn(text: 'رفض',
+                    Expanded(child: DangerBtn(text: 'Rejected'.tr(context),
                       onTap: () => _decide('rejected'))),
                     const SizedBox(width: 10),
-                    Expanded(child: TealBtn(text: 'اعتماد',
+                    Expanded(child: TealBtn(text: 'Approved'.tr(context),
                       onTap: () => _decide('approved'))),
                   ])),
           ]);
@@ -413,22 +414,22 @@ class ApprovalsScreen extends ConsumerWidget {
       backgroundColor: AppColors.bg,
       body: asyncRequests.when(
         loading: () => Column(children: [
-          AdminAppBar(title: 'صندوق الموافقات', onBack: () => context.pop()),
+          AdminAppBar(title: 'Approvals inbox'.tr(context), onBack: () => context.pop()),
           const Expanded(child: Center(child: CircularProgressIndicator())),
         ]),
         error: (e, _) => Column(children: [
-          AdminAppBar(title: 'صندوق الموافقات', onBack: () => context.pop()),
-          Expanded(child: Center(child: Text('حدث خطأ: $e',
+          AdminAppBar(title: 'Approvals inbox'.tr(context), onBack: () => context.pop()),
+          Expanded(child: Center(child: Text('${'Error'.tr(context)}: $e',
               style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.error)))),
         ]),
         data: (data) {
           final pending = data.requests.where((r) => r.status == 'pending').toList();
           return Column(children: [
-            AdminAppBar(title: 'صندوق الموافقات',
-              subtitle: '${pending.length} طلبات معلقة',
+            AdminAppBar(title: 'Approvals inbox'.tr(context),
+              subtitle: 'requests_review'.tr(context, params: {'count': '${pending.length}'}),
               onBack: () => context.pop()),
             Expanded(child: pending.isEmpty
-              ? Center(child: Text('لا توجد طلبات معلقة', style: TextStyle(
+              ? Center(child: Text('No pending requests'.tr(context), style: TextStyle(
                   fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx3)))
               : RefreshIndicator(
                   onRefresh: () async => ref.invalidate(managerRequestsProvider),
@@ -467,7 +468,7 @@ class ApprovalsScreen extends ConsumerWidget {
                             decoration: BoxDecoration(color: AppColors.bg,
                               borderRadius: BorderRadius.circular(10)),
                             child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                              Text(_typeAr(r.requestType), style: TextStyle(fontFamily: 'Cairo',
+                              Text(_typeTr(context,r.requestType), style: TextStyle(fontFamily: 'Cairo',
                                 fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.navyMid)),
                               Text(r.subject, style: TextStyle(fontFamily: 'Cairo',
                                 fontSize: 11, color: AppColors.tx3)),
@@ -480,7 +481,7 @@ class ApprovalsScreen extends ConsumerWidget {
                                 decoration: BoxDecoration(color: AppColors.navySoft,
                                   borderRadius: BorderRadius.circular(9),
                                   border: Border.all(color: AppColors.navyBorder)),
-                                child: Center(child: Text('التفاصيل', style: TextStyle(fontFamily: 'Cairo',
+                                child: Center(child: Text('Details'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                                   fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.navyMid)))))),
                             const SizedBox(width: 8),
                             Expanded(child: GestureDetector(
@@ -488,7 +489,7 @@ class ApprovalsScreen extends ConsumerWidget {
                               child: Container(padding: const EdgeInsets.symmetric(vertical: 8),
                                 decoration: BoxDecoration(gradient: AppColors.tealGradient,
                                   borderRadius: BorderRadius.circular(9), boxShadow: AppShadows.teal),
-                                child: Center(child: Text('مراجعة', style: TextStyle(fontFamily: 'Cairo',
+                                child: Center(child: Text('Review'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                                   fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)))))),
                           ]),
                         ])),

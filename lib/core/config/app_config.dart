@@ -46,9 +46,9 @@ class AppConfig {
       default:
         return const AppConfig(
           flavor: AppFlavor.dev,
-          baseUrl: 'http://192.168.1.41:8000/api/v1',
+          baseUrl: 'https://account.alzajeltravel.com/api/v1',
           envName: 'Development',
-          enableDebugLogs: true,
+          enableDebugLogs: true, 
           showEnvBanner: true,
           connectTimeoutMs: 30000,
           receiveTimeoutMs: 30000,

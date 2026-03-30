@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/localization/locale_provider.dart';
 import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../core/widgets/admin_widgets.dart';
@@ -23,31 +24,31 @@ class AdminSettingsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Column(children: [
-        AdminAppBar(title: 'الإعدادات', onBack: () => context.pop()),
+        AdminAppBar(title: 'Settings'.tr(context), onBack: () => context.pop()),
         Expanded(child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 80),
           children: [
 
             // ── Theme Section ──────────────────────────────────
-            _SectionHeader(icon: Icons.palette_outlined, title: 'المظهر'),
+            _SectionHeader(icon: Icons.palette_outlined, title: 'Appearance'.tr(context)),
             _OptionCard(children: [
               _RadioOption<ThemeMode>(
                 icon: Icons.settings_suggest_outlined,
-                label: 'تلقائي (حسب النظام)',
+                label: 'Auto system'.tr(context),
                 value: ThemeMode.system,
                 groupValue: themeMode,
                 onChanged: (v) => ref.read(themeModeProvider.notifier).setThemeMode(v)),
               const Divider(height: 0.5, color: AppColors.g200),
               _RadioOption<ThemeMode>(
                 icon: Icons.light_mode_outlined,
-                label: 'فاتح',
+                label: 'Light'.tr(context),
                 value: ThemeMode.light,
                 groupValue: themeMode,
                 onChanged: (v) => ref.read(themeModeProvider.notifier).setThemeMode(v)),
               const Divider(height: 0.5, color: AppColors.g200),
               _RadioOption<ThemeMode>(
                 icon: Icons.dark_mode_outlined,
-                label: 'داكن',
+                label: 'Dark'.tr(context),
                 value: ThemeMode.dark,
                 groupValue: themeMode,
                 onChanged: (v) => ref.read(themeModeProvider.notifier).setThemeMode(v)),
@@ -55,18 +56,18 @@ class AdminSettingsScreen extends ConsumerWidget {
             const SizedBox(height: 20),
 
             // ── Language Section ────────────────────────────────
-            _SectionHeader(icon: Icons.language, title: 'اللغة'),
+            _SectionHeader(icon: Icons.language, title: 'Language'.tr(context)),
             _OptionCard(children: [
               _RadioOption<AppLocaleMode>(
                 icon: Icons.settings_suggest_outlined,
-                label: 'تلقائي (حسب الجهاز)',
+                label: 'Auto device'.tr(context),
                 value: AppLocaleMode.system,
                 groupValue: localeMode,
                 onChanged: (v) => ref.read(localeModeProvider.notifier).setMode(v)),
               const Divider(height: 0.5, color: AppColors.g200),
               _RadioOption<AppLocaleMode>(
                 flag: 'AR',
-                label: 'العربية',
+                label: 'Arabic'.tr(context),
                 value: AppLocaleMode.ar,
                 groupValue: localeMode,
                 onChanged: (v) => ref.read(localeModeProvider.notifier).setMode(v)),
@@ -81,24 +82,24 @@ class AdminSettingsScreen extends ConsumerWidget {
             const SizedBox(height: 20),
 
             // ── Account Section ────────────────────────────────
-            _SectionHeader(icon: Icons.person_outline, title: 'الحساب'),
+            _SectionHeader(icon: Icons.person_outline, title: 'Account'.tr(context)),
             _OptionCard(children: [
-              _SettingsTile(icon: '👤', label: 'الملف الشخصي',
-                desc: 'عرض وتعديل بياناتك',
+              _SettingsTile(icon: '👤', label: 'Profile'.tr(context),
+                desc: 'View edit profile'.tr(context),
                 onTap: () => context.push('/admin-profile')),
-              _SettingsTile(icon: '🔒', label: 'تغيير كلمة المرور',
+              _SettingsTile(icon: '🔒', label: 'Change Password'.tr(context),
                 onTap: () {}),
-              _SettingsTile(icon: '🛡', label: 'الصلاحيات والأدوار',
-                desc: 'إدارة كاملة للنظام', isLast: true, onTap: () {}),
+              _SettingsTile(icon: '🛡', label: 'Permissions Roles'.tr(context),
+                desc: 'Full system admin'.tr(context), isLast: true, onTap: () {}),
             ]),
             const SizedBox(height: 20),
 
             // ── System Section ─────────────────────────────────
-            _SectionHeader(icon: Icons.info_outline, title: 'النظام'),
+            _SectionHeader(icon: Icons.info_outline, title: 'System section'.tr(context)),
             _OptionCard(children: [
-              _SettingsTile(icon: '❓', label: 'مركز المساعدة',
+              _SettingsTile(icon: '❓', label: 'Help Center'.tr(context),
                 onTap: () => context.push('/support')),
-              _SettingsTile(icon: 'ℹ️', label: 'حول التطبيق',
+              _SettingsTile(icon: 'ℹ️', label: 'About App'.tr(context),
                 onTap: () => context.push('/about'), isLast: true),
             ]),
             const SizedBox(height: 20),
@@ -114,15 +115,15 @@ class AdminSettingsScreen extends ConsumerWidget {
                     context: context,
                     builder: (ctx) => AlertDialog(
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      title: Text('تسجيل الخروج', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w800)),
-                      content: Text('هل أنت متأكد؟', style: TextStyle(fontFamily: 'Cairo')),
+                      title: Text('Logout'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w800)),
+                      content: Text('Are you sure?'.tr(context), style: TextStyle(fontFamily: 'Cairo')),
                       actions: [
                         TextButton(onPressed: () => Navigator.pop(ctx, false),
-                          child: Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', color: AppColors.tx3))),
+                          child: Text('Cancel'.tr(context), style: TextStyle(fontFamily: 'Cairo', color: AppColors.tx3))),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
                           onPressed: () => Navigator.pop(ctx, true),
-                          child: Text('خروج', style: TextStyle(fontFamily: 'Cairo', color: Colors.white))),
+                          child: Text('Sign out'.tr(context), style: TextStyle(fontFamily: 'Cairo', color: Colors.white))),
                       ]));
                   if (confirm == true && context.mounted) {
                     await ref.read(authProvider.notifier).logout();
@@ -130,7 +131,7 @@ class AdminSettingsScreen extends ConsumerWidget {
                   }
                 },
                 icon: const Icon(Icons.logout, color: Colors.white, size: 20),
-                label: Text('تسجيل الخروج', style: TextStyle(fontFamily: 'Cairo',
+                label: Text('Logout'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
               )),
           ],
@@ -240,10 +241,10 @@ class _SettingsTile extends StatelessWidget {
           color: danger ? AppColors.error : AppColors.g400, size: 20),
         Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text(label, style: TextStyle(fontFamily: 'Cairo', 
+            Text(label, style: TextStyle(fontFamily: 'Cairo',
               fontSize: 14, fontWeight: FontWeight.w600,
               color: danger ? AppColors.error : AppColors.tx1)),
-            if (desc != null) Text(desc!, style: TextStyle(fontFamily: 'Cairo', 
+            if (desc != null) Text(desc!, style: TextStyle(fontFamily: 'Cairo',
               fontSize: 11, color: AppColors.tx3)),
           ]),
           const SizedBox(width: 12),
@@ -267,13 +268,13 @@ class AdminProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final employee = ref.watch(authProvider).employee;
-    final adminName = employee?.name ?? 'المدير';
-    final adminRole = employee?.jobTitle ?? 'مدير النظام';
+    final adminName = employee?.name ?? 'Admin'.tr(context);
+    final adminRole = employee?.jobTitle ?? 'System Manager'.tr(context);
     final adminInitials = employee?.initials ?? '—';
     final adminCode = employee?.code ?? '';
-    final adminEmail = employee?.email ?? 'غير محدد';
-    final adminPhone = employee?.mobile ?? employee?.phone ?? 'غير محدد';
-    final adminDept = employee?.department?.name ?? 'غير محدد';
+    final adminEmail = employee?.email ?? 'Not specified'.tr(context);
+    final adminPhone = employee?.mobile ?? employee?.phone ?? 'Not specified'.tr(context);
+    final adminDept = employee?.department?.name ?? 'Not specified'.tr(context);
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Column(children: [
@@ -307,49 +308,49 @@ class AdminProfileScreen extends ConsumerWidget {
           child: Column(children: [
             // Permissions
             AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('الصلاحيات والأدوار', style: TextStyle(fontFamily: 'Cairo', 
+              Text('Permissions Roles'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 14, fontWeight: FontWeight.w800)),
               const SizedBox(height: 12),
               Wrap(spacing: 8, runSpacing: 8,
                 children: [
-                  'إدارة الموارد البشرية',
-                  'اعتماد الطلبات',
-                  'مراجعة التقارير',
-                  'إدارة الموظفين',
-                  'النشر والإعلانات',
-                  'إدارة المهام',
+                  'HR Management',
+                  'Approve Requests',
+                  'Review Reports',
+                  'Employee Management',
+                  'Announcements',
+                  'Task Management',
                 ].map((p) => Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: AppColors.tealSoft, borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: AppColors.teal.withOpacity(0.3))),
-                  child: Text(p, style: TextStyle(fontFamily: 'Cairo', 
+                  child: Text(p.tr(context), style: TextStyle(fontFamily: 'Cairo',
                     fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.teal))
                 )).toList()),
             ])),
             // Account info
             AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('بيانات الحساب', style: TextStyle(fontFamily: 'Cairo', 
+              Text('Account Info'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 14, fontWeight: FontWeight.w800)),
               const SizedBox(height: 10),
-              InfoRow(label: 'رقم الموظف',           value: adminCode,    icon: '🔖'),
-              InfoRow(label: 'الدور الوظيفي',        value: adminRole,   icon: '💼'),
-              InfoRow(label: 'القسم',                  value: adminDept,   icon: '🏢'),
-              InfoRow(label: 'البريد الإلكتروني',    value: adminEmail,  icon: '✉️'),
-              InfoRow(label: 'الهاتف',                value: adminPhone,  icon: '📱'),
-              const InfoRow(label: 'مستوى الوصول',   value: 'إدارة عليا — صلاحيات كاملة', icon: '🛡', border: false),
+              InfoRow(label: 'Employee Number'.tr(context),   value: adminCode,    icon: '🔖'),
+              InfoRow(label: 'Job Title'.tr(context),          value: adminRole,   icon: '💼'),
+              InfoRow(label: 'Department'.tr(context),         value: adminDept,   icon: '🏢'),
+              InfoRow(label: 'Email'.tr(context),              value: adminEmail,  icon: '✉️'),
+              InfoRow(label: 'Phone'.tr(context),              value: adminPhone,  icon: '📱'),
+              InfoRow(label: 'Access Level'.tr(context),       value: 'Senior admin full access'.tr(context), icon: '🛡', border: false),
             ])),
             // Activity stats
             AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('إحصائيات النشاط', style: TextStyle(fontFamily: 'Cairo', 
+              Text('Activity Stats'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 14, fontWeight: FontWeight.w800)),
               const SizedBox(height: 12),
               Row(children: [
-                _actStat('42', 'اعتماد هذا الشهر', AppColors.success),
+                _actStat('42', 'Approvals this month'.tr(context), AppColors.success),
                 const SizedBox(width: 8),
-                _actStat('8',  'مرفوض هذا الشهر', AppColors.error),
+                _actStat('8',  'Rejected this month'.tr(context), AppColors.error),
                 const SizedBox(width: 8),
-                _actStat('15', 'مهام مُسنَدة', AppColors.navyMid),
+                _actStat('15', 'Assigned tasks'.tr(context), AppColors.navyMid),
               ]),
             ])),
           ]),
@@ -376,54 +377,56 @@ class AdminProfileScreen extends ConsumerWidget {
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
 
-  static const _faqs = [
-    ('كيف أعتمد طلباً عاجلاً؟',    'الطلبات → صندوق الموافقات → اختر الطلب → اعتماد'),
-    ('كيف أنشئ مهمة جديدة؟',       'المهام → لوحة المهام → إنشاء مهمة جديدة'),
-    ('كيف أتابع بنود المتابعة؟',   'التبويب السفلي → المتابعة → عرض البنود'),
-    ('كيف أرى تقارير الإدارات؟',   'التقارير → مؤشرات الأداء → اختر الإدارة'),
-    ('كيف أنشر إعلاناً للموظفين؟', 'الإعلانات → إضافة جديد → نشر'),
-  ];
-
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.bg,
-    body: Column(children: [
-      AdminAppBar(title: 'مركز المساعدة والدعم', onBack: () => context.pop()),
-      Expanded(child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(children: [
-          // Contact channels
-          GridView.count(
-            crossAxisCount: 2, shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.6,
-            children: [
-              _contactCard('💻', 'الدعم التقني', 'IT Support — ext. 1000', AppColors.navyMid),
-              _contactCard('📞', 'خط مساعدة المدراء', '+966 11 XXX 5000', AppColors.teal),
-              _contactCard('📧', 'البريد الإلكتروني', 'support@riyad.sa', AppColors.gold),
-              _contactCard('💬', 'دردشة مباشرة', '8 ص — 5 م', AppColors.success),
-            ],
-          ),
-          const SizedBox(height: 20),
-          SectionHeader(title: 'الأسئلة الشائعة للمدراء'),
-          ..._faqs.map((faq) => Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.bgCard, borderRadius: BorderRadius.circular(14),
-              boxShadow: AppShadows.sm),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('❓ ${faq.$1}', style: TextStyle(fontFamily: 'Cairo', 
-                fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.navyMid)),
-              const SizedBox(height: 6),
-              Text('↩ ${faq.$2}', style: TextStyle(fontFamily: 'Cairo', 
-                fontSize: 12, color: AppColors.tx3, height: 1.6)),
-            ])),
-          ),
-        ]),
-      )),
-    ]),
-  );
+  Widget build(BuildContext context) {
+    final faqs = [
+      ('faq1_q'.tr(context), 'faq1_a'.tr(context)),
+      ('faq2_q'.tr(context), 'faq2_a'.tr(context)),
+      ('faq3_q'.tr(context), 'faq3_a'.tr(context)),
+      ('faq4_q'.tr(context), 'faq4_a'.tr(context)),
+      ('faq5_q'.tr(context), 'faq5_a'.tr(context)),
+    ];
+
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      body: Column(children: [
+        AdminAppBar(title: 'Help Support Center'.tr(context), onBack: () => context.pop()),
+        Expanded(child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(children: [
+            // Contact channels
+            GridView.count(
+              crossAxisCount: 2, shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.6,
+              children: [
+                _contactCard('💻', 'Technical Support'.tr(context), 'IT Support — ext. 1000', AppColors.navyMid),
+                _contactCard('📞', 'Manager Helpline'.tr(context), '+966 11 XXX 5000', AppColors.teal),
+                _contactCard('📧', 'Email'.tr(context), 'support@riyad.sa', AppColors.gold),
+                _contactCard('💬', 'Live Chat'.tr(context), '8am 5pm'.tr(context), AppColors.success),
+              ],
+            ),
+            const SizedBox(height: 20),
+            SectionHeader(title: 'Manager FAQs'.tr(context)),
+            ...faqs.map((faq) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.bgCard, borderRadius: BorderRadius.circular(14),
+                boxShadow: AppShadows.sm),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                Text('❓ ${faq.$1}', style: TextStyle(fontFamily: 'Cairo',
+                  fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.navyMid)),
+                const SizedBox(height: 6),
+                Text('↩ ${faq.$2}', style: TextStyle(fontFamily: 'Cairo',
+                  fontSize: 12, color: AppColors.tx3, height: 1.6)),
+              ])),
+            ),
+          ]),
+        )),
+      ]),
+    );
+  }
 
   Widget _contactCard(String ico, String t, String s, Color c) => Container(
     padding: const EdgeInsets.all(14),
@@ -449,18 +452,18 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.bg,
     body: Column(children: [
-      AdminAppBar(title: 'حول التطبيق', onBack: () => context.pop()),
+      AdminAppBar(title: 'About App'.tr(context), onBack: () => context.pop()),
       Expanded(child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(children: [
           AppCard(mb: 14, child: Column(children: [
             const Text('🏛', style: TextStyle(fontSize: 52)),
             const SizedBox(height: 12),
-            Text('بوابة إدارة المنظومة', style: TextStyle(fontFamily: 'Cairo', 
+            Text('Portal title'.tr(context), style: TextStyle(fontFamily: 'Cairo',
               fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.navyMid),
               textAlign: TextAlign.center),
             const SizedBox(height: 4),
-            Text('مجموعة الرياض القابضة', style: TextStyle(fontFamily: 'Cairo', 
+            Text('Riyadh Group Holding'.tr(context), style: TextStyle(fontFamily: 'Cairo',
               fontSize: 12, color: AppColors.tx3)),
             const SizedBox(height: 12),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -470,13 +473,13 @@ class AboutScreen extends StatelessWidget {
             ]),
           ])),
           AppCard(mb: 14, child: Column(children: [
-            const InfoRow(label: 'الإصدار',           value: '1.0.0 (Build 100)'),
-            const InfoRow(label: 'تاريخ الإصدار',     value: '1 مارس 2025'),
-            const InfoRow(label: 'المنصة',             value: 'Android 8+'),
-            const InfoRow(label: 'المطوّر',            value: 'مجموعة الرياض — التقنية'),
-            const InfoRow(label: 'الخادم',              value: 'سحابي — منطقة الرياض', border: false),
+            InfoRow(label: 'Version'.tr(context),        value: '1.0.0 (Build 100)'),
+            InfoRow(label: 'Release Date'.tr(context),   value: 'March 2025'.tr(context)),
+            InfoRow(label: 'Platform'.tr(context),       value: 'Android 8+'),
+            InfoRow(label: 'Developer'.tr(context),      value: 'Riyadh Group Tech'.tr(context)),
+            InfoRow(label: 'Server'.tr(context),         value: 'Cloud Riyadh'.tr(context), border: false),
           ])),
-          ...['سياسة الخصوصية', 'شروط الاستخدام', 'ترخيص البرمجيات'].map((l) =>
+          ...['Privacy Policy', 'Terms of Use', 'Software License'].map((l) =>
             Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -485,11 +488,11 @@ class AboutScreen extends StatelessWidget {
                 boxShadow: AppShadows.sm),
               child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 const Icon(Icons.chevron_left, color: AppColors.g400, size: 20),
-                Text(l, style: TextStyle(fontFamily: 'Cairo', 
+                Text(l.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.navyMid)),
               ]))),
           const SizedBox(height: 16),
-          Text('جميع الحقوق محفوظة © 2025 مجموعة الرياض', style: TextStyle(fontFamily: 'Cairo', 
+          Text('All rights reserved'.tr(context), style: TextStyle(fontFamily: 'Cairo',
             fontSize: 11, color: AppColors.g400), textAlign: TextAlign.center),
         ]),
       )),

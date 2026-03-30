@@ -62,6 +62,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
     GoRoute(path: '/otp', builder: (_, __) => const OTPScreen()),
     GoRoute(path: '/forgot-password', builder: (_, __) => const LoginScreen()),
+    GoRoute(path: '/guest-settings', builder: (_, __) => const AdminSettingsScreen()),
 
     // ── Main Shell with persistent bottom nav ─────────────
     StatefulShellRoute.indexedStack(

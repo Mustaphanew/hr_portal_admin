@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../providers/auth_providers.dart';
 
@@ -63,13 +64,13 @@ class _SplashState extends ConsumerState<SplashScreen> with SingleTickerProvider
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 40, offset: const Offset(0, 20))]),
               child: const Center(child: Text('🏛', style: TextStyle(fontSize: 46)))),
             const SizedBox(height: 24),
-            Text('لوحة إدارة المنظومة', style: TextStyle(fontFamily: 'Cairo', 
+            Text('لوحة إدارة المنظومة', style: TextStyle(fontFamily: 'Cairo',
               fontSize: 11, color: AppColors.goldLight, letterSpacing: 6, fontWeight: FontWeight.w400)),
             const SizedBox(height: 10),
-            Text('مجموعة الرياض', style: TextStyle(fontFamily: 'Cairo', 
+            Text('مجموعة الرياض', style: TextStyle(fontFamily: 'Cairo',
               fontSize: 30, fontWeight: FontWeight.w900, color: Colors.white, height: 1.1)),
             const SizedBox(height: 4),
-            Text('ADMIN MANAGEMENT PORTAL', style: TextStyle(fontFamily: 'Cairo', 
+            Text('ADMIN MANAGEMENT PORTAL', style: TextStyle(fontFamily: 'Cairo',
               fontSize: 11, color: Colors.white30, letterSpacing: 2)),
           ])))),
         Positioned(bottom: 52, left: 0, right: 0, child: Center(
@@ -98,7 +99,7 @@ class _LoginState extends ConsumerState<LoginScreen> {
 
     if (username.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('يرجى إدخال اسم المستخدم وكلمة المرور',
+        content: Text('Please enter credentials'.tr(context),
           style: TextStyle(fontFamily: 'Cairo')),
         backgroundColor: AppColors.error));
       return;
@@ -123,8 +124,8 @@ class _LoginState extends ConsumerState<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
             e.toString().contains('401')
-              ? 'اسم المستخدم أو كلمة المرور غير صحيحة'
-              : 'فشل الاتصال بالسيرفر، تأكد من اتصالك بالشبكة',
+              ? 'Invalid credentials'.tr(context)
+              : 'Connection failed'.tr(context),
             style: TextStyle(fontFamily: 'Cairo')),
           backgroundColor: AppColors.error));
       }
@@ -137,41 +138,61 @@ class _LoginState extends ConsumerState<LoginScreen> {
       body: SingleChildScrollView(child: Column(children: [
         Container(
           decoration: const BoxDecoration(gradient: AppColors.navyGradient),
-          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 36, bottom: 44, left: 22, right: 22),
+          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 16, bottom: 44, left: 22, right: 22),
           child: Column(children: [
+            Align(
+              alignment: AlignmentDirectional.topEnd,
+              child: GestureDetector(
+                onTap: () => context.push('/guest-settings'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white38),
+                    borderRadius: BorderRadius.circular(20),
+                    color: Colors.white10,
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.settings_outlined, color: Colors.white70, size: 16),
+                    const SizedBox(width: 6),
+                    Text('Settings'.tr(context), style: const TextStyle(
+                      fontFamily: 'Cairo', fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w600)),
+                  ]),
+                ),
+              ),
+            ),
             Container(width: 72, height: 72,
               decoration: BoxDecoration(borderRadius: BorderRadius.circular(20),
                 color: Colors.white12, border: Border.all(color: AppColors.gold.withOpacity(0.5))),
               child: const Center(child: Text('🏛', style: TextStyle(fontSize: 36)))),
             const SizedBox(height: 14),
-            Text('بوابة إدارة المنظومة', style: TextStyle(fontFamily: 'Cairo', 
+            Text('Login Title'.tr(context), style: TextStyle(fontFamily: 'Cairo',
               fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white)),
             const SizedBox(height: 4),
-            Text('مجموعة الرياض القابضة', style: TextStyle(fontFamily: 'Cairo', 
+            Text('Login Subtitle'.tr(context), style: TextStyle(fontFamily: 'Cairo',
               fontSize: 13, color: AppColors.goldLight)),
             const SizedBox(height: 6),
             Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
               decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(99)),
-              child: Text('🔒 دخول خاص بالإدارة فقط', style: TextStyle(fontFamily: 'Cairo', 
+              child: Text('Admin access only'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 11, color: Colors.white70))),
           ]),
         ),
         Padding(
           padding: const EdgeInsets.all(22),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text('اسم المستخدم', style: TextStyle(fontFamily: 'Cairo',
+            Text('Admin email'.tr(context), style: TextStyle(fontFamily: 'Cairo',
               fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.tx2), textAlign: TextAlign.right),
             const SizedBox(height: 6),
             TextField(controller: _userCtrl, textDirection: TextDirection.ltr,
               textAlign: TextAlign.right,
-              style: TextStyle(fontFamily: 'Cairo', fontSize: 13), decoration: fieldDec('أدخل اسم المستخدم')),
+              style: TextStyle(fontFamily: 'Cairo', fontSize: 13), decoration: fieldDec('Admin email'.tr(context))),
             const SizedBox(height: 14),
-            Text('كلمة المرور', style: TextStyle(fontFamily: 'Cairo', 
+            Text('Enter password'.tr(context), style: TextStyle(fontFamily: 'Cairo',
               fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.tx2), textAlign: TextAlign.right),
             const SizedBox(height: 6),
             TextField(controller: _pwCtrl, obscureText: !_showPw,
               style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
-              decoration: fieldDec('كلمة المرور').copyWith(
+              decoration: fieldDec('Enter password'.tr(context)).copyWith(
                 suffixIcon: IconButton(
                   icon: Icon(_showPw ? Icons.visibility_off : Icons.visibility,
                     color: AppColors.g400, size: 20),
@@ -180,10 +201,10 @@ class _LoginState extends ConsumerState<LoginScreen> {
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               TextButton(
                 onPressed: () => context.push('/forgot-password'),
-                child: Text('نسيت كلمة المرور؟', style: TextStyle(fontFamily: 'Cairo', 
+                child: Text('Forgot password?'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 12, color: AppColors.navyLight, fontWeight: FontWeight.w600))),
               Row(children: [
-                Text('تذكّرني', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.tx3)),
+                Text('Remember me'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.tx3)),
                 const SizedBox(width: 6),
                 Transform.scale(scale: 0.9, child: Checkbox(
                   value: _remember, activeColor: AppColors.navyMid,
@@ -191,29 +212,9 @@ class _LoginState extends ConsumerState<LoginScreen> {
               ]),
             ]),
             const SizedBox(height: 20),
-            PrimaryBtn(text: 'تسجيل الدخول الآمن', onTap: _login, loading: _loading, icon: '🔐'),
-            const SizedBox(height: 16),
-            Row(children: [
-              const Expanded(child: Divider(color: AppColors.g200)),
-              Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text('أو', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.g400))),
-              const Expanded(child: Divider(color: AppColors.g200)),
-            ]),
-            const SizedBox(height: 14),
-            GestureDetector(onTap: _login,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.bgCard, borderRadius: BorderRadius.circular(11),
-                  border: Border.all(color: AppColors.g200), boxShadow: AppShadows.sm),
-                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  const Text('🖐', style: TextStyle(fontSize: 18)),
-                  const SizedBox(width: 8),
-                  Text('الدخول بالبصمة', style: TextStyle(fontFamily: 'Cairo', 
-                    fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.tx2)),
-                ]))),
+            PrimaryBtn(text: 'Secure Login'.tr(context), onTap: _login, loading: _loading, icon: '🔐'),
             const SizedBox(height: 28),
-            Center(child: Text('هذه البوابة مخصصة للإدارة العليا ومسؤولي الموارد البشرية فقط',
+            Center(child: Text('Portal for management only'.tr(context),
               style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.g400), textAlign: TextAlign.center)),
           ]),
         ),
@@ -278,7 +279,7 @@ class _OTPState extends State<OTPScreen> {
           _timer > 0
             ? Text('إعادة الإرسال بعد ${_timer}s', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.tx3))
             : TextButton(onPressed: () => setState(() { _timer = 60; _startTimer(); }),
-                child: Text('إعادة إرسال الرمز', style: TextStyle(fontFamily: 'Cairo', 
+                child: Text('إعادة إرسال الرمز', style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.navyMid, decoration: TextDecoration.underline))),
           const SizedBox(height: 30),
           PrimaryBtn(text: 'تأكيد الدخول',

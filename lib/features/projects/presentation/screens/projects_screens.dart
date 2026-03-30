@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/providers/admin_providers.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../../data/models/project_models.dart';
 
@@ -26,12 +27,12 @@ class ProjectProgressCard extends StatelessWidget {
     }
   }
 
-  String get _statusLabel {
+  String statusLabel(BuildContext context) {
     switch (project.status) {
-      case 'active':    return 'نشط';
-      case 'on_hold':   return 'معلق';
-      case 'completed': return 'مكتمل';
-      case 'cancelled': return 'ملغي';
+      case 'active':    return 'Active'.tr(context);
+      case 'on_hold':   return 'On Hold'.tr(context);
+      case 'completed': return 'Completed'.tr(context);
+      case 'cancelled': return 'Cancelled'.tr(context);
       default:          return project.status;
     }
   }
@@ -63,7 +64,7 @@ class ProjectProgressCard extends StatelessWidget {
           // Header row
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Row(children: [
-              StatusBadge(text: _statusLabel, type: _badgeType, dot: true),
+              StatusBadge(text: statusLabel(context), type: _badgeType, dot: true),
               const SizedBox(width: 6),
               PriorityBadge(priority: project.priority),
               if (project.isDelayed) ...[
@@ -72,7 +73,7 @@ class ProjectProgressCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.errorSoft, borderRadius: BorderRadius.circular(6)),
-                  child: Text('⏰ متأخر', style: TextStyle(fontFamily: 'Cairo',
+                  child: Text('⏰ ${'Delayed'.tr(context)}', style: TextStyle(fontFamily: 'Cairo',
                     fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.error))),
               ],
             ]),
@@ -98,7 +99,7 @@ class ProjectProgressCard extends StatelessWidget {
                   backgroundColor: AppColors.g100,
                   valueColor: AlwaysStoppedAnimation(_statusColor),
                   minHeight: 6)))),
-            Text('${project.completedTasks}/${project.taskCount} مهمة',
+            Text('tasks_progress'.tr(context, params: {'completed': '${project.completedTasks}', 'total': '${project.taskCount}'}),
               style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: AppColors.tx3)),
           ]),
           const SizedBox(height: 10),
@@ -169,7 +170,7 @@ class MilestoneTimelineCard extends StatelessWidget {
               color: milestone.isCompleted ? AppColors.tx3 : AppColors.tx1),
               textAlign: TextAlign.right, maxLines: 2, overflow: TextOverflow.ellipsis),
             if (milestone.isDelayed)
-              Text('⚠️ تجاوز الموعد', style: TextStyle(fontFamily: 'Cairo',
+              Text('⚠️ ${'Deadline exceeded'.tr(context)}', style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 10, color: AppColors.error, fontWeight: FontWeight.w600)),
           ])),
         ]),
@@ -196,10 +197,10 @@ class ProjectsOverviewScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('حدث خطأ في تحميل المشاريع', style: TextStyle(fontFamily: 'Cairo',
+            Text('Error loading projects'.tr(context), style: TextStyle(fontFamily: 'Cairo',
               fontSize: 14, color: AppColors.error)),
             const SizedBox(height: 8),
-            OutlineBtn(text: 'إعادة المحاولة',
+            OutlineBtn(text: 'Retry'.tr(context),
               onTap: () => ref.invalidate(projectsProvider)),
           ],
         )),
@@ -225,25 +226,25 @@ class ProjectsOverviewScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                      child: Text('عرض الكل', style: TextStyle(fontFamily: 'Cairo',
+                      child: Text('View all'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                         fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w600)))),
                   Expanded(child: Column(children: [
-                    Text('إدارة المشاريع', style: TextStyle(fontFamily: 'Cairo',
+                    Text('Project Management'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-                    Text('${projects.length} مشاريع إجمالية', style: TextStyle(fontFamily: 'Cairo',
+                    Text('projects_total'.tr(context, params: {'count': '${projects.length}'}), style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 11, color: AppColors.goldLight)),
                   ])),
                   const SizedBox(width: 36),
                 ]),
                 const SizedBox(height: 14),
                 Row(children: [
-                  _pill('$active',    'نشط',     AppColors.navyBright),
+                  _pill('$active',    'Active'.tr(context),     AppColors.navyBright),
                   const SizedBox(width: 8),
-                  _pill('$onHold',    'معلق',    AppColors.warning),
+                  _pill('$onHold',    'On Hold'.tr(context),    AppColors.warning),
                   const SizedBox(width: 8),
-                  _pill('$completed', 'مكتمل',   AppColors.success),
+                  _pill('$completed', 'Completed'.tr(context),   AppColors.success),
                   const SizedBox(width: 8),
-                  _pill('${projects.length}', 'إجمالي', Colors.white54),
+                  _pill('${projects.length}', 'Total'.tr(context), Colors.white54),
                 ]),
               ]),
             ),
@@ -256,28 +257,28 @@ class ProjectsOverviewScreen extends ConsumerWidget {
 
                   // Alerts
                   if (delayed > 0) AlertBanner(
-                    message: '$delayed مشاريع متأخرة — يحتاج إجراء فوري',
+                    message: 'delayed_projects_alert'.tr(context, params: {'count': '$delayed'}),
                     type: 'error'),
 
                   // KPI cards row
-                  SectionHeader(title: 'نظرة تشغيلية'),
+                  SectionHeader(title: 'Operational overview'.tr(context)),
                   Row(children: [
                     _kpiTile(projects.isNotEmpty
                       ? '${(projects.fold(0.0, (s, p) => s + p.progress) / projects.length * 100).toInt()}%'
                       : '0%',
-                      'متوسط الإنجاز', AppColors.navyMid, '📊'),
+                      'Average completion'.tr(context), AppColors.navyMid, '📊'),
                     const SizedBox(width: 10),
                     _kpiTile('${projects.fold(0, (s, p) => s + p.taskCount)}',
-                      'إجمالي المهام', AppColors.teal, '✅'),
+                      'Total tasks'.tr(context), AppColors.teal, '✅'),
                     const SizedBox(width: 10),
                     _kpiTile('$delayed',
-                      'مشاريع متأخرة', AppColors.error, '⏰'),
+                      'Delayed projects'.tr(context), AppColors.error, '⏰'),
                   ]),
                   const SizedBox(height: 16),
 
                   // Active projects
-                  SectionHeader(title: 'المشاريع النشطة',
-                    actionLabel: 'عرض الكل',
+                  SectionHeader(title: 'Active projects'.tr(context),
+                    actionLabel: 'View all'.tr(context),
                     onAction: () => context.push('/projects-list')),
                   ...projects.where((p) => p.status == 'active').map((p) =>
                     ProjectProgressCard(project: p,
@@ -285,8 +286,8 @@ class ProjectsOverviewScreen extends ConsumerWidget {
 
                   // Delayed projects
                   if (delayed > 0) ...[
-                    SectionHeader(title: 'المشاريع المتأخرة',
-                      actionLabel: 'متابعة',
+                    SectionHeader(title: 'Delayed projects'.tr(context),
+                      actionLabel: 'Follow-up'.tr(context),
                       onAction: () => context.push('/project-follow-up')),
                     ...projects.where((p) => p.isDelayed).map((p) =>
                       ProjectProgressCard(project: p,
@@ -297,7 +298,7 @@ class ProjectsOverviewScreen extends ConsumerWidget {
 
                   // Completed
                   if (completed > 0) ...[
-                    SectionHeader(title: 'المشاريع المكتملة'),
+                    SectionHeader(title: 'Completed projects'.tr(context)),
                     ...projects.where((p) => p.status == 'completed').map((p) =>
                       ProjectProgressCard(project: p,
                         onTap: () => context.push('/project-detail/${p.id}'))),
@@ -306,10 +307,10 @@ class ProjectsOverviewScreen extends ConsumerWidget {
               ),
             )),
             StickyBar(child: Row(children: [
-              Expanded(child: OutlineBtn(text: '📊 التحليلات',
+              Expanded(child: OutlineBtn(text: '📊 ${'Analytics'.tr(context)}',
                 onTap: () => context.push('/project-analytics'))),
               const SizedBox(width: 10),
-              Expanded(child: PrimaryBtn(text: '+ مشروع جديد', icon: '🏗',
+              Expanded(child: PrimaryBtn(text: '+ ${'New project'.tr(context)}', icon: '🏗',
                 onTap: () {})),
             ])),
           ]);
@@ -366,27 +367,27 @@ class _ProjectsListState extends ConsumerState<ProjectsListScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Column(children: [
-        AdminAppBar(title: 'المشاريع',
-          subtitle: projectsAsync.whenOrNull(data: (d) => '${d.projects.length} مشاريع') ?? '',
+        AdminAppBar(title: 'Projects'.tr(context),
+          subtitle: projectsAsync.whenOrNull(data: (d) => 'projects_total'.tr(context, params: {'count': '${d.projects.length}'})) ?? '',
           onBack: () => context.pop()),
         Container(color: AppColors.bgCard,
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
           child: TextField(
             style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
             onChanged: (v) => setState(() => _search = v),
-            decoration: fieldDec('ابحث عن مشروع أو كود...').copyWith(
+            decoration: fieldDec('Search'.tr(context)).copyWith(
               prefixIcon: const Icon(Icons.search, color: AppColors.g400, size: 20),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10)))),
-        FilterBar(tabs: ['الكل', 'نشط', 'معلق', 'مكتمل', 'ملغي'],
+        FilterBar(tabs: ['All'.tr(context), 'Active'.tr(context), 'On Hold'.tr(context), 'Completed'.tr(context), 'Cancelled'.tr(context)],
           selected: _tab, onSelect: (i) => setState(() => _tab = i)),
         Expanded(child: projectsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('حدث خطأ', style: TextStyle(fontFamily: 'Cairo', color: AppColors.error)),
+              Text('Error loading projects'.tr(context), style: TextStyle(fontFamily: 'Cairo', color: AppColors.error)),
               const SizedBox(height: 8),
-              OutlineBtn(text: 'إعادة المحاولة',
+              OutlineBtn(text: 'Retry'.tr(context),
                 onTap: () => ref.invalidate(projectsProvider)),
             ],
           )),
@@ -400,8 +401,8 @@ class _ProjectsListState extends ConsumerState<ProjectsListScreen> {
             }).toList();
 
             if (filtered.isEmpty) {
-              return const EmptyState(icon: '🏗', title: 'لا توجد مشاريع',
-                subtitle: 'لا توجد مشاريع تطابق معايير البحث');
+              return EmptyState(icon: '🏗', title: 'No projects'.tr(context),
+                subtitle: 'No matching projects'.tr(context));
             }
 
             return RefreshIndicator(
@@ -441,10 +442,10 @@ class ProjectDetailScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('حدث خطأ في تحميل المشروع', style: TextStyle(fontFamily: 'Cairo',
+            Text('Error loading projects'.tr(context), style: TextStyle(fontFamily: 'Cairo',
               fontSize: 14, color: AppColors.error)),
             const SizedBox(height: 8),
-            OutlineBtn(text: 'إعادة المحاولة',
+            OutlineBtn(text: 'Retry'.tr(context),
               onTap: () {
                 ref.invalidate(projectDetailProvider(projectId));
                 ref.invalidate(projectMilestonesProvider(projectId));
@@ -452,7 +453,7 @@ class ProjectDetailScreen extends ConsumerWidget {
           ],
         )),
         data: (p) {
-          final String statusLabel = _projectStatusLabel(p.status);
+          final String statusLabel = _projectStatusLabel(context, p.status);
 
           return Column(children: [
             Container(
@@ -562,7 +563,7 @@ class ProjectDetailScreen extends ConsumerWidget {
 
                   // Milestones preview
                   SectionHeader(title: 'المراحل الرئيسية',
-                    actionLabel: 'عرض الكل',
+                    actionLabel: 'View all'.tr(context),
                     onAction: () => context.push('/project-milestones/$projectId')),
                   milestonesAsync.when(
                     loading: () => const Center(child: Padding(
@@ -571,8 +572,8 @@ class ProjectDetailScreen extends ConsumerWidget {
                     error: (_, __) => AppCard(mb: 14, child: const EmptyState(
                       icon: '🏁', title: 'خطأ في تحميل المراحل', subtitle: '')),
                     data: (milestones) => milestones.isEmpty
-                      ? AppCard(mb: 14, child: const EmptyState(
-                          icon: '🏁', title: 'لا توجد مراحل', subtitle: 'لم يتم إضافة مراحل بعد'))
+                      ? AppCard(mb: 14, child: EmptyState(
+                          icon: '🏁', title: 'No milestones'.tr(context), subtitle: 'No milestones added yet'.tr(context)))
                       : AppCard(mb: 14, child: Column(children:
                           milestones.take(5).toList().asMap().entries.map((e) =>
                             MilestoneTimelineCard(
@@ -582,14 +583,14 @@ class ProjectDetailScreen extends ConsumerWidget {
 
                   // Tasks summary
                   SectionHeader(title: 'المهام المرتبطة',
-                    actionLabel: 'عرض الكل',
+                    actionLabel: 'View all'.tr(context),
                     onAction: () => context.push('/project-tasks/$projectId')),
                   Row(children: [
-                    _taskStat('${p.completedTasks}', 'مكتملة', AppColors.success),
+                    _taskStat('${p.completedTasks}', 'Completed'.tr(context), AppColors.success),
                     const SizedBox(width: 8),
                     _taskStat('${p.taskCount - p.completedTasks}', 'أخرى', AppColors.teal),
                     const SizedBox(width: 8),
-                    _taskStat('${p.taskCount}', 'الكل', AppColors.navyMid),
+                    _taskStat('${p.taskCount}', 'All'.tr(context), AppColors.navyMid),
                   ]),
                   const SizedBox(height: 14),
 
@@ -634,12 +635,12 @@ class ProjectDetailScreen extends ConsumerWidget {
     );
   }
 
-  String _projectStatusLabel(String status) {
+  String _projectStatusLabel(BuildContext context, String status) {
     switch (status) {
-      case 'active':    return 'نشط';
-      case 'on_hold':   return 'معلق';
-      case 'completed': return 'مكتمل';
-      case 'cancelled': return 'ملغي';
+      case 'active':    return 'Active'.tr(context);
+      case 'on_hold':   return 'On Hold'.tr(context);
+      case 'completed': return 'Completed'.tr(context);
+      case 'cancelled': return 'Cancelled'.tr(context);
       default:          return status;
     }
   }
@@ -701,7 +702,7 @@ class _ProjectTasksState extends ConsumerState<ProjectTasksScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Column(children: [
-        AdminAppBar(title: 'مهام المشروع',
+        AdminAppBar(title: 'Project tasks'.tr(context),
           subtitle: subtitleText,
           onBack: () => context.pop()),
         // Summary strip
@@ -711,25 +712,25 @@ class _ProjectTasksState extends ConsumerState<ProjectTasksScreen> {
           data: (tasks) => Container(color: AppColors.bgCard,
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
             child: Row(children: [
-              _statChip('${tasks.length}', 'الكل', AppColors.navyMid),
+              _statChip('${tasks.length}', 'All'.tr(context), AppColors.navyMid),
               const SizedBox(width: 8),
-              _statChip('${tasks.where((t) => t.status == 'in_progress').length}', 'جارية', AppColors.teal),
+              _statChip('${tasks.where((t) => t.status == 'in_progress').length}', 'In Progress'.tr(context), AppColors.teal),
               const SizedBox(width: 8),
-              _statChip('${tasks.where((t) => t.status == 'overdue').length}', 'متأخرة', AppColors.error),
+              _statChip('${tasks.where((t) => t.status == 'overdue').length}', 'Delayed'.tr(context), AppColors.error),
               const SizedBox(width: 8),
-              _statChip('${tasks.where((t) => t.status == 'pending').length}', 'معلقة', AppColors.warning),
+              _statChip('${tasks.where((t) => t.status == 'pending').length}', 'Pending'.tr(context), AppColors.warning),
             ])),
         ),
-        FilterBar(tabs: ['الكل', 'جارية', 'معلقة', 'متأخرة', 'مكتملة'],
+        FilterBar(tabs: ['All'.tr(context), 'In Progress'.tr(context), 'Pending'.tr(context), 'Delayed'.tr(context), 'Completed'.tr(context)],
           selected: _tab, onSelect: (i) => setState(() => _tab = i)),
         Expanded(child: tasksAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('حدث خطأ', style: TextStyle(fontFamily: 'Cairo', color: AppColors.error)),
+              Text('Error loading projects'.tr(context), style: TextStyle(fontFamily: 'Cairo', color: AppColors.error)),
               const SizedBox(height: 8),
-              OutlineBtn(text: 'إعادة المحاولة',
+              OutlineBtn(text: 'Retry'.tr(context),
                 onTap: () => ref.invalidate(projectTasksProvider(widget.projectId))),
             ],
           )),
@@ -740,8 +741,8 @@ class _ProjectTasksState extends ConsumerState<ProjectTasksScreen> {
               : tasks.where((t) => t.status == statusFilter).toList();
 
             if (filtered.isEmpty) {
-              return const EmptyState(icon: '📋', title: 'لا توجد مهام',
-                subtitle: 'لا توجد مهام تطابق المعايير المحددة');
+              return EmptyState(icon: '📋', title: 'No tasks'.tr(context),
+                subtitle: 'No matching tasks'.tr(context));
             }
 
             return RefreshIndicator(
@@ -786,12 +787,12 @@ class _ProjectTaskCard extends StatelessWidget {
     }
   }
 
-  String get _statusLabel {
+  String statusLabel(BuildContext context) {
     switch (task.status) {
-      case 'completed':   return 'مكتملة';
-      case 'in_progress': return 'جارية';
-      case 'overdue':     return 'متأخرة';
-      case 'pending':     return 'معلقة';
+      case 'completed':   return 'Completed'.tr(context);
+      case 'in_progress': return 'In Progress'.tr(context);
+      case 'overdue':     return 'Delayed'.tr(context);
+      case 'pending':     return 'Pending'.tr(context);
       default:            return task.status;
     }
   }
@@ -808,7 +809,7 @@ class _ProjectTaskCard extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Row(children: [
-            StatusBadge(text: _statusLabel,
+            StatusBadge(text: statusLabel(context),
               type: task.status == 'completed' ? 'approved'
                 : task.status == 'overdue' ? 'overdue'
                 : task.status == 'in_progress' ? 'teal' : 'pending',
@@ -856,7 +857,7 @@ class ProjectMilestonesScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Column(children: [
-        AdminAppBar(title: 'مراحل المشروع',
+        AdminAppBar(title: 'Project milestones'.tr(context),
           subtitle: milestonesAsync.whenOrNull(
             data: (ms) => '${ms.length} مراحل',
           ) ?? '',
@@ -866,17 +867,17 @@ class ProjectMilestonesScreen extends ConsumerWidget {
           error: (e, _) => Expanded(child: Center(child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('حدث خطأ', style: TextStyle(fontFamily: 'Cairo', color: AppColors.error)),
+              Text('Error loading projects'.tr(context), style: TextStyle(fontFamily: 'Cairo', color: AppColors.error)),
               const SizedBox(height: 8),
-              OutlineBtn(text: 'إعادة المحاولة',
+              OutlineBtn(text: 'Retry'.tr(context),
                 onTap: () => ref.invalidate(projectMilestonesProvider(projectId))),
             ],
           ))),
           data: (milestones) {
             if (milestones.isEmpty) {
-              return const Expanded(child: EmptyState(
-                icon: '🏁', title: 'لا توجد مراحل',
-                subtitle: 'لم يتم إضافة مراحل رئيسية بعد'));
+              return Expanded(child: EmptyState(
+                icon: '🏁', title: 'No milestones'.tr(context),
+                subtitle: 'No milestones added yet'.tr(context)));
             }
 
             final completed = milestones.where((m) => m.isCompleted).length;
@@ -942,9 +943,9 @@ class ProjectFollowUpScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('حدث خطأ', style: TextStyle(fontFamily: 'Cairo', color: AppColors.error)),
+            Text('Error loading projects'.tr(context), style: TextStyle(fontFamily: 'Cairo', color: AppColors.error)),
             const SizedBox(height: 8),
-            OutlineBtn(text: 'إعادة المحاولة',
+            OutlineBtn(text: 'Retry'.tr(context),
               onTap: () => ref.invalidate(projectsProvider)),
           ],
         )),
@@ -965,7 +966,7 @@ class ProjectFollowUpScreen extends ConsumerWidget {
                     decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
                     child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 17))),
                 Expanded(child: Column(children: [
-                  Text('متابعة المشاريع', style: TextStyle(fontFamily: 'Cairo',
+                  Text('Project follow-up'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                     fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
                   Text('${delayedProjects.length} متأخرة · ${followUpProjects.length} للمتابعة',
                     style: TextStyle(fontFamily: 'Cairo',
@@ -977,12 +978,12 @@ class ProjectFollowUpScreen extends ConsumerWidget {
             Expanded(child: RefreshIndicator(
               onRefresh: () async => ref.invalidate(projectsProvider),
               child: followUpProjects.isEmpty
-                ? const SingleChildScrollView(
-                    physics: AlwaysScrollableScrollPhysics(),
+                ? SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     child: Padding(
-                      padding: EdgeInsets.only(top: 100),
-                      child: EmptyState(icon: '✅', title: 'لا توجد مشاريع للمتابعة',
-                        subtitle: 'جميع المشاريع تسير بشكل جيد')))
+                      padding: const EdgeInsets.only(top: 100),
+                      child: EmptyState(icon: '✅', title: 'No projects to follow up'.tr(context),
+                        subtitle: 'All projects on track'.tr(context))))
                 : ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -1032,7 +1033,7 @@ class _FollowUpProjectCard extends StatelessWidget {
                 color: isDelayed ? AppColors.errorSoft : AppColors.warningSoft,
                 borderRadius: BorderRadius.circular(6)),
               child: Text(
-                isDelayed ? '⏰ متأخر' : '🔄 نشط',
+                isDelayed ? '⏰ ${'Delayed'.tr(context)}' : '🔄 نشط',
                 style: TextStyle(fontFamily: 'Cairo', fontSize: 10,
                   fontWeight: FontWeight.w700,
                   color: isDelayed ? AppColors.error : AppColors.warningDark))),
@@ -1080,10 +1081,10 @@ class ProjectAnalyticsScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('حدث خطأ في تحميل التحليلات', style: TextStyle(fontFamily: 'Cairo',
+            Text('Error loading projects'.tr(context), style: TextStyle(fontFamily: 'Cairo',
               fontSize: 14, color: AppColors.error)),
             const SizedBox(height: 8),
-            OutlineBtn(text: 'إعادة المحاولة',
+            OutlineBtn(text: 'Retry'.tr(context),
               onTap: () => ref.invalidate(projectAnalyticsProvider(projectId))),
           ],
         )),
@@ -1102,7 +1103,7 @@ class ProjectAnalyticsScreen extends ConsumerWidget {
                     decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
                     child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 17))),
                 Expanded(child: Column(children: [
-                  Text('تحليل المشروع', style: TextStyle(fontFamily: 'Cairo',
+                  Text('Project analysis'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                     fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
                   if (projectName.isNotEmpty)
                     Text(projectName, style: TextStyle(fontFamily: 'Cairo',
@@ -1111,7 +1112,7 @@ class ProjectAnalyticsScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(9)),
-                  child: Text('📤 تصدير', style: TextStyle(fontFamily: 'Cairo',
+                  child: Text('📤 ${'Export'.tr(context)}', style: TextStyle(fontFamily: 'Cairo',
                     fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.navyDeep))),
               ]),
             ),
@@ -1123,7 +1124,7 @@ class ProjectAnalyticsScreen extends ConsumerWidget {
                 child: Column(children: [
 
                   // Overall progress
-                  SectionHeader(title: 'نسبة الإنجاز'),
+                  SectionHeader(title: 'Completion rate'.tr(context)),
                   AppCard(mb: 16, child: Column(children: [
                     Text('${(analytics.progress * 100).toInt()}%', style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 36, fontWeight: FontWeight.w900, color: AppColors.navyMid)),
@@ -1145,13 +1146,13 @@ class ProjectAnalyticsScreen extends ConsumerWidget {
                   ])),
 
                   // KPI cards
-                  SectionHeader(title: 'مؤشرات الأداء'),
+                  SectionHeader(title: 'Performance indicators'.tr(context)),
                   GridView.count(
                     crossAxisCount: 2, shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.35,
                     children: [
-                      KpiCard(label: 'إجمالي المهام',  value: '${analytics.tasks.total}',
+                      KpiCard(label: 'Total tasks'.tr(context),  value: '${analytics.tasks.total}',
                         change: '${analytics.tasks.completed} مكتملة', icon: '📋',
                         isPositive: true,  color: AppColors.navyMid),
                       KpiCard(label: 'مهام جارية',     value: '${analytics.tasks.inProgress}',
@@ -1168,24 +1169,24 @@ class ProjectAnalyticsScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
 
                   // Milestone completion
-                  SectionHeader(title: 'حالة المراحل الرئيسية'),
+                  SectionHeader(title: 'Key milestones status'.tr(context)),
                   AppCard(mb: 16, child: Column(children: [
                     Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-                      _circStat('${analytics.milestones.completed}', 'مكتملة',  AppColors.success),
-                      _circStat('${analytics.milestones.overdue}',   'متأخرة',  AppColors.error),
-                      _circStat('${analytics.milestones.pending}',   'معلقة',    AppColors.warning),
+                      _circStat('${analytics.milestones.completed}', 'Completed'.tr(context),  AppColors.success),
+                      _circStat('${analytics.milestones.overdue}',   'Delayed'.tr(context),  AppColors.error),
+                      _circStat('${analytics.milestones.pending}',   'Pending'.tr(context),    AppColors.warning),
                       _circStat('${analytics.milestones.total}',     'إجمالية', AppColors.navyMid),
                     ]),
                   ])),
 
                   // Budget
-                  SectionHeader(title: 'الميزانية'),
+                  SectionHeader(title: 'Budget'.tr(context)),
                   AppCard(mb: 16, child: Column(children: [
                     Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                       Text('${analytics.budget.spent.toStringAsFixed(0)} / ${analytics.budget.allocated.toStringAsFixed(0)}',
                         style: TextStyle(fontFamily: 'Cairo', fontSize: 14,
                           fontWeight: FontWeight.w800, color: AppColors.navyMid)),
-                      Text('الميزانية', style: TextStyle(fontFamily: 'Cairo',
+                      Text('Budget'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                         fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.tx2)),
                     ]),
                     const SizedBox(height: 8),
@@ -1209,7 +1210,7 @@ class ProjectAnalyticsScreen extends ConsumerWidget {
                   ])),
 
                   // Timeline
-                  SectionHeader(title: 'الجدول الزمني'),
+                  SectionHeader(title: 'Timeline'.tr(context)),
                   AppCard(child: Column(children: [
                     InfoRow(label: 'تاريخ البداية', value: analytics.timeline.startDate ?? '-', icon: '🟢'),
                     InfoRow(label: 'تاريخ الانتهاء', value: analytics.timeline.endDate ?? '-', icon: '🔴'),

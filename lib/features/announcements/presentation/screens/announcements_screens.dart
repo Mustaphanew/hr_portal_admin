@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/providers/admin_providers.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../../data/models/announcement_models.dart';
@@ -37,7 +38,7 @@ class _AnnouncementsState extends ConsumerState<AnnouncementsManagementScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text('حدث خطأ', style: TextStyle(fontFamily: 'Cairo',
+            Text('Error'.tr(context), style: TextStyle(fontFamily: 'Cairo',
               fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.error)),
             const SizedBox(height: 8),
             Text('$e', style: TextStyle(fontFamily: 'Cairo',
@@ -50,7 +51,7 @@ class _AnnouncementsState extends ConsumerState<AnnouncementsManagementScreen> {
                 decoration: BoxDecoration(
                   gradient: AppColors.navyGradient,
                   borderRadius: BorderRadius.circular(10)),
-                child: Text('إعادة المحاولة', style: TextStyle(fontFamily: 'Cairo',
+                child: Text('Retry'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)))),
           ])),
         data: (data) {
@@ -72,9 +73,9 @@ class _AnnouncementsState extends ConsumerState<AnnouncementsManagementScreen> {
                       decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
                       child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 17))),
                   Expanded(child: Column(children: [
-                    Text('إدارة الإعلانات', style: TextStyle(fontFamily: 'Cairo',
+                    Text('Announcement Management'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-                    Text('${all.length} إعلانات', style: TextStyle(fontFamily: 'Cairo',
+                    Text('announcements_count'.tr(context, params: {'count': '${all.length}'}), style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 11, color: AppColors.goldLight)),
                   ])),
                   GestureDetector(
@@ -86,18 +87,18 @@ class _AnnouncementsState extends ConsumerState<AnnouncementsManagementScreen> {
                 ]),
                 const SizedBox(height: 14),
                 Row(children: [
-                  _pill('$published', 'منشور', AppColors.tealLight),
+                  _pill('$published', 'Published'.tr(context), AppColors.tealLight),
                   const SizedBox(width: 8),
-                  _pill('$drafts', 'مسودة', AppColors.warning),
+                  _pill('$drafts', 'Draft'.tr(context), AppColors.warning),
                   const SizedBox(width: 8),
-                  _pill('$pinned', 'مثبّت', AppColors.goldLight),
+                  _pill('$pinned', 'Pinned'.tr(context), AppColors.goldLight),
                   const SizedBox(width: 8),
-                  _pill('${all.length}', 'إجمالي', Colors.white70),
+                  _pill('${all.length}', 'Total'.tr(context), Colors.white70),
                 ]),
               ]),
             ),
             FilterBar(
-              tabs: ['الكل', 'منشور', 'مسودة', 'مثبّت'],
+              tabs: ['All'.tr(context), 'Published'.tr(context), 'Draft'.tr(context), 'Pinned'.tr(context)],
               selected: _tab, onSelect: _onTabChanged),
             Expanded(
               child: RefreshIndicator(
@@ -118,9 +119,9 @@ class _AnnouncementsState extends ConsumerState<AnnouncementsManagementScreen> {
 
     if (filtered.isEmpty) {
       return ListView(
-        children: const [
-          SizedBox(height: 80),
-          EmptyState(icon: '📢', title: 'لا توجد إعلانات', subtitle: 'لم يتم العثور على إعلانات'),
+        children: [
+          const SizedBox(height: 80),
+          EmptyState(icon: '📢', title: 'No announcements'.tr(context), subtitle: 'No announcements'.tr(context)),
         ],
       );
     }

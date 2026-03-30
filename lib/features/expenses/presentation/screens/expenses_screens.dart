@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/providers/admin_providers.dart';
 import '../../../../core/providers/core_providers.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../../data/models/expense_models.dart';
 
@@ -27,12 +28,12 @@ class ExpenseAmountCard extends StatelessWidget {
     }
   }
 
-  String get _statusLabel {
+  String statusLabel(BuildContext context) {
     switch (expense.status) {
-      case 'approved':  return 'معتمد';
-      case 'rejected':  return 'مرفوض';
-      case 'returned':  return 'معاد للتعديل';
-      case 'pending':   return 'قيد المراجعة';
+      case 'approved':  return 'Approved'.tr(context);
+      case 'rejected':  return 'Rejected'.tr(context);
+      case 'returned':  return 'Returned'.tr(context);
+      case 'pending':   return 'Under Review'.tr(context);
       default:          return expense.status;
     }
   }
@@ -54,7 +55,7 @@ class ExpenseAmountCard extends StatelessWidget {
         child: Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Row(children: [
-              StatusBadge(text: _statusLabel,
+              StatusBadge(text: statusLabel(context),
                 type: expense.status == 'approved' ? 'approved'
                   : expense.status == 'rejected' ? 'rejected'
                   : expense.status == 'returned' ? 'warning' : 'pending',
@@ -65,7 +66,7 @@ class ExpenseAmountCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.goldSoft, borderRadius: BorderRadius.circular(6)),
-                  child: Text('💰 مبلغ عالٍ', style: TextStyle(fontFamily: 'Cairo',
+                  child: Text('💰 ${'High amount'.tr(context)}', style: TextStyle(fontFamily: 'Cairo',
                     fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.goldDark))),
               ],
             ]),
@@ -116,7 +117,7 @@ class ExpenseAmountCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.warningSoft, borderRadius: BorderRadius.circular(6)),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('تنبيه: لا توجد فاتورة مرفقة', style: TextStyle(fontFamily: 'Cairo',
+                Text('No invoice attached'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.warningDark)),
                 const SizedBox(width: 4),
                 const Text('📎', style: TextStyle(fontSize: 12)),
@@ -169,10 +170,10 @@ class ExpensesOverviewScreen extends ConsumerWidget {
         error: (err, _) => Center(child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('حدث خطأ في تحميل البيانات', style: TextStyle(fontFamily: 'Cairo',
+            Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo',
               fontSize: 14, color: AppColors.error)),
             const SizedBox(height: 8),
-            OutlineBtn(text: 'إعادة المحاولة', fullWidth: false,
+            OutlineBtn(text: 'Retry'.tr(context), fullWidth: false,
               onTap: () => ref.invalidate(expensesProvider)),
           ],
         )),
@@ -198,12 +199,12 @@ class ExpensesOverviewScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                      child: Text('عرض الكل', style: TextStyle(fontFamily: 'Cairo',
+                      child: Text('View all'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                         fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w600)))),
                   Expanded(child: Column(children: [
-                    Text('إدارة المصروفات', style: TextStyle(fontFamily: 'Cairo',
+                    Text('Expense Management'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-                    Text('${expenses.length} طلب هذا الشهر', style: TextStyle(fontFamily: 'Cairo',
+                    Text('requests_this_month'.tr(context, params: {'count': '${expenses.length}'}), style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 11, color: AppColors.goldLight)),
                   ])),
                   const SizedBox(width: 36),
@@ -215,7 +216,7 @@ class ExpensesOverviewScreen extends ConsumerWidget {
                     border: Border.all(color: Colors.white12)),
                   child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
                     Column(children: [
-                      Text('إجمالي المصروفات', style: TextStyle(fontFamily: 'Cairo',
+                      Text('Total expenses'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                         fontSize: 11, color: Colors.white60)),
                       RichText(text: TextSpan(children: [
                         TextSpan(text: 'SAR ', style: TextStyle(fontFamily: 'Cairo',
@@ -227,13 +228,13 @@ class ExpensesOverviewScreen extends ConsumerWidget {
                     ]),
                     Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.15)),
                     Column(children: [
-                      Text('معتمد', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.white60)),
+                      Text('Approved'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.white60)),
                       Text('SAR ${_fmtBig(_totalAmount(approved))}', style: TextStyle(fontFamily: 'Cairo',
                         fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.tealLight)),
                     ]),
                     Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.15)),
                     Column(children: [
-                      Text('معلق', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.white60)),
+                      Text('Under Review'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.white60)),
                       Text('SAR ${_fmtBig(_totalAmount(pending))}', style: TextStyle(fontFamily: 'Cairo',
                         fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.warning)),
                     ]),
@@ -248,47 +249,47 @@ class ExpensesOverviewScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 80),
                 child: Column(children: [
                   if (noAttach.isNotEmpty) AlertBanner(
-                    message: '${noAttach.length} طلبات بدون مرفقات — تحتاج مراجعة',
+                    message: 'requests_no_attachments'.tr(context, params: {'count': '${noAttach.length}'}),
                     type: 'warning'),
                   if (highValue.any((e) => e.status == 'pending')) AlertBanner(
-                    message: '${highValue.where((e) => e.status == 'pending').length} طلبات بمبالغ عالية معلقة',
+                    message: 'high_value_pending'.tr(context, params: {'count': '${highValue.where((e) => e.status == 'pending').length}'}),
                     type: 'error'),
 
-                  SectionHeader(title: 'نظرة إجمالية'),
+                  SectionHeader(title: 'Overview'.tr(context)),
                   Row(children: [
-                    _kpi('${pending.length}', 'معلق',  AppColors.warning),
+                    _kpi('${pending.length}', 'Under Review'.tr(context),  AppColors.warning),
                     const SizedBox(width: 8),
-                    _kpi('${approved.length}', 'معتمد', AppColors.success),
+                    _kpi('${approved.length}', 'Approved'.tr(context), AppColors.success),
                     const SizedBox(width: 8),
-                    _kpi('${rejected.length}', 'مرفوض', AppColors.error),
+                    _kpi('${rejected.length}', 'Rejected'.tr(context), AppColors.error),
                     const SizedBox(width: 8),
-                    _kpi('${expenses.where((e) => e.status == 'returned').length}', 'معاد', AppColors.gold),
+                    _kpi('${expenses.where((e) => e.status == 'returned').length}', 'Returned'.tr(context), AppColors.gold),
                   ]),
                   const SizedBox(height: 16),
 
-                  SectionHeader(title: 'الطلبات المعلقة',
-                    actionLabel: 'عرض الكل',
+                  SectionHeader(title: 'Pending requests section'.tr(context),
+                    actionLabel: 'View all'.tr(context),
                     onAction: () => context.push('/expense-requests')),
                   ...pending.take(3).map((e) => ExpenseAmountCard(expense: e,
                     onTap: () => context.push('/expense-detail/${e.id}'))),
                   const SizedBox(height: 6),
 
                   // Category breakdown derived from expenses
-                  SectionHeader(title: 'توزيع المصروفات حسب الفئة'),
-                  _buildCategoryBreakdown(expenses),
+                  SectionHeader(title: 'Expense category distribution'.tr(context)),
+                  _buildCategoryBreakdown(context, expenses),
                   const SizedBox(height: 16),
 
-                  SectionHeader(title: 'آخر المعتمدة'),
+                  SectionHeader(title: 'Recent approved'.tr(context)),
                   ...approved.take(2).map((e) => ExpenseAmountCard(expense: e,
                     onTap: () => context.push('/expense-detail/${e.id}'))),
                 ]),
               ),
             )),
             StickyBar(child: Row(children: [
-              Expanded(child: OutlineBtn(text: '📊 التحليلات',
+              Expanded(child: OutlineBtn(text: '📊 ${'Analytics'.tr(context)}',
                 onTap: () => context.push('/expense-analytics'))),
               const SizedBox(width: 10),
-              Expanded(child: PrimaryBtn(text: '🔄 المتابعة',
+              Expanded(child: PrimaryBtn(text: '🔄 ${'Follow-up'.tr(context)}',
                 onTap: () => context.push('/expense-follow-up'))),
             ])),
           ]);
@@ -297,7 +298,7 @@ class ExpensesOverviewScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCategoryBreakdown(List<Expense> expenses) {
+  Widget _buildCategoryBreakdown(BuildContext context, List<Expense> expenses) {
     final catMap = <String, double>{};
     final catIcons = <String, String?>{};
     for (final e in expenses) {
@@ -328,9 +329,9 @@ class ExpensesOverviewScreen extends ConsumerWidget {
       )),
       const SizedBox(height: 8),
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text('الفئات الرئيسية', style: TextStyle(fontFamily: 'Cairo',
+        Text('Main categories'.tr(context), style: TextStyle(fontFamily: 'Cairo',
           fontSize: 11, color: AppColors.tx3)),
-        Text('SAR ${_fmtBig(_totalAmount(expenses))} إجمالي', style: TextStyle(fontFamily: 'Cairo',
+        Text('SAR ${_fmtBig(_totalAmount(expenses))} ${'Total'.tr(context)}', style: TextStyle(fontFamily: 'Cairo',
           fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.navyMid)),
       ]),
     ]));
@@ -369,18 +370,18 @@ class _ExpRequestsState extends ConsumerState<ExpenseRequestsListScreen> {
       backgroundColor: AppColors.bg,
       body: asyncExpenses.when(
         loading: () => Column(children: [
-          AdminAppBar(title: 'طلبات المصروفات', subtitle: 'جاري التحميل...', onBack: () => context.pop()),
+          AdminAppBar(title: 'Expense requests'.tr(context), subtitle: 'Loading'.tr(context), onBack: () => context.pop()),
           const Expanded(child: Center(child: CircularProgressIndicator())),
         ]),
         error: (err, _) => Column(children: [
-          AdminAppBar(title: 'طلبات المصروفات', onBack: () => context.pop()),
+          AdminAppBar(title: 'Expense requests'.tr(context), onBack: () => context.pop()),
           Expanded(child: Center(child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('حدث خطأ في تحميل البيانات', style: TextStyle(fontFamily: 'Cairo',
+              Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 14, color: AppColors.error)),
               const SizedBox(height: 8),
-              OutlineBtn(text: 'إعادة المحاولة', fullWidth: false,
+              OutlineBtn(text: 'Retry'.tr(context), fullWidth: false,
                 onTap: () => ref.invalidate(expensesProvider)),
             ],
           ))),
@@ -400,26 +401,26 @@ class _ExpRequestsState extends ConsumerState<ExpenseRequestsListScreen> {
           }).toList();
 
           return Column(children: [
-            AdminAppBar(title: 'طلبات المصروفات',
-              subtitle: '${all.length} طلب إجمالي',
+            AdminAppBar(title: 'Expense requests'.tr(context),
+              subtitle: 'requests_total'.tr(context, params: {'count': '${all.length}'}),
               onBack: () => context.pop()),
             Container(color: AppColors.bgCard,
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
               child: TextField(
                 style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
                 onChanged: (v) => setState(() => _search = v),
-                decoration: fieldDec('ابحث: موظف، رقم، فئة...').copyWith(
+                decoration: fieldDec('Search'.tr(context)).copyWith(
                   prefixIcon: const Icon(Icons.search, color: AppColors.g400, size: 20),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10)))),
-            FilterBar(tabs: ['الكل', 'معلق', 'معتمد', 'مرفوض', 'معاد'],
+            FilterBar(tabs: ['All'.tr(context), 'Under Review'.tr(context), 'Approved'.tr(context), 'Rejected'.tr(context), 'Returned'.tr(context)],
               selected: _tab, onSelect: (i) => setState(() => _tab = i)),
             Expanded(child: RefreshIndicator(
               onRefresh: () async => ref.invalidate(expensesProvider),
               child: filtered.isEmpty
-                ? ListView(children: const [
-                    SizedBox(height: 100),
-                    EmptyState(icon: '💳', title: 'لا توجد طلبات',
-                      subtitle: 'لا توجد مصروفات تطابق معايير البحث'),
+                ? ListView(children: [
+                    const SizedBox(height: 100),
+                    EmptyState(icon: '💳', title: 'No requests'.tr(context),
+                      subtitle: 'No matching expenses'.tr(context)),
                   ])
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -466,7 +467,7 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
       setState(() => _processing = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('حدث خطأ أثناء اعتماد الطلب')));
+          SnackBar(content: Text('Error approving request'.tr(context))));
       }
     }
   }
@@ -481,7 +482,7 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
       setState(() => _processing = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('حدث خطأ أثناء رفض الطلب')));
+          SnackBar(content: Text('Error rejecting request'.tr(context))));
       }
     }
   }
@@ -494,18 +495,18 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
       backgroundColor: AppColors.bg,
       body: asyncExpense.when(
         loading: () => Column(children: [
-          AdminAppBar(title: 'تفاصيل المصروف', onBack: () => context.pop()),
+          AdminAppBar(title: 'Expense details'.tr(context), onBack: () => context.pop()),
           const Expanded(child: Center(child: CircularProgressIndicator())),
         ]),
         error: (err, _) => Column(children: [
-          AdminAppBar(title: 'تفاصيل المصروف', onBack: () => context.pop()),
+          AdminAppBar(title: 'Expense details'.tr(context), onBack: () => context.pop()),
           Expanded(child: Center(child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('حدث خطأ في تحميل البيانات', style: TextStyle(fontFamily: 'Cairo',
+              Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 14, color: AppColors.error)),
               const SizedBox(height: 8),
-              OutlineBtn(text: 'إعادة المحاولة', fullWidth: false,
+              OutlineBtn(text: 'Retry'.tr(context), fullWidth: false,
                 onTap: () => ref.invalidate(expenseDetailProvider(widget.expenseId))),
             ],
           ))),
@@ -520,7 +521,7 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
 
   Widget _buildDecisionResult(BuildContext context) {
     return Column(children: [
-      AdminAppBar(title: 'تفاصيل المصروف', onBack: () => context.pop()),
+      AdminAppBar(title: 'Expense details'.tr(context), onBack: () => context.pop()),
       Expanded(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
         Container(width: 80, height: 80,
           decoration: BoxDecoration(
@@ -530,28 +531,28 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
             _decision == 'approve' ? Icons.check : Icons.close,
             color: _decision == 'approve' ? AppColors.success : AppColors.error, size: 40))),
         const SizedBox(height: 16),
-        Text(_decision == 'approve' ? '✅ تم اعتماد المصروف' : '❌ تم رفض المصروف',
+        Text(_decision == 'approve' ? '✅ ${'Expense approved'.tr(context)}' : '❌ ${'Expense rejected'.tr(context)}',
           style: TextStyle(fontFamily: 'Cairo', fontSize: 18, fontWeight: FontWeight.w800)),
         const SizedBox(height: 6),
-        Text('تم إشعار الموظف بالقرار', style: TextStyle(fontFamily: 'Cairo',
+        Text('Employee notified'.tr(context), style: TextStyle(fontFamily: 'Cairo',
           fontSize: 13, color: AppColors.tx3)),
         const SizedBox(height: 24),
-        OutlineBtn(text: 'رجوع للطلبات', fullWidth: false,
+        OutlineBtn(text: 'Back to requests'.tr(context), fullWidth: false,
           onTap: () => context.pop()),
       ]))),
     ]);
   }
 
   Widget _buildDetail(BuildContext context, Expense e) {
-    final statusLabel = e.status == 'approved' ? 'معتمد'
-      : e.status == 'rejected' ? 'مرفوض'
-      : e.status == 'returned' ? 'معاد للتعديل' : 'قيد المراجعة';
+    final statusLabel = e.status == 'approved' ? 'Approved'.tr(context)
+      : e.status == 'rejected' ? 'Rejected'.tr(context)
+      : e.status == 'returned' ? 'Returned'.tr(context) : 'Under Review'.tr(context);
     final statusType = e.status == 'approved' ? 'approved'
       : e.status == 'rejected' ? 'rejected'
       : e.status == 'returned' ? 'warning' : 'pending';
 
     return Column(children: [
-      AdminAppBar(title: 'تفاصيل المصروف', subtitle: 'EXP-${e.id}',
+      AdminAppBar(title: 'Expense details'.tr(context), subtitle: 'EXP-${e.id}',
         onBack: () => context.pop()),
       Expanded(child: RefreshIndicator(
         onRefresh: () async => ref.invalidate(expenseDetailProvider(widget.expenseId)),
@@ -578,7 +579,7 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.white24, borderRadius: BorderRadius.circular(99)),
-                    child: Text('💰 مبلغ عالٍ — يحتاج اعتماد مزدوج', style: TextStyle(fontFamily: 'Cairo',
+                    child: Text('💰 ${'High amount'.tr(context)} — ${'Needs dual approval'.tr(context)}', style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 10, color: Colors.white, fontWeight: FontWeight.w700))),
                 ]),
                 const SizedBox(height: 14),
@@ -603,28 +604,28 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
 
             // Employee info
             AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('بيانات الموظف', style: TextStyle(fontFamily: 'Cairo',
+              Text('Employee info'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 14, fontWeight: FontWeight.w800)),
               const SizedBox(height: 10),
-              InfoRow(label: 'اسم الموظف',   value: e.employee.name,       icon: '👤'),
-              InfoRow(label: 'رقم الموظف',   value: e.employee.code,       icon: '🔖'),
-              InfoRow(label: 'الإدارة',       value: e.employee.department, icon: '🏢', border: false),
+              InfoRow(label: 'Employee name'.tr(context),   value: e.employee.name,       icon: '👤'),
+              InfoRow(label: 'Employee ID'.tr(context),   value: e.employee.code,       icon: '🔖'),
+              InfoRow(label: 'Department'.tr(context),       value: e.employee.department, icon: '🏢', border: false),
             ])),
 
             // Expense details
             AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('تفاصيل المصروف', style: TextStyle(fontFamily: 'Cairo',
+              Text('Expense details'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 14, fontWeight: FontWeight.w800)),
               const SizedBox(height: 10),
-              InfoRow(label: 'رقم الطلب',      value: 'EXP-${e.id}',       icon: '📋'),
-              InfoRow(label: 'الفئة',           value: e.category,          icon: e.categoryIcon ?? '📦'),
-              InfoRow(label: 'المبلغ',          value: '${e.currency} ${e.amount.toStringAsFixed(0)}', icon: '💰'),
-              InfoRow(label: 'تاريخ الصرف',    value: e.expenseDate,        icon: '📅'),
-              InfoRow(label: 'تاريخ التقديم',  value: e.submittedDate,      icon: '🕐'),
+              InfoRow(label: 'Request ID'.tr(context),      value: 'EXP-${e.id}',       icon: '📋'),
+              InfoRow(label: 'Category'.tr(context),           value: e.category,          icon: e.categoryIcon ?? '📦'),
+              InfoRow(label: 'Amount'.tr(context),          value: '${e.currency} ${e.amount.toStringAsFixed(0)}', icon: '💰'),
+              InfoRow(label: 'Expense date'.tr(context),    value: e.expenseDate,        icon: '📅'),
+              InfoRow(label: 'Submission date'.tr(context),  value: e.submittedDate,      icon: '🕐'),
               if (e.projectRef != null)
-                InfoRow(label: 'مشروع مرتبط', value: e.projectRef!,        icon: '🏗'),
+                InfoRow(label: 'Linked project'.tr(context), value: e.projectRef!,        icon: '🏗'),
               if (e.notes != null)
-                InfoRow(label: 'الملاحظات',   value: e.notes!,             icon: '📝', border: false),
+                InfoRow(label: 'Notes'.tr(context),   value: e.notes!,             icon: '📝', border: false),
             ])),
 
             // Attachments
@@ -634,16 +635,16 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: AppColors.warningSoft, borderRadius: BorderRadius.circular(6)),
-                  child: Text('⚠️ لا توجد مرفقات', style: TextStyle(fontFamily: 'Cairo',
+                  child: Text('⚠️ ${'No attachments'.tr(context)}', style: TextStyle(fontFamily: 'Cairo',
                     fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.warningDark))),
-                Text('الفواتير والمرفقات', style: TextStyle(fontFamily: 'Cairo',
+                Text('Invoices and attachments'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 14, fontWeight: FontWeight.w800)),
               ]),
               const SizedBox(height: 10),
               if (!e.hasAttachment)
-                const EmptyState(icon: '📎',
-                  title: 'لا توجد فاتورة مرفقة',
-                  subtitle: 'يجب طلب الفاتورة من الموظف قبل الاعتماد')
+                EmptyState(icon: '📎',
+                  title: 'No invoice attached'.tr(context),
+                  subtitle: 'Request invoice before approval'.tr(context))
               else
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -660,18 +661,18 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
 
             // Approval timeline
             AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Text('مسار الاعتماد', style: TextStyle(fontFamily: 'Cairo',
+              Text('Approval path'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 14, fontWeight: FontWeight.w800), textAlign: TextAlign.right),
               const SizedBox(height: 14),
               TimelineWidget(steps: [
-                const TLStep(label: 'تقديم الطلب', sub: 'الموظف', done: true),
-                TLStep(label: 'مراجعة المدير المباشر',
-                  sub: e.status == 'pending' ? 'قيد المراجعة...' : 'تم',
+                TLStep(label: 'Submit request'.tr(context), sub: 'Employee'.tr(context), done: true),
+                TLStep(label: 'Manager review'.tr(context),
+                  sub: e.status == 'pending' ? 'Under Review'.tr(context) : 'Done'.tr(context),
                   done: e.status != 'pending',
                   active: e.status == 'pending'),
-                TLStep(label: 'اعتماد إدارة المالية',
+                TLStep(label: 'Finance approval'.tr(context),
                   done: e.status == 'approved'),
-                TLStep(label: 'إغلاق وسداد',
+                TLStep(label: 'Close and pay'.tr(context),
                   done: e.status == 'approved'),
               ]),
             ])),
@@ -679,13 +680,13 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
             // Comment
             if (e.status == 'pending')
               AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Text('تعليق / ملاحظة على القرار', style: TextStyle(fontFamily: 'Cairo',
+                Text('Comment note'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 14, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 10),
                 TextField(controller: _noteCtrl, maxLines: 3,
                   
                   style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
-                  decoration: fieldDec('أضف ملاحظتك...')),
+                  decoration: fieldDec('Add your comment'.tr(context))),
               ])),
           ]),
         ),
@@ -696,10 +697,10 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
               padding: EdgeInsets.symmetric(vertical: 8),
               child: CircularProgressIndicator()))
           : Row(children: [
-              Expanded(child: DangerBtn(text: '✗ رفض',
+              Expanded(child: DangerBtn(text: '✗ ${'Rejected'.tr(context)}',
                 onTap: () => _handleReject(e.id))),
               const SizedBox(width: 8),
-              Expanded(child: TealBtn(text: '✓ اعتماد',
+              Expanded(child: TealBtn(text: '✓ ${'Approved'.tr(context)}',
                 onTap: () => _handleApprove(e.id))),
             ])),
     ]);
@@ -720,16 +721,16 @@ class ExpenseCategoriesScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Column(children: [
-        AdminAppBar(title: 'فئات المصروفات', subtitle: 'مستخلصة من الطلبات',
+        AdminAppBar(title: 'Expense categories'.tr(context), subtitle: 'Extracted from requests'.tr(context),
           onBack: () => context.pop()),
         Expanded(child: asyncExpenses.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, _) => Center(child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('حدث خطأ', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
+              Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
               const SizedBox(height: 8),
-              OutlineBtn(text: 'إعادة المحاولة', fullWidth: false,
+              OutlineBtn(text: 'Retry'.tr(context), fullWidth: false,
                 onTap: () => ref.invalidate(expensesProvider)),
             ],
           )),
@@ -744,10 +745,10 @@ class ExpenseCategoriesScreen extends ConsumerWidget {
             final grandTotal = cats.fold(0.0, (s, c) => s + c.value.total);
 
             if (cats.isEmpty) {
-              return const Center(child: EmptyState(
+              return Center(child: EmptyState(
                 icon: '📁',
-                title: 'لا توجد فئات',
-                subtitle: 'لم يتم العثور على مصروفات بعد'));
+                title: 'No categories'.tr(context),
+                subtitle: 'No expenses found yet'.tr(context)));
             }
 
             return RefreshIndicator(
@@ -757,7 +758,7 @@ class ExpenseCategoriesScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(16),
                 child: Column(children: [
                   AppCard(mb: 16, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                    Text('الإجمالي الشهري', style: TextStyle(fontFamily: 'Cairo',
+                    Text('Monthly total'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 12, color: AppColors.tx3)),
                     RichText(text: TextSpan(children: [
                       TextSpan(text: 'SAR ', style: TextStyle(fontFamily: 'Cairo',
@@ -803,7 +804,7 @@ class ExpenseCategoriesScreen extends ConsumerWidget {
                           Text(c.key, style: TextStyle(fontFamily: 'Cairo',
                             fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.navyMid)),
                           const SizedBox(height: 4),
-                          Text('${c.value.count} طلب', style: TextStyle(fontFamily: 'Cairo',
+                          Text('requests_count'.tr(context, params: {'count': '${c.value.count}'}), style: TextStyle(fontFamily: 'Cairo',
                             fontSize: 11, color: AppColors.tx3)),
                           const SizedBox(height: 2),
                           Text('SAR ${_fmtBig(c.value.total)}', style: TextStyle(fontFamily: 'Cairo',
@@ -852,9 +853,9 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
           Expanded(child: Center(child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('حدث خطأ', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
+              Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
               const SizedBox(height: 8),
-              OutlineBtn(text: 'إعادة المحاولة', fullWidth: false,
+              OutlineBtn(text: 'Retry'.tr(context), fullWidth: false,
                 onTap: () => ref.invalidate(expensesProvider)),
             ],
           ))),
@@ -896,27 +897,27 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 80),
                 child: Column(children: [
 
-                  SectionHeader(title: 'مؤشرات المصروفات'),
+                  SectionHeader(title: 'Expense indicators'.tr(context)),
                   GridView.count(
                     crossAxisCount: 2, shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.35,
                     children: [
-                      KpiCard(label: 'إجمالي الشهر', value: _fmtBig(total),
-                        change: '${expenses.length} طلب', icon: '💰', isPositive: false, color: AppColors.navyMid),
-                      KpiCard(label: 'طلبات معلقة', value: '${pending.length}',
-                        change: 'يحتاج مراجعة', icon: '⏳', isPositive: false, color: AppColors.warning),
-                      KpiCard(label: 'معدل الاعتماد', value: '$approvalRate%',
-                        change: '${approved.length} من ${expenses.length}', icon: '✅', isPositive: true, color: AppColors.success),
-                      KpiCard(label: 'مبالغ عالية', value: '${highValue.length}',
-                        change: 'تحتاج اعتماد مزدوج', icon: '⚠️', isPositive: false, color: AppColors.error),
+                      KpiCard(label: 'Monthly total'.tr(context), value: _fmtBig(total),
+                        change: 'requests_count'.tr(context, params: {'count': '${expenses.length}'}), icon: '💰', isPositive: false, color: AppColors.navyMid),
+                      KpiCard(label: 'Pending requests'.tr(context), value: '${pending.length}',
+                        change: 'Needs review'.tr(context), icon: '⏳', isPositive: false, color: AppColors.warning),
+                      KpiCard(label: 'Approval rate'.tr(context), value: '$approvalRate%',
+                        change: '${approved.length} / ${expenses.length}', icon: '✅', isPositive: true, color: AppColors.success),
+                      KpiCard(label: 'High amount'.tr(context), value: '${highValue.length}',
+                        change: 'Needs dual approval'.tr(context), icon: '⚠️', isPositive: false, color: AppColors.error),
                     ],
                   ),
                   const SizedBox(height: 16),
 
                   // By category distribution
                   if (catSorted.isNotEmpty) ...[
-                    SectionHeader(title: 'التوزيع حسب الفئة'),
+                    SectionHeader(title: 'Distribution by category'.tr(context)),
                     AppCard(mb: 16, child: Column(children: [
                       ...catSorted.map((c) => Padding(
                         padding: const EdgeInsets.only(bottom: 10),
@@ -944,7 +945,7 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
 
                   // Top spending depts
                   if (deptSorted.isNotEmpty) ...[
-                    SectionHeader(title: 'أعلى الإدارات إنفاقاً'),
+                    SectionHeader(title: 'Top spending departments'.tr(context)),
                     AppCard(mb: 16, child: Column(children: [
                       ...deptSorted.take(6).toList().asMap().entries.map((entry) {
                         final maxAmt = deptSorted.first.value;
@@ -969,13 +970,13 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
                   ],
 
                   // Rejected summary
-                  SectionHeader(title: 'المرفوضة والمعادة'),
+                  SectionHeader(title: 'Rejected and returned'.tr(context)),
                   ...expenses.where((e) => e.status == 'rejected' || e.status == 'returned')
                     .take(3).map((e) => ExpenseAmountCard(expense: e,
                       onTap: () => context.push('/expense-detail/${e.id}'))),
                   if (expenses.where((e) => e.status == 'rejected' || e.status == 'returned').isEmpty)
-                    const EmptyState(icon: '✅', title: 'لا توجد مرفوضة',
-                      subtitle: 'جميع الطلبات تم اعتمادها أو قيد المراجعة'),
+                    EmptyState(icon: '✅', title: 'No rejected'.tr(context),
+                      subtitle: 'All requests approved or under review'.tr(context)),
                 ]),
               ),
             )),
@@ -997,9 +998,9 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
             decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
             child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 17))),
         Expanded(child: Column(children: [
-          Text('تحليلات المصروفات', style: TextStyle(fontFamily: 'Cairo',
+          Text('Expense analytics'.tr(context), style: TextStyle(fontFamily: 'Cairo',
             fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-          Text('ملخص الطلبات', style: TextStyle(fontFamily: 'Cairo',
+          Text('Requests Summary'.tr(context), style: TextStyle(fontFamily: 'Cairo',
             fontSize: 11, color: AppColors.goldLight)),
         ])),
         const SizedBox(width: 36),
@@ -1031,9 +1032,9 @@ class ExpenseFollowUpScreen extends ConsumerWidget {
           Expanded(child: Center(child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('حدث خطأ', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
+              Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
               const SizedBox(height: 8),
-              OutlineBtn(text: 'إعادة المحاولة', fullWidth: false,
+              OutlineBtn(text: 'Retry'.tr(context), fullWidth: false,
                 onTap: () => ref.invalidate(expensesProvider)),
             ],
           ))),
@@ -1051,13 +1052,13 @@ class ExpenseFollowUpScreen extends ConsumerWidget {
               color: AppColors.navyDeep,
               padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
               child: Row(children: [
-                _pill('${pending.length}',  'معلق',         AppColors.warning),
+                _pill('${pending.length}',  'Under Review'.tr(context),         AppColors.warning),
                 const SizedBox(width: 8),
-                _pill('${highVal.length}',  'مبالغ عالية',  AppColors.error),
+                _pill('${highVal.length}',  'High amount'.tr(context),  AppColors.error),
                 const SizedBox(width: 8),
-                _pill('${noAttach.length}', 'بدون مرفقات', AppColors.gold),
+                _pill('${noAttach.length}', 'No attachments'.tr(context), AppColors.gold),
                 const SizedBox(width: 8),
-                _pill('${returned.length}', 'معاد',         AppColors.navyBright),
+                _pill('${returned.length}', 'Returned'.tr(context),         AppColors.navyBright),
               ]),
             ),
             Expanded(child: RefreshIndicator(
@@ -1068,16 +1069,16 @@ class ExpenseFollowUpScreen extends ConsumerWidget {
                 child: Column(children: [
                   if (highVal.isNotEmpty) ...[
                     AlertBanner(
-                      message: '${highVal.length} طلبات بمبالغ عالية تنتظر اعتماد مزدوج',
+                      message: 'high_value_pending'.tr(context, params: {'count': '${highVal.length}'}),
                       type: 'error'),
-                    SectionHeader(title: '💰 مبالغ عالية — أولوية'),
+                    SectionHeader(title: '💰 ${'High amount priority'.tr(context)}'),
                     ...highVal.map((e) => ExpenseAmountCard(expense: e,
                       onTap: () => context.push('/expense-detail/${e.id}'))),
                     const SizedBox(height: 10),
                   ],
 
                   if (noAttach.isNotEmpty) ...[
-                    SectionHeader(title: '📎 بدون مرفقات — يحتاج متابعة'),
+                    SectionHeader(title: '📎 ${'No attachments follow-up'.tr(context)}'),
                     ...noAttach.map((e) => Container(
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(13),
@@ -1088,7 +1089,7 @@ class ExpenseFollowUpScreen extends ConsumerWidget {
                       child: Row(children: [
                         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           const Text('📎', style: TextStyle(fontSize: 18)),
-                          Text('لا توجد فاتورة', style: TextStyle(fontFamily: 'Cairo',
+                          Text('No invoice'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                             fontSize: 10, color: AppColors.warning, fontWeight: FontWeight.w700)),
                         ]),
                         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -1105,16 +1106,16 @@ class ExpenseFollowUpScreen extends ConsumerWidget {
                   ],
 
                   if (returned.isNotEmpty) ...[
-                    SectionHeader(title: '↩ معادة للتعديل'),
+                    SectionHeader(title: '↩ ${'Returned'.tr(context)}'),
                     ...returned.map((e) => ExpenseAmountCard(expense: e,
                       onTap: () => context.push('/expense-detail/${e.id}'))),
                     const SizedBox(height: 10),
                   ],
 
-                  SectionHeader(title: '⏳ جميع المعلقة'),
+                  SectionHeader(title: '⏳ ${'All pending'.tr(context)}'),
                   if (pending.isEmpty)
-                    const EmptyState(icon: '✅', title: 'لا توجد طلبات معلقة',
-                      subtitle: 'جميع الطلبات تمت مراجعتها')
+                    EmptyState(icon: '✅', title: 'No pending requests'.tr(context),
+                      subtitle: 'All requests reviewed'.tr(context))
                   else
                     ...pending.map((e) => ExpenseAmountCard(expense: e,
                       onTap: () => context.push('/expense-detail/${e.id}'))),
@@ -1139,9 +1140,9 @@ class ExpenseFollowUpScreen extends ConsumerWidget {
             decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
             child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 17))),
         Expanded(child: Column(children: [
-          Text('متابعة المصروفات', style: TextStyle(fontFamily: 'Cairo',
+          Text('Expense follow-up'.tr(context), style: TextStyle(fontFamily: 'Cairo',
             fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-          Text('$pendingCount معلق · $noAttachCount بدون مرفقات',
+          Text('$pendingCount ${'Pending'.tr(context)} · $noAttachCount ${'No attachments'.tr(context)}',
             style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.goldLight)),
         ])),
         const SizedBox(width: 36),

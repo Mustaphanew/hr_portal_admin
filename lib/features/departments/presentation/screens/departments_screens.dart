@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/providers/admin_providers.dart';
 import '../../../../core/widgets/admin_widgets.dart';
+import '../../../../core/localization/app_localizations.dart';
 
 // ── Departments Overview ──────────────────────────────────
 class DepartmentsScreen extends ConsumerStatefulWidget {
@@ -19,17 +20,17 @@ class _DepartmentsState extends ConsumerState<DepartmentsScreen> {
       backgroundColor: AppColors.bg,
       body: deptsAsync.when(
         loading: () => Column(children: [
-          AdminAppBar(title: 'الإدارات', subtitle: '...', onBack: () => context.pop()),
+          AdminAppBar(title: 'Departments'.tr(context), subtitle: '...', onBack: () => context.pop()),
           const Expanded(child: Center(child: CircularProgressIndicator())),
         ]),
         error: (e, _) => Column(children: [
-          AdminAppBar(title: 'الإدارات', subtitle: '', onBack: () => context.pop()),
+          AdminAppBar(title: 'Departments'.tr(context), subtitle: '', onBack: () => context.pop()),
           Expanded(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 12),
-            Text('حدث خطأ في تحميل البيانات', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx3)),
+            Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx3)),
             const SizedBox(height: 12),
-            OutlineBtn(text: 'إعادة المحاولة', onTap: () => ref.invalidate(departmentsProvider)),
+            OutlineBtn(text: 'Retry'.tr(context), onTap: () => ref.invalidate(departmentsProvider)),
           ]))),
         ]),
         data: (data) {
@@ -40,20 +41,20 @@ class _DepartmentsState extends ConsumerState<DepartmentsScreen> {
           final totalPending = allDepts.fold<int>(0, (s, d) => s + d.pendingRequests);
           final totalIssues = allDepts.fold<int>(0, (s, d) => s + d.attendanceIssues);
           return Column(children: [
-            AdminAppBar(title: 'الإدارات', subtitle: '${allDepts.length} إدارات',
+            AdminAppBar(title: 'Departments'.tr(context), subtitle: 'depts_count'.tr(context, params: {'count': '${allDepts.length}'}),
               onBack: () => context.pop()),
             // Stats strip
             Container(
               color: AppColors.bgCard,
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
               child: Row(children: [
-                _orgStat('$totalEmployees', 'موظف', AppColors.navyMid, '👥'),
+                _orgStat('$totalEmployees', 'employee_word'.tr(context), AppColors.navyMid, '👥'),
                 const SizedBox(width: 10),
-                _orgStat('${allDepts.length}', 'إدارة', AppColors.teal, '🏢'),
+                _orgStat('${allDepts.length}', 'department_word'.tr(context), AppColors.teal, '🏢'),
                 const SizedBox(width: 10),
-                _orgStat('$totalPending', 'طلب معلق', AppColors.warning, '📋'),
+                _orgStat('$totalPending', 'pending_request_word'.tr(context), AppColors.warning, '📋'),
                 const SizedBox(width: 10),
-                _orgStat('$totalIssues', 'استثناء', AppColors.error, '⚠️'),
+                _orgStat('$totalIssues', 'exception_word'.tr(context), AppColors.error, '⚠️'),
               ]),
             ),
             // Search
@@ -63,7 +64,7 @@ class _DepartmentsState extends ConsumerState<DepartmentsScreen> {
                 
                 style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
                 onChanged: (v) => setState(() => _search = v),
-                decoration: fieldDec('ابحث عن إدارة...').copyWith(
+                decoration: fieldDec('Search department'.tr(context)).copyWith(
                   prefixIcon: const Icon(Icons.search, color: AppColors.g400, size: 20),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10)))),
             Expanded(child: RefreshIndicator(
@@ -124,7 +125,7 @@ class DepartmentDetailScreen extends ConsumerWidget {
                 child: Container(width: 36, height: 36,
                   decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 17))),
-              const Expanded(child: Center(child: Text('جاري التحميل...', style: TextStyle(fontFamily: 'Cairo', fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)))),
+              Expanded(child: Center(child: Text('Loading'.tr(context), style: const TextStyle(fontFamily: 'Cairo', fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)))),
               const SizedBox(width: 36),
             ]),
           ),
@@ -141,16 +142,16 @@ class DepartmentDetailScreen extends ConsumerWidget {
                 child: Container(width: 36, height: 36,
                   decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 17))),
-              const Expanded(child: Center(child: Text('خطأ', style: TextStyle(fontFamily: 'Cairo', fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)))),
+              Expanded(child: Center(child: Text('Error'.tr(context), style: const TextStyle(fontFamily: 'Cairo', fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)))),
               const SizedBox(width: 36),
             ]),
           ),
           Expanded(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 12),
-            Text('حدث خطأ في تحميل البيانات', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx3)),
+            Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx3)),
             const SizedBox(height: 12),
-            OutlineBtn(text: 'إعادة المحاولة', onTap: () => ref.invalidate(departmentDetailProvider(departmentId))),
+            OutlineBtn(text: 'Retry'.tr(context), onTap: () => ref.invalidate(departmentDetailProvider(departmentId))),
           ]))),
         ]),
         data: (d) => Column(children: [

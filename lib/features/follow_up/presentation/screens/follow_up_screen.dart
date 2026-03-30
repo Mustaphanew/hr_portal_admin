@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/providers/admin_providers.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 
@@ -44,11 +45,11 @@ class _FollowUpState extends ConsumerState<FollowUpScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text('حدث خطأ', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
+            Text('Error'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => ref.invalidate(followUpsProvider),
-              child: Text('إعادة المحاولة', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
+              child: Text('Retry'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
             ),
           ]),
         ),
@@ -72,29 +73,29 @@ class _FollowUpState extends ConsumerState<FollowUpScreen> {
                 Row(children: [
                   const SizedBox(width: 36),
                   Expanded(child: Column(children: [
-                    Text('لوحة المتابعة', style: TextStyle(fontFamily: 'Cairo',
+                    Text('Follow-up Board'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-                    Text('${stats.total} بنود تحتاج متابعة', style: TextStyle(fontFamily: 'Cairo',
+                    Text('items_followup'.tr(context, params: {'count': '${stats.total}'}), style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 11, color: AppColors.goldLight)),
                   ])),
                   const SizedBox(width: 36),
                 ]),
                 const SizedBox(height: 14),
                 Row(children: [
-                  _pill('متأخر', '${stats.overdue}',     AppColors.error,       AppColors.errorSoft.withOpacity(0.3)),
+                  _pill('Overdue'.tr(context), '${stats.overdue}',     AppColors.error,       AppColors.errorSoft.withOpacity(0.3)),
                   const SizedBox(width: 8),
-                  _pill('مُصعَّد', '${stats.escalated}', AppColors.warningDark,  AppColors.warningSoft.withOpacity(0.3)),
+                  _pill('Escalated'.tr(context), '${stats.escalated}', AppColors.warningDark,  AppColors.warningSoft.withOpacity(0.3)),
                   const SizedBox(width: 8),
-                  _pill('جارٍ',   '${stats.inProgress}', AppColors.tealLight,   AppColors.tealSoft.withOpacity(0.3)),
+                  _pill('In Progress'.tr(context),   '${stats.inProgress}', AppColors.tealLight,   AppColors.tealSoft.withOpacity(0.3)),
                   const SizedBox(width: 8),
-                  _pill('معلق',   '${stats.pending}',    AppColors.goldLight,   AppColors.goldSoft.withOpacity(0.3)),
+                  _pill('Pending'.tr(context),   '${stats.pending}',    AppColors.goldLight,   AppColors.goldSoft.withOpacity(0.3)),
                 ]),
               ]),
             ),
 
             // ── Filter tabs ──
             FilterBar(
-              tabs: const ['الكل','متأخر','مُصعَّد','جارٍ','معلق'],
+              tabs: ['All'.tr(context),'Overdue'.tr(context),'Escalated'.tr(context),'In Progress'.tr(context),'Pending'.tr(context)],
               selected: _tab,
               onSelect: _onTabSelect,
             ),
@@ -108,7 +109,7 @@ class _FollowUpState extends ConsumerState<FollowUpScreen> {
                   children: [
                     if (stats.overdue > 0 || stats.escalated > 0)
                       AlertBanner(
-                        message: '${stats.overdue} بنود متأخرة · ${stats.escalated} مُصعَّدة — يحتاج إجراء فوري',
+                        message: 'overdue_escalated_alert'.tr(context, params: {'overdue': '${stats.overdue}', 'escalated': '${stats.escalated}'}),
                         type: 'error'),
                     ...filtered.map((f) => FollowUpCard(
                       id: '${f.id}',
@@ -163,11 +164,11 @@ class FollowUpDetailScreen extends ConsumerWidget {
             onBack: () => context.pop()),
           Expanded(child: Center(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Text('حدث خطأ', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
+              Text('Error'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => ref.invalidate(followUpDetailProvider(followUpId)),
-                child: Text('إعادة المحاولة', style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
+                child: Text('Retry'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
               ),
             ]),
           )),

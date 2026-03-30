@@ -189,25 +189,41 @@ class AdminAppBar extends StatelessWidget {
   const AdminAppBar({super.key, required this.title, this.subtitle, this.onBack, this.trailing});
 
   @override
-  Widget build(BuildContext context) => Container(
-    decoration: const BoxDecoration(gradient: AppColors.navyGradient),
-    padding: EdgeInsets.only(
-      top: MediaQuery.of(context).padding.top + 12,
-      bottom: 14, left: 18, right: 18),
-    child: Row(children: [
-      trailing ?? const SizedBox(width: 36),
-      Expanded(child: Column(children: [
-        Text(title, style: TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-        if (subtitle != null) Text(subtitle!, style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.white54)),
-      ])),
-      if (onBack != null)
-        GestureDetector(onTap: onBack,
-          child: Container(width: 36, height: 36,
-            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 17)))
-      else const SizedBox(width: 36),
-    ]),
-  );
+  Widget build(BuildContext context) {
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
+    return Container(
+      decoration: const BoxDecoration(gradient: AppColors.navyGradient),
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 12,
+        bottom: 14, left: 18, right: 18),
+      child: Row(children: [
+        // ── START: زر الرجوع ──────────────────────────────────
+        if (onBack != null)
+          GestureDetector(
+            onTap: onBack,
+            child: Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10)),
+              child: Icon(
+                isRtl ? Icons.arrow_forward_ios : Icons.arrow_back_ios_new,
+                color: Colors.white, size: 17)))
+        else
+          const SizedBox(width: 36),
+        // ── CENTER: العنوان ───────────────────────────────────
+        Expanded(child: Column(children: [
+          Text(title, style: TextStyle(fontFamily: 'Cairo',
+            fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
+          if (subtitle != null)
+            Text(subtitle!, style: TextStyle(fontFamily: 'Cairo',
+              fontSize: 11, color: Colors.white54)),
+        ])),
+        // ── END: trailing ─────────────────────────────────────
+        trailing ?? const SizedBox(width: 36),
+      ]),
+    );
+  }
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -291,13 +307,13 @@ class SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      Text(title, style: TextStyle(fontFamily: 'Cairo',
+        fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.tx1)),
       if (onAction != null)
         GestureDetector(onTap: onAction,
-          child: Text(actionLabel ?? 'عرض الكل', style: TextStyle(fontFamily: 'Cairo', 
+          child: Text(actionLabel ?? 'عرض الكل', style: TextStyle(fontFamily: 'Cairo',
             fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.navyLight)))
       else const SizedBox(),
-      Text(title, style: TextStyle(fontFamily: 'Cairo', 
-        fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.tx1)),
     ]),
   );
 }

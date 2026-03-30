@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/providers/admin_providers.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../../data/models/local_notification_model.dart';
 import '../providers/notifications_providers.dart';
@@ -55,9 +56,9 @@ class DocumentsOverviewScreen extends ConsumerWidget {
                   decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 17))),
               Expanded(child: Column(children: [
-                Text('إدارة المستندات', style: TextStyle(fontFamily: 'Cairo',
+                Text('Document Management'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-                Text('نظرة شاملة على الوثائق التنظيمية', style: TextStyle(fontFamily: 'Cairo',
+                Text('Documents overview'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 11, color: AppColors.goldLight)),
               ])),
               const SizedBox(width: 36),
@@ -72,7 +73,7 @@ class DocumentsOverviewScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppColors.warning.withOpacity(0.4))),
                 child: Row(children: [
-                  Text('${data.totalDocuments} وثيقة في النظام', style: TextStyle(fontFamily: 'Cairo',
+                  Text('docs_in_system'.tr(context, params: {'count': '${data.totalDocuments}'}), style: TextStyle(fontFamily: 'Cairo',
                     fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
                   const Spacer(),
                   const Text('📂', style: TextStyle(fontSize: 16)),
@@ -94,7 +95,7 @@ class DocumentsOverviewScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               child: Column(children: [
                 // Stats
-                SectionHeader(title: 'نظرة عامة'),
+                SectionHeader(title: 'Overview'.tr(context)),
                 GridView.count(
                   crossAxisCount: 2, shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -143,7 +144,7 @@ class DocumentsOverviewScreen extends ConsumerWidget {
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 12),
-              Text('حدث خطأ أثناء تحميل البيانات', style: TextStyle(fontFamily: 'Cairo',
+              Text('Error loading documents'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.tx2)),
               const SizedBox(height: 8),
               Text('$err', style: TextStyle(fontFamily: 'Cairo',
@@ -152,7 +153,7 @@ class DocumentsOverviewScreen extends ConsumerWidget {
               ElevatedButton.icon(
                 onPressed: () => ref.invalidate(documentCategoriesProvider),
                 icon: const Icon(Icons.refresh, size: 18),
-                label: Text('إعادة المحاولة', style: TextStyle(fontFamily: 'Cairo',
+                label: Text('Retry'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.navyMid,
@@ -218,12 +219,12 @@ class _NotifState extends ConsumerState<NotificationsCenterScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(9)),
-                child: Text('قراءة الكل', style: TextStyle(fontFamily: 'Cairo',
+                child: Text('Mark all read'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70)))),
             Expanded(child: Column(children: [
-              Text('مركز الإشعارات', style: TextStyle(fontFamily: 'Cairo',
+              Text('Notifications Center'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-              if (unread > 0) Text('$unread إشعار غير مقروء', style: TextStyle(fontFamily: 'Cairo',
+              if (unread > 0) Text('unread_notifications'.tr(context, params: {'count': '$unread'}), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 11, color: AppColors.goldLight)),
             ])),
             // Back + Refresh
@@ -252,10 +253,10 @@ class _NotifState extends ConsumerState<NotificationsCenterScreen> {
       return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
         const Text('🔔', style: TextStyle(fontSize: 48)),
         const SizedBox(height: 12),
-        Text('لا توجد إشعارات', style: TextStyle(fontFamily: 'Cairo',
+        Text('No notifications'.tr(context), style: TextStyle(fontFamily: 'Cairo',
           fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.tx3)),
         const SizedBox(height: 6),
-        Text('ستظهر الإشعارات هنا عند وصولها', style: TextStyle(fontFamily: 'Cairo',
+        Text('Notifications will appear here'.tr(context), style: TextStyle(fontFamily: 'Cairo',
           fontSize: 12, color: AppColors.g400)),
       ]));
     }
