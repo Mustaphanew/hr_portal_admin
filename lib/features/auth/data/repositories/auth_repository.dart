@@ -32,8 +32,8 @@ class AuthRepository {
     final data = {
       'username': username,
       'password': password,
-      if (deviceName != null) 'device_name': deviceName,
-      if (fcmToken != null) 'fcm_token': fcmToken,
+      'device_name': ?deviceName,
+      'fcm_token': ?fcmToken,
     };
 
     final response = await _client.post<LoginData>(

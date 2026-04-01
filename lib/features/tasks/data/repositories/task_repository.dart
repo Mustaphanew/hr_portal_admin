@@ -30,13 +30,13 @@ class TaskRepository {
       fromJson: (json) =>
           AdminTasksData.fromJson(json as Map<String, dynamic>),
       queryParameters: {
-        if (status != null) 'status': status,
-        if (priority != null) 'priority': priority,
-        if (departmentId != null) 'department_id': departmentId,
-        if (assignedTo != null) 'assigned_to': assignedTo,
-        if (search != null) 'search': search,
-        if (perPage != null) 'per_page': perPage,
-        if (page != null) 'page': page,
+        'status': ?status,
+        'priority': ?priority,
+        'department_id': ?departmentId,
+        'assigned_to': ?assignedTo,
+        'search': ?search,
+        'per_page': ?perPage,
+        'page': ?page,
       },
     );
     return response.data!;
@@ -71,7 +71,7 @@ class TaskRepository {
         'department_id': departmentId,
         'due_date': dueDate,
         'priority': priority,
-        if (notes != null) 'notes': notes,
+        'notes': ?notes,
       },
     );
     return response.data!;
@@ -93,13 +93,13 @@ class TaskRepository {
       fromJson: (json) =>
           AdminTaskItem.fromJson(json as Map<String, dynamic>),
       data: {
-        if (title != null) 'title': title,
-        if (status != null) 'status': status,
-        if (priority != null) 'priority': priority,
-        if (notes != null) 'notes': notes,
-        if (assignedTo != null) 'assigned_to': assignedTo,
-        if (departmentId != null) 'department_id': departmentId,
-        if (dueDate != null) 'due_date': dueDate,
+        'title': ?title,
+        'status': ?status,
+        'priority': ?priority,
+        'notes': ?notes,
+        'assigned_to': ?assignedTo,
+        'department_id': ?departmentId,
+        'due_date': ?dueDate,
       },
     );
     return response.data!;

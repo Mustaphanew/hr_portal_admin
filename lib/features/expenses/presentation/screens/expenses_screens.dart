@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/providers/admin_providers.dart';
+import '../../../../core/providers/paginated_providers.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
+import '../../../../core/widgets/paginated_list_view.dart';
 import '../../data/models/expense_models.dart';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -39,12 +41,14 @@ class ExpenseAmountCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    return GestureDetector(
     onTap: onTap,
     child: Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: AppColors.bgCard,
+        color: c.bgCard,
         borderRadius: BorderRadius.circular(16),
         boxShadow: AppShadows.card,
         border: expense.isHighValue
@@ -75,7 +79,7 @@ class ExpenseAmountCard extends StatelessWidget {
                 Text(expense.employee.name, style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 13, fontWeight: FontWeight.w700)),
                 Text('${expense.employee.department} · ${expense.employee.code}', style: TextStyle(fontFamily: 'Cairo',
-                  fontSize: 11, color: AppColors.tx3)),
+                  fontSize: 11, color: c.textMuted)),
               ]),
               const SizedBox(width: 8),
               AdminAvatar(initials: expense.employee.name.characters.first, size: 36, fontSize: 14),
@@ -85,7 +89,7 @@ class ExpenseAmountCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.bg, borderRadius: BorderRadius.circular(10)),
+              color: c.bg, borderRadius: BorderRadius.circular(10)),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
@@ -93,14 +97,14 @@ class ExpenseAmountCard extends StatelessWidget {
                     Text(expense.categoryIcon!, style: const TextStyle(fontSize: 14)),
                   if (expense.categoryIcon != null) const SizedBox(width: 4),
                   Text(expense.category, style: TextStyle(fontFamily: 'Cairo',
-                    fontSize: 11, color: AppColors.tx3)),
+                    fontSize: 11, color: c.textMuted)),
                 ]),
                 Text('EXP-${expense.id}', style: TextStyle(fontFamily: 'Cairo',
-                  fontSize: 10, color: AppColors.g400, letterSpacing: 0.5)),
+                  fontSize: 10, color: c.gray400, letterSpacing: 0.5)),
               ]),
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 Text(expense.submittedDate, style: TextStyle(fontFamily: 'Cairo',
-                  fontSize: 10, color: AppColors.tx3)),
+                  fontSize: 10, color: c.textMuted)),
                 RichText(text: TextSpan(children: [
                   TextSpan(text: '${expense.currency} ', style: TextStyle(fontFamily: 'Cairo',
                     fontSize: 11, color: _statusColor, fontWeight: FontWeight.w600)),
@@ -127,6 +131,7 @@ class ExpenseAmountCard extends StatelessWidget {
       ),
     ),
   );
+  }
 
   String _formatAmount(double a) {
     if (a >= 1000) {
@@ -161,10 +166,11 @@ class ExpensesOverviewScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncExpenses = ref.watch(expensesProvider);
+    final c = context.appColors;
+    final asyncExpenses = ref.watch(paginatedExpensesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: asyncExpenses.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Column(
@@ -174,11 +180,11 @@ class ExpensesOverviewScreen extends ConsumerWidget {
               fontSize: 14, color: AppColors.error)),
             const SizedBox(height: 8),
             OutlineBtn(text: 'Retry'.tr(context), fullWidth: false,
-              onTap: () => ref.invalidate(expensesProvider)),
+              onTap: () => ref.invalidate(paginatedExpensesProvider)),
           ],
         )),
-        data: (data) {
-          final expenses  = data.expenses;
+        data: (paginated) {
+          final expenses  = paginated.items;
           final pending   = expenses.where((e) => e.status == 'pending');
           final approved  = expenses.where((e) => e.status == 'approved');
           final rejected  = expenses.where((e) => e.status == 'rejected');
@@ -243,7 +249,10 @@ class ExpensesOverviewScreen extends ConsumerWidget {
               ]),
             ),
             Expanded(child: RefreshIndicator(
-              onRefresh: () async => ref.invalidate(expensesProvider),
+              onRefresh: () async {
+                ref.invalidate(paginatedExpensesProvider);
+                await ref.read(paginatedExpensesProvider.future);
+              },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 80),
@@ -330,22 +339,22 @@ class ExpensesOverviewScreen extends ConsumerWidget {
       const SizedBox(height: 8),
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Text('Main categories'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-          fontSize: 11, color: AppColors.tx3)),
+          fontSize: 11, color: context.appColors.textMuted)),
         Text('SAR ${_fmtBig(_totalAmount(expenses))} ${'Total'.tr(context)}', style: TextStyle(fontFamily: 'Cairo',
           fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.navyMid)),
       ]),
     ]));
   }
 
-  Widget _kpi(String v, String l, Color c) => Expanded(child: Container(
+  Widget _kpi(String v, String l, Color col) => Expanded(child: Container(
     padding: const EdgeInsets.symmetric(vertical: 10),
     decoration: BoxDecoration(
-      color: c.withOpacity(0.08), borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: c.withOpacity(0.2))),
+      color: col.withOpacity(0.08), borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: col.withOpacity(0.2))),
     child: Column(children: [
       Text(v, style: TextStyle(fontFamily: 'Cairo',
-        fontSize: 22, fontWeight: FontWeight.w900, color: c, height: 1.1)),
-      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: AppColors.tx3)),
+        fontSize: 22, fontWeight: FontWeight.w900, color: col, height: 1.1)),
+      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: col.withOpacity(0.6))),
     ])));
 }
 
@@ -364,10 +373,11 @@ class _ExpRequestsState extends ConsumerState<ExpenseRequestsListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final asyncExpenses = ref.watch(expensesProvider);
+    final c = context.appColors;
+    final asyncExpenses = ref.watch(paginatedExpensesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: asyncExpenses.when(
         loading: () => Column(children: [
           AdminAppBar(title: 'Expense requests'.tr(context), subtitle: 'Loading'.tr(context), onBack: () => context.pop()),
@@ -382,12 +392,12 @@ class _ExpRequestsState extends ConsumerState<ExpenseRequestsListScreen> {
                 fontSize: 14, color: AppColors.error)),
               const SizedBox(height: 8),
               OutlineBtn(text: 'Retry'.tr(context), fullWidth: false,
-                onTap: () => ref.invalidate(expensesProvider)),
+                onTap: () => ref.invalidate(paginatedExpensesProvider)),
             ],
           ))),
         ]),
-        data: (data) {
-          final all = data.expenses;
+        data: (paginated) {
+          final all = paginated.items;
           final filtered = all.where((e) {
             final matchSearch = _search.isEmpty ||
               e.employee.name.contains(_search) ||
@@ -404,30 +414,36 @@ class _ExpRequestsState extends ConsumerState<ExpenseRequestsListScreen> {
             AdminAppBar(title: 'Expense requests'.tr(context),
               subtitle: 'requests_total'.tr(context, params: {'count': '${all.length}'}),
               onBack: () => context.pop()),
-            Container(color: AppColors.bgCard,
+            Container(color: c.bgCard,
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
               child: TextField(
                 style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
                 onChanged: (v) => setState(() => _search = v),
-                decoration: fieldDec('Search'.tr(context)).copyWith(
-                  prefixIcon: const Icon(Icons.search, color: AppColors.g400, size: 20),
+                decoration: fieldDec(context, 'Search'.tr(context)).copyWith(
+                  prefixIcon: Icon(Icons.search, color: c.gray400, size: 20),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10)))),
             FilterBar(tabs: ['All'.tr(context), 'Under Review'.tr(context), 'Approved'.tr(context), 'Rejected'.tr(context), 'Returned'.tr(context)],
               selected: _tab, onSelect: (i) => setState(() => _tab = i)),
             Expanded(child: RefreshIndicator(
-              onRefresh: () async => ref.invalidate(expensesProvider),
-              child: filtered.isEmpty
-                ? ListView(children: [
-                    const SizedBox(height: 100),
-                    EmptyState(icon: '💳', title: 'No requests'.tr(context),
-                      subtitle: 'No matching expenses'.tr(context)),
-                  ])
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                    itemCount: filtered.length,
-                    itemBuilder: (_, i) => ExpenseAmountCard(
-                      expense: filtered[i],
-                      onTap: () => context.push('/expense-detail/${filtered[i].id}'))),
+              onRefresh: () async {
+                ref.invalidate(paginatedExpensesProvider);
+                await ref.read(paginatedExpensesProvider.future);
+              },
+              child: PaginatedListView<Expense>(
+                items: filtered,
+                isLoadingMore: paginated.isLoadingMore,
+                hasMore: _tab == 0 && _search.isEmpty ? paginated.hasMore : false,
+                loadMoreError: paginated.loadMoreError,
+                onFetchMore: () => ref.read(paginatedExpensesProvider.notifier).fetchMore(),
+                emptyWidget: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  const SizedBox(height: 100),
+                  EmptyState(icon: '💳', title: 'No requests'.tr(context),
+                    subtitle: 'No matching expenses'.tr(context)),
+                ])),
+                itemBuilder: (_, e, i) => ExpenseAmountCard(
+                  expense: e,
+                  onTap: () => context.push('/expense-detail/${e.id}')),
+              ),
             )),
           ]);
         },
@@ -462,7 +478,7 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
     try {
       await ref.read(expenseRepositoryProvider).approveExpense(id, notes: _noteCtrl.text.isNotEmpty ? _noteCtrl.text : null);
       setState(() { _decision = 'approve'; _processing = false; });
-      ref.invalidate(expensesProvider);
+      ref.invalidate(paginatedExpensesProvider);
     } catch (_) {
       setState(() => _processing = false);
       if (mounted) {
@@ -477,7 +493,7 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
     try {
       await ref.read(expenseRepositoryProvider).rejectExpense(id, notes: _noteCtrl.text.isNotEmpty ? _noteCtrl.text : null);
       setState(() { _decision = 'reject'; _processing = false; });
-      ref.invalidate(expensesProvider);
+      ref.invalidate(paginatedExpensesProvider);
     } catch (_) {
       setState(() => _processing = false);
       if (mounted) {
@@ -489,10 +505,11 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final asyncExpense = ref.watch(expenseDetailProvider(widget.expenseId));
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: asyncExpense.when(
         loading: () => Column(children: [
           AdminAppBar(title: 'Expense details'.tr(context), onBack: () => context.pop()),
@@ -520,6 +537,7 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
   }
 
   Widget _buildDecisionResult(BuildContext context) {
+    final c = context.appColors;
     return Column(children: [
       AdminAppBar(title: 'Expense details'.tr(context), onBack: () => context.pop()),
       Expanded(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -535,7 +553,7 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
           style: TextStyle(fontFamily: 'Cairo', fontSize: 18, fontWeight: FontWeight.w800)),
         const SizedBox(height: 6),
         Text('Employee notified'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-          fontSize: 13, color: AppColors.tx3)),
+          fontSize: 13, color: c.textMuted)),
         const SizedBox(height: 24),
         OutlineBtn(text: 'Back to requests'.tr(context), fullWidth: false,
           onTap: () => context.pop()),
@@ -686,7 +704,7 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
                 TextField(controller: _noteCtrl, maxLines: 3,
                   
                   style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
-                  decoration: fieldDec('Add your comment'.tr(context))),
+                  decoration: fieldDec(context, 'Add your comment'.tr(context))),
               ])),
           ]),
         ),
@@ -716,10 +734,11 @@ class ExpenseCategoriesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncExpenses = ref.watch(expensesProvider);
+    final c = context.appColors;
+    final asyncExpenses = ref.watch(paginatedExpensesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: Column(children: [
         AdminAppBar(title: 'Expense categories'.tr(context), subtitle: 'Extracted from requests'.tr(context),
           onBack: () => context.pop()),
@@ -731,18 +750,18 @@ class ExpenseCategoriesScreen extends ConsumerWidget {
               Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
               const SizedBox(height: 8),
               OutlineBtn(text: 'Retry'.tr(context), fullWidth: false,
-                onTap: () => ref.invalidate(expensesProvider)),
+                onTap: () => ref.invalidate(paginatedExpensesProvider)),
             ],
           )),
-          data: (data) {
+          data: (paginated) {
             final catMap = <String, _CatSummary>{};
-            for (final e in data.expenses) {
+            for (final e in paginated.items) {
               catMap.putIfAbsent(e.category, () => _CatSummary(e.categoryIcon));
               catMap[e.category]!.count++;
               catMap[e.category]!.total += e.amount;
             }
             final cats = catMap.entries.toList()..sort((a, b) => b.value.total.compareTo(a.value.total));
-            final grandTotal = cats.fold(0.0, (s, c) => s + c.value.total);
+            final grandTotal = cats.fold(0.0, (s, entry) => s + entry.value.total);
 
             if (cats.isEmpty) {
               return Center(child: EmptyState(
@@ -752,14 +771,14 @@ class ExpenseCategoriesScreen extends ConsumerWidget {
             }
 
             return RefreshIndicator(
-              onRefresh: () async => ref.invalidate(expensesProvider),
+              onRefresh: () async => ref.invalidate(paginatedExpensesProvider),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 child: Column(children: [
                   AppCard(mb: 16, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                     Text('Monthly total'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-                      fontSize: 12, color: AppColors.tx3)),
+                      fontSize: 12, color: c.textMuted)),
                     RichText(text: TextSpan(children: [
                       TextSpan(text: 'SAR ', style: TextStyle(fontFamily: 'Cairo',
                         fontSize: 14, color: AppColors.navyMid, fontWeight: FontWeight.w600)),
@@ -767,20 +786,20 @@ class ExpenseCategoriesScreen extends ConsumerWidget {
                         fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.navyMid)),
                     ])),
                     const SizedBox(height: 12),
-                    ...cats.map((c) => Padding(
+                    ...cats.map((cat) => Padding(
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Row(children: [
                         SizedBox(width: 42, child: Text(
-                          grandTotal > 0 ? '${(c.value.total / grandTotal * 100).toInt()}%' : '0%',
-                          style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: AppColors.tx3))),
+                          grandTotal > 0 ? '${(cat.value.total / grandTotal * 100).toInt()}%' : '0%',
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: c.textMuted))),
                         Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
-                            value: grandTotal > 0 ? c.value.total / grandTotal : 0,
-                            backgroundColor: AppColors.g100,
+                            value: grandTotal > 0 ? cat.value.total / grandTotal : 0,
+                            backgroundColor: c.gray100,
                             valueColor: const AlwaysStoppedAnimation(AppColors.navyMid),
                             minHeight: 8))),
                         const SizedBox(width: 8),
-                        SizedBox(width: 28, child: Text(c.value.icon ?? '📦',
+                        SizedBox(width: 28, child: Text(cat.value.icon ?? '📦',
                           style: const TextStyle(fontSize: 14))),
                       ])),
                     ),
@@ -790,25 +809,26 @@ class ExpenseCategoriesScreen extends ConsumerWidget {
                     crossAxisCount: 2, shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.3,
-                    children: cats.map((c) => GestureDetector(
+                    padding: EdgeInsets.zero,
+                    children: cats.map((cat) => GestureDetector(
                       onTap: () => context.push('/expense-requests'),
                       child: Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: AppColors.bgCard,
+                          color: c.bgCard,
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: AppShadows.card),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                          Text(c.value.icon ?? '📦', style: const TextStyle(fontSize: 28)),
+                          Text(cat.value.icon ?? '📦', style: const TextStyle(fontSize: 28)),
                           const SizedBox(height: 6),
-                          Text(c.key, style: TextStyle(fontFamily: 'Cairo',
+                          Text(cat.key, style: TextStyle(fontFamily: 'Cairo',
                             fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.navyMid)),
                           const SizedBox(height: 4),
-                          Text('requests_count'.tr(context, params: {'count': '${c.value.count}'}), style: TextStyle(fontFamily: 'Cairo',
-                            fontSize: 11, color: AppColors.tx3)),
+                          Text('requests_count'.tr(context, params: {'count': '${cat.value.count}'}), style: TextStyle(fontFamily: 'Cairo',
+                            fontSize: 11, color: c.textMuted)),
                           const SizedBox(height: 2),
-                          Text('SAR ${_fmtBig(c.value.total)}', style: TextStyle(fontFamily: 'Cairo',
-                            fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.tx2)),
+                          Text('SAR ${_fmtBig(cat.value.total)}', style: TextStyle(fontFamily: 'Cairo',
+                            fontSize: 12, fontWeight: FontWeight.w700, color: c.textSecondary)),
                         ]),
                       ),
                     )).toList(),
@@ -839,10 +859,11 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncExpenses = ref.watch(expensesProvider);
+    final c = context.appColors;
+    final asyncExpenses = ref.watch(paginatedExpensesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: asyncExpenses.when(
         loading: () => Column(children: [
           _buildHeader(context),
@@ -856,12 +877,12 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
               Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
               const SizedBox(height: 8),
               OutlineBtn(text: 'Retry'.tr(context), fullWidth: false,
-                onTap: () => ref.invalidate(expensesProvider)),
+                onTap: () => ref.invalidate(paginatedExpensesProvider)),
             ],
           ))),
         ]),
-        data: (data) {
-          final expenses = data.expenses;
+        data: (paginated) {
+          final expenses = paginated.items;
           final total = _totalAmount(expenses);
           final pending = expenses.where((e) => e.status == 'pending');
           final approved = expenses.where((e) => e.status == 'approved');
@@ -891,7 +912,7 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
           return Column(children: [
             _buildHeader(context),
             Expanded(child: RefreshIndicator(
-              onRefresh: () async => ref.invalidate(expensesProvider),
+              onRefresh: () async => ref.invalidate(paginatedExpensesProvider),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 80),
@@ -902,6 +923,7 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
                     crossAxisCount: 2, shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.35,
+                    padding: EdgeInsets.zero,
                     children: [
                       KpiCard(label: 'Monthly total'.tr(context), value: _fmtBig(total),
                         change: 'requests_count'.tr(context, params: {'count': '${expenses.length}'}), icon: '💰', isPositive: false, color: AppColors.navyMid),
@@ -919,23 +941,23 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
                   if (catSorted.isNotEmpty) ...[
                     SectionHeader(title: 'Distribution by category'.tr(context)),
                     AppCard(mb: 16, child: Column(children: [
-                      ...catSorted.map((c) => Padding(
+                      ...catSorted.map((cat) => Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: Column(children: [
                           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                            Text('SAR ${_fmtBig(c.value)}', style: TextStyle(fontFamily: 'Cairo',
+                            Text('SAR ${_fmtBig(cat.value)}', style: TextStyle(fontFamily: 'Cairo',
                               fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.navyMid)),
                             Row(children: [
-                              Text(c.key, style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.tx2)),
+                              Text(cat.key, style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: c.textSecondary)),
                               const SizedBox(width: 6),
-                              Text(catIcons[c.key] ?? '📦', style: const TextStyle(fontSize: 14)),
+                              Text(catIcons[cat.key] ?? '📦', style: const TextStyle(fontSize: 14)),
                             ]),
                           ]),
                           const SizedBox(height: 4),
                           ClipRRect(borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
-                              value: total > 0 ? c.value / total : 0,
-                              backgroundColor: AppColors.g100,
+                              value: total > 0 ? cat.value / total : 0,
+                              backgroundColor: c.gray100,
                               valueColor: const AlwaysStoppedAnimation(AppColors.navyMid),
                               minHeight: 6)),
                         ]),
@@ -953,17 +975,17 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(children: [
                             SizedBox(width: 60, child: Text('SAR ${_fmtBig(entry.value.value)}',
-                              style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: AppColors.tx3))),
+                              style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: c.textMuted))),
                             Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
                                 value: maxAmt > 0 ? entry.value.value / maxAmt : 0,
-                                backgroundColor: AppColors.g100,
+                                backgroundColor: c.gray100,
                                 valueColor: AlwaysStoppedAnimation(
                                   deptColors[entry.key % deptColors.length]),
                                 minHeight: 8))),
                             const SizedBox(width: 8),
                             SizedBox(width: 80, child: Text(entry.value.key, style: TextStyle(fontFamily: 'Cairo',
-                              fontSize: 10, color: AppColors.tx2), textAlign: TextAlign.right)),
+                              fontSize: 10, color: c.textSecondary), textAlign: TextAlign.right)),
                           ]));
                       }),
                     ])),
@@ -1018,10 +1040,11 @@ class ExpenseFollowUpScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncExpenses = ref.watch(expensesProvider);
+    final c = context.appColors;
+    final asyncExpenses = ref.watch(paginatedExpensesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: asyncExpenses.when(
         loading: () => Column(children: [
           _buildHeader(context, 0, 0),
@@ -1035,12 +1058,12 @@ class ExpenseFollowUpScreen extends ConsumerWidget {
               Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
               const SizedBox(height: 8),
               OutlineBtn(text: 'Retry'.tr(context), fullWidth: false,
-                onTap: () => ref.invalidate(expensesProvider)),
+                onTap: () => ref.invalidate(paginatedExpensesProvider)),
             ],
           ))),
         ]),
-        data: (data) {
-          final expenses = data.expenses;
+        data: (paginated) {
+          final expenses = paginated.items;
           final pending   = expenses.where((e) => e.status == 'pending').toList();
           final noAttach  = expenses.where((e) => !e.hasAttachment && e.status == 'pending').toList();
           final returned  = expenses.where((e) => e.status == 'returned').toList();
@@ -1062,7 +1085,7 @@ class ExpenseFollowUpScreen extends ConsumerWidget {
               ]),
             ),
             Expanded(child: RefreshIndicator(
-              onRefresh: () async => ref.invalidate(expensesProvider),
+              onRefresh: () async => ref.invalidate(paginatedExpensesProvider),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -1083,7 +1106,7 @@ class ExpenseFollowUpScreen extends ConsumerWidget {
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(13),
                       decoration: BoxDecoration(
-                        color: AppColors.bgCard, borderRadius: BorderRadius.circular(14),
+                        color: c.bgCard, borderRadius: BorderRadius.circular(14),
                         boxShadow: AppShadows.sm,
                         border: Border.all(color: AppColors.warning.withOpacity(0.4))),
                       child: Row(children: [
@@ -1096,7 +1119,7 @@ class ExpenseFollowUpScreen extends ConsumerWidget {
                           Text(e.employee.name, style: TextStyle(fontFamily: 'Cairo',
                             fontSize: 13, fontWeight: FontWeight.w700)),
                           Text('${e.category} · ${e.currency} ${e.amount.toStringAsFixed(0)}',
-                            style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.tx3)),
+                            style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: c.textMuted)),
                         ])),
                         const SizedBox(width: 8),
                         AdminAvatar(initials: e.employee.name.characters.first, size: 36, fontSize: 14),

@@ -5,7 +5,10 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/providers/admin_providers.dart';
+import '../../../../core/providers/paginated_providers.dart';
+import '../../../../core/providers/paginated_notifier.dart';
 import '../../../../core/widgets/admin_widgets.dart';
+import '../../../../core/widgets/paginated_list_view.dart';
 import '../../data/models/announcement_models.dart';
 
 // ── Announcements Management ──────────────────────────────
@@ -30,10 +33,11 @@ class _AnnouncementsState extends ConsumerState<AnnouncementsManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final asyncAnnouncements = ref.watch(announcementsProvider);
+    final c = context.appColors;
+    final asyncAnnouncements = ref.watch(paginatedAnnouncementsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: asyncAnnouncements.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
@@ -42,10 +46,10 @@ class _AnnouncementsState extends ConsumerState<AnnouncementsManagementScreen> {
               fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.error)),
             const SizedBox(height: 8),
             Text('$e', style: TextStyle(fontFamily: 'Cairo',
-              fontSize: 12, color: AppColors.tx3), textAlign: TextAlign.center),
+              fontSize: 12, color: c.textMuted), textAlign: TextAlign.center),
             const SizedBox(height: 16),
             GestureDetector(
-              onTap: () => ref.invalidate(announcementsProvider),
+              onTap: () => ref.invalidate(paginatedAnnouncementsProvider),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
                 decoration: BoxDecoration(
@@ -54,8 +58,8 @@ class _AnnouncementsState extends ConsumerState<AnnouncementsManagementScreen> {
                 child: Text('Retry'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)))),
           ])),
-        data: (data) {
-          final all = data.announcements;
+        data: (paginated) {
+          final all = paginated.items;
           final published = all.where((a) => a.publishStatus == 'published').length;
           final drafts = all.where((a) => a.publishStatus == 'draft').length;
           final pinned = all.where((a) => a.isPinned).length;
@@ -102,8 +106,11 @@ class _AnnouncementsState extends ConsumerState<AnnouncementsManagementScreen> {
               selected: _tab, onSelect: _onTabChanged),
             Expanded(
               child: RefreshIndicator(
-                onRefresh: () async => ref.invalidate(announcementsProvider),
-                child: _buildList(all),
+                onRefresh: () async {
+                  ref.invalidate(paginatedAnnouncementsProvider);
+                  await ref.read(paginatedAnnouncementsProvider.future);
+                },
+                child: _buildList(all, paginated, c),
               ),
             ),
           ]);
@@ -112,25 +119,24 @@ class _AnnouncementsState extends ConsumerState<AnnouncementsManagementScreen> {
     );
   }
 
-  Widget _buildList(List<Announcement> all) {
+  Widget _buildList(List<Announcement> all, PaginatedState<Announcement> paginated, AppColorsExtension c) {
     // Client-side filter for pinned tab (tab index 3) since the API
     // only supports published/draft status filtering.
     final filtered = _tab == 3 ? all.where((a) => a.isPinned).toList() : all;
 
-    if (filtered.isEmpty) {
-      return ListView(
+    return PaginatedListView<Announcement>(
+      items: filtered,
+      isLoadingMore: paginated.isLoadingMore,
+      hasMore: _tab == 0 ? paginated.hasMore : false,
+      loadMoreError: paginated.loadMoreError,
+      onFetchMore: () => ref.read(paginatedAnnouncementsProvider.notifier).fetchMore(),
+      emptyWidget: ListView(
         children: [
           const SizedBox(height: 80),
           EmptyState(icon: '📢', title: 'No announcements'.tr(context), subtitle: 'No announcements'.tr(context)),
         ],
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      itemCount: filtered.length,
-      itemBuilder: (_, i) {
-        final a = filtered[i];
+      ),
+      itemBuilder: (_, a, i) {
         final statusLabel = a.publishStatus == 'published' ? 'منشور' : 'مسودة';
         final displayDate = a.publishedAt ?? a.createdAt;
         return GestureDetector(
@@ -138,14 +144,14 @@ class _AnnouncementsState extends ConsumerState<AnnouncementsManagementScreen> {
           child: Container(
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: AppColors.bgCard,
+              color: c.bgCard,
               borderRadius: BorderRadius.circular(16),
               boxShadow: AppShadows.card,
               border: Border(
                 right: BorderSide(
                   color: a.isPinned ? AppColors.gold
                     : a.publishStatus == 'published' ? AppColors.navyMid
-                    : AppColors.g300,
+                    : c.gray300,
                   width: 3.5))),
             child: Padding(padding: const EdgeInsets.all(14), child: Column(children: [
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -168,17 +174,17 @@ class _AnnouncementsState extends ConsumerState<AnnouncementsManagementScreen> {
                     fontSize: 13, fontWeight: FontWeight.w800),
                     textAlign: TextAlign.right, maxLines: 1, overflow: TextOverflow.ellipsis),
                   Text(a.category, style: TextStyle(fontFamily: 'Cairo',
-                    fontSize: 11, color: AppColors.tx3)),
+                    fontSize: 11, color: c.textMuted)),
                 ]),
               ]),
               const SizedBox(height: 8),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text(displayDate, style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.tx3)),
+                Text(displayDate, style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: c.textMuted)),
                 Row(children: [
                   const Text('👥', style: TextStyle(fontSize: 12)),
                   const SizedBox(width: 4),
                   Text(a.audience, style: TextStyle(fontFamily: 'Cairo',
-                    fontSize: 11, color: AppColors.tx3)),
+                    fontSize: 11, color: c.textMuted)),
                 ]),
               ]),
               const SizedBox(height: 10),
@@ -210,13 +216,13 @@ class _AnnouncementsState extends ConsumerState<AnnouncementsManagementScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 7),
                     decoration: BoxDecoration(
                       gradient: a.publishStatus == 'published' ? null : AppColors.tealGradient,
-                      color: a.publishStatus == 'published' ? AppColors.g100 : null,
+                      color: a.publishStatus == 'published' ? c.gray100 : null,
                       borderRadius: BorderRadius.circular(8)),
                     child: Center(child: Text(
                       a.publishStatus == 'published' ? '📤 أُرسل' : '📢 نشر',
                       style: TextStyle(fontFamily: 'Cairo',
                         fontSize: 11, fontWeight: FontWeight.w700,
-                        color: a.publishStatus == 'published' ? AppColors.g400 : Colors.white)))))),
+                        color: a.publishStatus == 'published' ? c.gray400 : Colors.white)))))),
               ]),
             ])),
           ),
@@ -245,12 +251,13 @@ class AnnouncementDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.appColors;
     final a = GoRouterState.of(context).extra as Announcement;
     final statusLabel = a.publishStatus == 'published' ? 'منشور' : 'مسودة';
     final displayDate = a.publishedAt ?? a.createdAt;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: Column(children: [
         AdminAppBar(title: 'تفاصيل الإعلان', onBack: () => context.pop(),
           trailing: GestureDetector(
@@ -297,7 +304,7 @@ class AnnouncementDetailScreen extends ConsumerWidget {
                 fontSize: 14, fontWeight: FontWeight.w800)),
               const SizedBox(height: 12),
               Text(a.body, style: TextStyle(fontFamily: 'Cairo',
-                fontSize: 14, color: AppColors.tx2, height: 2.0)),
+                fontSize: 14, color: c.textSecondary, height: 2.0)),
             ])),
             // Attachments placeholder
             AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -313,11 +320,11 @@ class AnnouncementDetailScreen extends ConsumerWidget {
                 style: TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w800))),
               const SizedBox(height: 12),
               Row(children: [
-                _reachStat('89', 'قرأ', AppColors.navyMid),
+                _reachStat('89', 'قرأ', AppColors.navyMid, c),
                 const SizedBox(width: 8),
-                _reachStat('12', 'لم يقرأ', AppColors.warning),
+                _reachStat('12', 'لم يقرأ', AppColors.warning, c),
                 const SizedBox(width: 8),
-                _reachStat('101', 'المستهدفون', AppColors.g500),
+                _reachStat('101', 'المستهدفون', AppColors.g500, c),
               ]),
             ])),
           ]),
@@ -333,14 +340,14 @@ class AnnouncementDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _reachStat(String v, String l, Color c) => Expanded(child: Container(
+  Widget _reachStat(String v, String l, Color color, AppColorsExtension c) => Expanded(child: Container(
     padding: const EdgeInsets.symmetric(vertical: 10),
     decoration: BoxDecoration(
-      color: c.withOpacity(0.08), borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: c.withOpacity(0.2))),
+      color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: color.withOpacity(0.2))),
     child: Column(children: [
       Text(v, style: TextStyle(fontFamily: 'Cairo',
-        fontSize: 22, fontWeight: FontWeight.w900, color: c, height: 1.1)),
-      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: AppColors.tx3)),
+        fontSize: 22, fontWeight: FontWeight.w900, color: color, height: 1.1)),
+      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: c.textMuted)),
     ])));
 }

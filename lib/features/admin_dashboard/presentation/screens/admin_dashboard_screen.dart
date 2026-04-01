@@ -30,7 +30,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
   }
 
   List<Map<String, dynamic>> _getQuickActions(BuildContext context) => [
-    {'l': 'Review Requests'.tr(context),  'i':'📋', 'r':'/requests',     'c': AppColors.navyMid},
+    {'l': 'Request Management'.tr(context),  'i':'📋', 'r':'/requests',     'c': AppColors.navyMid},
     {'l': 'Track Tasks'.tr(context),   'i':'✅', 'r':'/tasks',         'c': AppColors.teal},
     {'l': 'Approve Requests'.tr(context), 'i':'🖊', 'r':'/approvals',     'c': AppColors.gold},
     {'l': 'Attendance Management'.tr(context),   'i':'⏱', 'r':'/attendance',    'c': AppColors.info},
@@ -46,16 +46,16 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final authState = ref.watch(authProvider);
     final employee = authState.employee;
     final adminName = employee?.name.split(' ').take(2).join(' ') ?? 'Admin'.tr(context);
     final adminRole = employee?.jobTitle ?? 'System Manager'.tr(context);
     final notifCount = ref.watch(notificationsProvider).unreadCount;
     final dashAsync = ref.watch(dashboardProvider);
-    final isRtl = Directionality.of(context) == TextDirection.rtl;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: Column(children: [
         // ── Header ──────────────────────────────────────────
         Container(
@@ -64,36 +64,49 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
             top: MediaQuery.of(context).padding.top + 12,
             bottom: 18, left: 18, right: 18),
           child: Column(children: [
-            Row(children: [
-              // Icons (notification + profile) — leading side
-              Row(children: [
-                GestureDetector(
-                  onTap: () => context.push('/notifications'),
-                  child: Stack(children: [
-                    Container(width: 38, height: 38,
-                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(11)),
-                      child: const Center(child: Text('🔔', style: TextStyle(fontSize: 18)))),
-                    if (notifCount > 0) Positioned(top: 5, left: isRtl ? 5 : null, right: isRtl ? null : 5,
-                      child: Container(width: 14, height: 14,
-                        decoration: BoxDecoration(color: AppColors.error, shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.navyMid, width: 1.5)),
-                        child: Center(child: Text('$notifCount', style: TextStyle(fontFamily: 'Cairo',
-                          fontSize: 8, fontWeight: FontWeight.w900, color: Colors.white))))),
-                  ])),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => context.push('/admin-profile'),
-                  child: Container(width: 38, height: 38,
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(11)),
-                    child: const Center(child: Text('👤', style: TextStyle(fontSize: 18))))),
-              ]),
-              // Greeting — center
-              Expanded(child: Column(children: [
-                Text('Admin Panel'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.white38, letterSpacing: 2)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+              // ── النصوص في المنتصف الحقيقي ────────────────────
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                Text('Admin Panel'.tr(context), style: TextStyle(fontFamily: 'Cairo',
+                  fontSize: 10, color: Colors.white38, letterSpacing: 2)),
                 Text(adminName, style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
-                Text(adminRole, style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.goldLight)),
-              ])),
+                Text(adminRole, style: TextStyle(fontFamily: 'Cairo',
+                  fontSize: 11, color: AppColors.goldLight)),
+              ]),
+              // ── أيقونات الإشعارات والملف ─────────────────────
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min, children: [
+                  GestureDetector(
+                    onTap: () => context.push('/notifications'),
+                    child: Stack(children: [
+                      Container(width: 38, height: 38,
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(11)),
+                        child: const Center(child: Text('🔔', style: TextStyle(fontSize: 18)))),
+                      if (notifCount > 0) Positioned(top: 5, right: 5,
+                        child: Container(width: 14, height: 14,
+                          decoration: BoxDecoration(color: AppColors.error, shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.navyMid, width: 1.5)),
+                          child: Center(child: Text('$notifCount', style: TextStyle(fontFamily: 'Cairo',
+                            fontSize: 8, fontWeight: FontWeight.w900, color: Colors.white))))),
+                    ])),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => context.push('/admin-profile'),
+                    child: Container(width: 38, height: 38,
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(11)),
+                      child: const Center(child: Text('👤', style: TextStyle(fontSize: 18))))),
+                ]),
+              ),
             ]),
             const SizedBox(height: 16),
             // Date/Time + Quick Status Strip
@@ -118,7 +131,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                   ]),
                   loading: () => const SizedBox(width: 60, child: Center(
                     child: CircularProgressIndicator(color: Colors.white38, strokeWidth: 2))),
-                  error: (_, __) => Text('—', style: TextStyle(color: Colors.white54)),
+                  error: (_, _) => Text('—', style: TextStyle(color: Colors.white54)),
                 ),
               ]),
             ),
@@ -128,11 +141,11 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
         Expanded(child: dashAsync.when(
           loading: () => const Center(child: CircularProgressIndicator(color: AppColors.navyMid)),
           error: (error, _) => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.cloud_off, size: 48, color: AppColors.g300),
+            Icon(Icons.cloud_off, size: 48, color: c.gray300),
             const SizedBox(height: 12),
-            Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx2)),
+            Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: c.textSecondary)),
             const SizedBox(height: 4),
-            Text('$error', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.tx3), textAlign: TextAlign.center, maxLines: 3),
+            Text('$error', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: c.textMuted), textAlign: TextAlign.center, maxLines: 3),
             const SizedBox(height: 16),
             TextButton.icon(
               onPressed: () => ref.invalidate(dashboardProvider),
@@ -158,6 +171,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                   crossAxisCount: 2, shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.35,
+                  padding: EdgeInsets.zero,
                   children: [
                     KpiCard(label: 'Total Employees'.tr(context), value: '${dash.kpis.totalEmployees}', change: '', icon: '👥', isPositive: true, color: AppColors.navyMid, onTap: () => context.push('/employees')),
                     KpiCard(label: 'Present Today'.tr(context), value: '${dash.kpis.presentToday}', change: '${dash.kpis.attendanceRate.toStringAsFixed(0)}%', icon: '✅', isPositive: true, color: AppColors.success, onTap: () => context.push('/attendance')),
@@ -175,12 +189,13 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                   crossAxisCount: 4, shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.82,
+                  padding: EdgeInsets.zero,
                   children: _getQuickActions(context).map((a) => GestureDetector(
                     onTap: () => context.push(a['r'] as String),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.bgCard,
+                        color: c.bgCard,
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: AppShadows.sm),
                       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -191,7 +206,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                           child: Center(child: Text(a['i'] as String, style: const TextStyle(fontSize: 20)))),
                         const SizedBox(height: 6),
                         Text(a['l'] as String, style: TextStyle(fontFamily: 'Cairo',
-                          fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.tx2),
+                          fontSize: 10, fontWeight: FontWeight.w700, color: c.textSecondary),
                           textAlign: TextAlign.center, maxLines: 2),
                       ])),
                   )).toList(),
@@ -207,7 +222,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.only(bottom: 6),
                         itemCount: dash.departmentSummary.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 10),
+                        separatorBuilder: (_, _) => const SizedBox(width: 10),
                         itemBuilder: (context, i) {
                           final d = dash.departmentSummary[i];
                           final rate = d.employeeCount > 0 ? (d.present / d.employeeCount * 100) : 0.0;
@@ -219,7 +234,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                               width: 155,
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppColors.bgCard,
+                                color: c.bgCard,
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: AppShadows.card,
                                 border: Border(bottom: BorderSide(color: perfColor, width: 3))),
@@ -235,13 +250,13 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                                 ClipRRect(borderRadius: BorderRadius.circular(3),
                                   child: LinearProgressIndicator(
                                     value: rate / 100,
-                                    backgroundColor: AppColors.g100,
+                                    backgroundColor: c.gray100,
                                     valueColor: AlwaysStoppedAnimation(perfColor), minHeight: 3)),
                                 const SizedBox(height: 8),
                                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                                  _deptChip('${d.employeeCount}', '👥'),
-                                  _deptChip('${d.present}', '✅'),
-                                  _deptChip('${d.pendingRequests}', '📋'),
+                                  _deptChip('${d.employeeCount}', '👥', c),
+                                  _deptChip('${d.present}', '✅', c),
+                                  _deptChip('${d.pendingRequests}', '📋', c),
                                 ]),
                               ]),
                             ),
@@ -278,20 +293,20 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
     Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.w800, color: c)),
   ]);
 
-  Widget _deptChip(String v, String ico) => Row(mainAxisSize: MainAxisSize.min, children: [
+  Widget _deptChip(String v, String ico, AppColorsExtension c) => Row(mainAxisSize: MainAxisSize.min, children: [
     Text(ico, style: const TextStyle(fontSize: 10)),
     const SizedBox(width: 2),
-    Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.tx1)),
+    Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w800, color: c.textPrimary)),
   ]);
 
-  Widget _taskStat(String v, String l, Color c) => Expanded(child: Container(
+  Widget _taskStat(String v, String l, Color c, AppColorsExtension colors) => Expanded(child: Container(
     padding: const EdgeInsets.symmetric(vertical: 10),
     decoration: BoxDecoration(
       color: c.withOpacity(0.08), borderRadius: BorderRadius.circular(12),
       border: Border.all(color: c.withOpacity(0.2))),
     child: Column(children: [
       Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 22, fontWeight: FontWeight.w900, color: c, height: 1)),
-      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: AppColors.tx3)),
+      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: colors.textMuted)),
     ]),
   ));
 }

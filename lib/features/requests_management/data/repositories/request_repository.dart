@@ -25,10 +25,10 @@ class RequestRepository {
     int? page,
   }) async {
     final queryParameters = <String, dynamic>{
-      if (status != null) 'status': status,
-      if (type != null) 'type': type,
-      if (perPage != null) 'per_page': perPage,
-      if (page != null) 'page': page,
+      'status': ?status,
+      'type': ?type,
+      'per_page': ?perPage,
+      'page': ?page,
     };
 
     return _apiClient.get<RequestsListData>(
@@ -50,7 +50,7 @@ class RequestRepository {
       data: {
         'request_type': requestType,
         'subject': subject,
-        if (description != null) 'description': description,
+        'description': ?description,
       },
       fromJson: (json) =>
           EmployeeRequest.fromJson(json as Map<String, dynamic>),
@@ -79,11 +79,11 @@ class RequestRepository {
     int? page,
   }) async {
     final queryParameters = <String, dynamic>{
-      if (status != null) 'status': status,
-      if (requestType != null) 'request_type': requestType,
-      if (employeeId != null) 'employee_id': employeeId,
-      if (perPage != null) 'per_page': perPage,
-      if (page != null) 'page': page,
+      'status': ?status,
+      'request_type': ?requestType,
+      'employee_id': ?employeeId,
+      'per_page': ?perPage,
+      'page': ?page,
     };
 
     return _apiClient.get<RequestsListData>(
@@ -113,7 +113,7 @@ class RequestRepository {
       ApiConstants.managerRequestDecide(id),
       data: {
         'status': status,
-        if (responseNotes != null) 'response_notes': responseNotes,
+        'response_notes': ?responseNotes,
       },
       fromJson: (json) =>
           EmployeeRequest.fromJson(json as Map<String, dynamic>),

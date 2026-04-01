@@ -30,14 +30,14 @@ class FollowUpRepository {
       fromJson: (json) =>
           FollowUpsData.fromJson(json as Map<String, dynamic>),
       queryParameters: {
-        if (status != null) 'status': status,
-        if (type != null) 'type': type,
+        'status': ?status,
+        'type': ?type,
         if (isOverdue == true) 'is_overdue': 'true',
         if (isEscalated == true) 'is_escalated': 'true',
-        if (departmentId != null) 'department_id': departmentId,
-        if (search != null) 'search': search,
-        if (perPage != null) 'per_page': perPage,
-        if (page != null) 'page': page,
+        'department_id': ?departmentId,
+        'search': ?search,
+        'per_page': ?perPage,
+        'page': ?page,
       },
     );
     return response.data!;
@@ -65,7 +65,7 @@ class FollowUpRepository {
           FollowUpDetail.fromJson(json as Map<String, dynamic>),
       data: {
         'status': status,
-        if (notes != null) 'notes': notes,
+        'notes': ?notes,
       },
     );
     return response.data!;
@@ -83,7 +83,7 @@ class FollowUpRepository {
           FollowUpItem.fromJson(json as Map<String, dynamic>),
       data: {
         'reason': reason,
-        if (escalateTo != null) 'escalate_to': escalateTo,
+        'escalate_to': ?escalateTo,
       },
     );
     return response.data!;

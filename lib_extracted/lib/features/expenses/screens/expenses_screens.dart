@@ -458,7 +458,8 @@ class _ExpDetailState extends State<ExpenseRequestDetailScreen> {
   Widget build(BuildContext context) {
     final e = AdminData.expenses.first;
 
-    if (_decision != null) return Scaffold(
+    if (_decision != null) {
+      return Scaffold(
       backgroundColor: AppColors.bg,
       body: Column(children: [
         AdminAppBar(title: 'تفاصيل المصروف', onBack: () => context.pop()),
@@ -481,6 +482,7 @@ class _ExpDetailState extends State<ExpenseRequestDetailScreen> {
             onTap: () => context.pop()),
         ]))),
       ]));
+    }
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -521,7 +523,7 @@ class _ExpDetailState extends State<ExpenseRequestDetailScreen> {
                     RichText(text: TextSpan(children: [
                       TextSpan(text: '${e.currency} ', style: TextStyle(fontFamily: 'Cairo', 
                         fontSize: 14, color: Colors.white70)),
-                      TextSpan(text: '${e.amount.toStringAsFixed(0)}',
+                      TextSpan(text: e.amount.toStringAsFixed(0),
                         style: TextStyle(fontFamily: 'Cairo', 
                           fontSize: 36, fontWeight: FontWeight.w900,
                           color: Colors.white)),

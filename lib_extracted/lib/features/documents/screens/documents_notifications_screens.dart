@@ -216,7 +216,9 @@ class _NotifState extends State<NotificationsCenterScreen> {
             bottom: 14, left: 18, right: 18),
           child: Row(children: [
             GestureDetector(
-              onTap: () => setState(() { for (final n in _notifs) n.isRead = true; }),
+              onTap: () => setState(() { for (final n in _notifs) {
+                n.isRead = true;
+              } }),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(9)),

@@ -6,7 +6,6 @@ import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/providers/admin_providers.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
-import '../../data/models/report_models.dart';
 
 class ReportsKpiScreen extends ConsumerWidget {
   const ReportsKpiScreen({super.key});
@@ -24,13 +23,14 @@ class ReportsKpiScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.appColors;
     final kpis = ref.watch(reportsKpisProvider);
     final attendance = ref.watch(attendanceTrendProvider);
     final leave = ref.watch(leaveAnalysisProvider);
     final tasks = ref.watch(taskCompletionProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: Column(children: [
         // ── Header ──────────────────────────────────────────────
         Container(
@@ -93,6 +93,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisSpacing: 10, mainAxisSpacing: 10,
                   childAspectRatio: 1.35,
+                  padding: EdgeInsets.zero,
                   children: items.asMap().entries.map((e) {
                     final i = e.key;
                     final k = e.value;
@@ -127,15 +128,15 @@ class ReportsKpiScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(children: [
-                          _legend(AppColors.success, 'Present'.tr(context)),
+                          _legend(AppColors.success, 'Present'.tr(context), c),
                           const SizedBox(width: 12),
-                          _legend(AppColors.warning, 'Late'.tr(context)),
+                          _legend(AppColors.warning, 'Late'.tr(context), c),
                           const SizedBox(width: 12),
-                          _legend(AppColors.error, 'Absent'.tr(context)),
+                          _legend(AppColors.error, 'Absent'.tr(context), c),
                         ]),
                         Text('months_count'.tr(context, params: {'count': '${months.length}'}),
                           style: TextStyle(fontFamily: 'Cairo',
-                            fontSize: 11, color: AppColors.tx3)),
+                            fontSize: 11, color: c.textMuted)),
                       ]),
                     const SizedBox(height: 16),
                     SizedBox(
@@ -179,7 +180,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                                 const SizedBox(height: 4),
                                 Text(m.month,
                                   style: TextStyle(fontFamily: 'Cairo',
-                                    fontSize: 8, color: AppColors.tx3),
+                                    fontSize: 8, color: c.textMuted),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis),
                               ]),
@@ -219,12 +220,12 @@ class ReportsKpiScreen extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           _circStat('$totalDays', 'Leave days'.tr(context),
-                            AppColors.navyMid),
+                            AppColors.navyMid, c),
                           _circStat('$totalCount', 'Leave requests'.tr(context),
-                            AppColors.teal),
+                            AppColors.teal, c),
                           _circStat(
                             '${data.byType.length}', 'Types'.tr(context),
-                            AppColors.warning),
+                            AppColors.warning, c),
                         ]),
                     ),
                     // By type bars
@@ -237,7 +238,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                           final ratio = totalDays > 0
                               ? t.totalDays / totalDays
                               : 0.0;
-                          final c = leaveColors[i % leaveColors.length];
+                          final barColor = leaveColors[i % leaveColors.length];
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 8),
                             child: Column(children: [
@@ -250,20 +251,20 @@ class ReportsKpiScreen extends ConsumerWidget {
                                     style: TextStyle(fontFamily: 'Cairo',
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
-                                      color: c)),
+                                      color: barColor)),
                                   Text(t.type,
                                     style: TextStyle(fontFamily: 'Cairo',
                                       fontSize: 12,
-                                      color: AppColors.tx2)),
+                                      color: c.textSecondary)),
                                 ]),
                               const SizedBox(height: 4),
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(4),
                                 child: LinearProgressIndicator(
                                   value: ratio,
-                                  backgroundColor: AppColors.g100,
+                                  backgroundColor: c.gray100,
                                   valueColor:
-                                      AlwaysStoppedAnimation(c),
+                                      AlwaysStoppedAnimation(barColor),
                                   minHeight: 6)),
                             ]),
                           );
@@ -298,7 +299,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                                       value: totalDays > 0
                                           ? m.totalDays / totalDays
                                           : 0,
-                                      backgroundColor: AppColors.g100,
+                                      backgroundColor: c.gray100,
                                       valueColor:
                                           const AlwaysStoppedAnimation(
                                               AppColors.teal),
@@ -310,7 +311,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                                     style: TextStyle(
                                       fontFamily: 'Cairo',
                                       fontSize: 10,
-                                      color: AppColors.tx2),
+                                      color: c.textSecondary),
                                     textAlign: TextAlign.right)),
                               ]),
                             );
@@ -341,7 +342,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                       margin: const EdgeInsets.only(bottom: 10),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColors.bgCard,
+                        color: c.bgCard,
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: AppShadows.card),
                       child: Column(
@@ -361,7 +362,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                                 style: TextStyle(fontFamily: 'Cairo',
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.tx2),
+                                  color: c.textSecondary),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis),
                             ]),
@@ -370,7 +371,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
                               value: d.completionRate / 100,
-                              backgroundColor: AppColors.g100,
+                              backgroundColor: c.gray100,
                               valueColor:
                                   AlwaysStoppedAnimation(perfColor),
                               minHeight: 8)),
@@ -380,13 +381,13 @@ class ReportsKpiScreen extends ConsumerWidget {
                                 MainAxisAlignment.spaceAround,
                             children: [
                               _taskStat('${d.completed}', 'Completed'.tr(context),
-                                AppColors.success),
+                                AppColors.success, c),
                               _taskStat('${d.inProgress}', 'In Progress'.tr(context),
-                                AppColors.warning),
+                                AppColors.warning, c),
                               _taskStat('${d.overdue}', 'Late'.tr(context),
-                                AppColors.error),
+                                AppColors.error, c),
                               _taskStat('${d.total}', 'Total'.tr(context),
-                                AppColors.navyMid),
+                                AppColors.navyMid, c),
                             ]),
                         ]),
                     );
@@ -408,7 +409,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: AppColors.bgCard,
+                      color: c.bgCard,
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: AppShadows.card,
                       border: const Border(
@@ -434,7 +435,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: AppColors.bgCard,
+                      color: c.bgCard,
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: AppShadows.card,
                       border: const Border(
@@ -466,7 +467,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16, vertical: 13),
                 decoration: BoxDecoration(
-                  color: AppColors.bgCard,
+                  color: c.bgCard,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: AppShadows.sm),
                 child: Row(children: [
@@ -475,7 +476,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                     const SizedBox(width: 6),
                     Text('PDF Excel'.tr(context),
                       style: TextStyle(fontFamily: 'Cairo',
-                        fontSize: 11, color: AppColors.g400)),
+                        fontSize: 11, color: c.gray400)),
                   ]),
                   Expanded(child: Text(label,
                     style: TextStyle(fontFamily: 'Cairo',
@@ -498,31 +499,31 @@ class ReportsKpiScreen extends ConsumerWidget {
     return v.toStringAsFixed(1);
   }
 
-  Widget _legend(Color c, String l) => Row(children: [
+  Widget _legend(Color col, String l, AppColorsExtension colors) => Row(children: [
     Container(width: 10, height: 10,
       decoration: BoxDecoration(
-        color: c, borderRadius: BorderRadius.circular(3))),
+        color: col, borderRadius: BorderRadius.circular(3))),
     const SizedBox(width: 4),
     Text(l, style: TextStyle(fontFamily: 'Cairo',
-      fontSize: 10, color: AppColors.tx3)),
+      fontSize: 10, color: colors.textMuted)),
   ]);
 
-  Widget _circStat(String v, String l, Color c) =>
+  Widget _circStat(String v, String l, Color col, AppColorsExtension colors) =>
       Column(children: [
         Text(v, style: TextStyle(fontFamily: 'Cairo',
           fontSize: 22, fontWeight: FontWeight.w900,
-          color: c, height: 1.1)),
+          color: col, height: 1.1)),
         Text(l, style: TextStyle(fontFamily: 'Cairo',
-          fontSize: 10, color: AppColors.tx3, height: 1.3),
+          fontSize: 10, color: colors.textMuted, height: 1.3),
           textAlign: TextAlign.center),
       ]);
 
-  Widget _taskStat(String v, String l, Color c) =>
+  Widget _taskStat(String v, String l, Color col, AppColorsExtension colors) =>
       Column(children: [
         Text(v, style: TextStyle(fontFamily: 'Cairo',
-          fontSize: 14, fontWeight: FontWeight.w800, color: c)),
+          fontSize: 14, fontWeight: FontWeight.w800, color: col)),
         Text(l, style: TextStyle(fontFamily: 'Cairo',
-          fontSize: 9, color: AppColors.tx3)),
+          fontSize: 9, color: colors.textMuted)),
       ]);
 
   Widget _errorCard(String msg, [Object? error]) => Container(

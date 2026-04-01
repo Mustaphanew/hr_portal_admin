@@ -4,8 +4,12 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/providers/admin_providers.dart';
+import '../../../../core/providers/paginated_providers.dart'; // ignore: unused_import, prepared for paginated documents
+import '../../../../core/providers/paginated_notifier.dart'; // ignore: unused_import, prepared for paginated documents
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
+import '../../../../core/widgets/paginated_list_view.dart'; // ignore: unused_import, prepared for paginated documents
+import '../../data/models/document_models.dart'; // ignore: unused_import, prepared for paginated documents
 import '../../data/models/local_notification_model.dart';
 import '../providers/notifications_providers.dart';
 
@@ -38,10 +42,11 @@ class DocumentsOverviewScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.appColors;
     final categoriesAsync = ref.watch(documentCategoriesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: Column(children: [
         // ── Header ──
         Container(
@@ -79,7 +84,7 @@ class DocumentsOverviewScreen extends ConsumerWidget {
                   const Text('📂', style: TextStyle(fontSize: 16)),
                 ])),
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             ),
           ]),
         ),
@@ -100,6 +105,7 @@ class DocumentsOverviewScreen extends ConsumerWidget {
                   crossAxisCount: 2, shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.5,
+                  padding: EdgeInsets.zero,
                   children: data.categories.map((cat) {
                     final color = _colorForCategory(cat.key);
                     return GestureDetector(
@@ -107,7 +113,7 @@ class DocumentsOverviewScreen extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: AppColors.bgCard, borderRadius: BorderRadius.circular(16),
+                          color: c.bgCard, borderRadius: BorderRadius.circular(16),
                           boxShadow: AppShadows.card,
                           border: Border(bottom: BorderSide(color: color, width: 3))),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -127,7 +133,7 @@ class DocumentsOverviewScreen extends ConsumerWidget {
                             fontSize: 26, fontWeight: FontWeight.w900,
                             color: color, height: 1)),
                           Text(cat.label, style: TextStyle(fontFamily: 'Cairo',
-                            fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.tx2),
+                            fontSize: 11, fontWeight: FontWeight.w700, color: c.textSecondary),
                             maxLines: 1, overflow: TextOverflow.ellipsis),
                         ]),
                       ),
@@ -145,10 +151,10 @@ class DocumentsOverviewScreen extends ConsumerWidget {
               const Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 12),
               Text('Error loading documents'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-                fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.tx2)),
+                fontSize: 14, fontWeight: FontWeight.w700, color: c.textSecondary)),
               const SizedBox(height: 8),
               Text('$err', style: TextStyle(fontFamily: 'Cairo',
-                fontSize: 11, color: AppColors.tx3), textAlign: TextAlign.center),
+                fontSize: 11, color: c.textMuted), textAlign: TextAlign.center),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: () => ref.invalidate(documentCategoriesProvider),
@@ -199,12 +205,13 @@ class _NotifState extends ConsumerState<NotificationsCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final state = ref.watch(notificationsProvider);
     final notifs = state.visible;
     final unread = state.unreadCount;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: Column(children: [
         // ── Header ──
         Container(
@@ -213,51 +220,65 @@ class _NotifState extends ConsumerState<NotificationsCenterScreen> {
             top: MediaQuery.of(context).padding.top + 12,
             bottom: 14, left: 18, right: 18),
           child: Row(children: [
-            // Mark all read
+            // ── START: زر الرجوع ─────────────────────────────
             GestureDetector(
-              onTap: () => ref.read(notificationsProvider.notifier).markAllAsRead(),
+              onTap: () => context.pop(),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(9)),
-                child: Text('Mark all read'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-                  fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70)))),
-            Expanded(child: Column(children: [
-              Text('Notifications Center'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-                fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-              if (unread > 0) Text('unread_notifications'.tr(context, params: {'count': '$unread'}), style: TextStyle(fontFamily: 'Cairo',
-                fontSize: 11, color: AppColors.goldLight)),
+                padding: EdgeInsetsDirectional.only(start: 6),
+                alignment: AlignmentDirectional.center,
+                width: 36, height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 18))),
+            // ── CENTER: العنوان ───────────────────────────────
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+              Padding(
+                padding: const EdgeInsetsDirectional.only(start: 6),
+                child: Text('Notifications Center'.tr(context), style: TextStyle(fontFamily: 'Cairo',
+                  fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
+              ),
+              if (unread > 0) Text('unread_notifications'.tr(context, params: {'count': '$unread'}),
+                style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.goldLight)),
             ])),
-            // Back + Refresh
-            Row(children: [
+            // ── END: تحديث + تحديد الكل ──────────────────────
+            Row(mainAxisSize: MainAxisSize.min, children: [
               GestureDetector(
                 onTap: () => ref.read(notificationsProvider.notifier).fetchFirstPage(),
                 child: Container(width: 36, height: 36,
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.refresh, color: Colors.white, size: 18))),
               const SizedBox(width: 8),
-              GestureDetector(onTap: () => context.pop(),
-                child: Container(width: 36, height: 36,
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 17))),
+              GestureDetector(
+                onTap: () => ref.read(notificationsProvider.notifier).markAllAsRead(),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(9)),
+                  child: Text('Mark all read'.tr(context), style: TextStyle(fontFamily: 'Cairo',
+                    fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70)))),
             ]),
           ]),
         ),
         // ── Body ──
-        Expanded(child: _buildBody(notifs, state)),
+        Expanded(child: _buildBody(notifs, state, c)),
       ]),
     );
   }
 
-  Widget _buildBody(List<LocalNotification> notifs, NotificationsState state) {
+  Widget _buildBody(List<LocalNotification> notifs, NotificationsState state, AppColorsExtension c) {
     if (notifs.isEmpty && !state.isLoading) {
       return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
         const Text('🔔', style: TextStyle(fontSize: 48)),
         const SizedBox(height: 12),
         Text('No notifications'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-          fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.tx3)),
+          fontSize: 16, fontWeight: FontWeight.w700, color: c.textMuted)),
         const SizedBox(height: 6),
         Text('Notifications will appear here'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-          fontSize: 12, color: AppColors.g400)),
+          fontSize: 12, color: c.gray400)),
       ]));
     }
 
@@ -277,8 +298,8 @@ class _NotifState extends ConsumerState<NotificationsCenterScreen> {
           key: ValueKey(n.id),
           direction: DismissDirection.endToStart,
           background: Container(
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.only(left: 20),
+            alignment: AlignmentDirectional.centerStart,
+            padding: EdgeInsetsDirectional.only(start: 20),
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
               color: AppColors.error, borderRadius: BorderRadius.circular(16)),
@@ -294,7 +315,7 @@ class _NotifState extends ConsumerState<NotificationsCenterScreen> {
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: n.isRead ? AppColors.bgCard : AppColors.navyGhost,
+                color: n.isRead ? c.bgCard : AppColors.navyGhost,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: n.isRead ? AppShadows.sm : AppShadows.card,
                 border: n.isRead
@@ -312,20 +333,24 @@ class _NotifState extends ConsumerState<NotificationsCenterScreen> {
                 ]),
                 const SizedBox(width: 8),
                 // Content
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                     Text(n.timeAgo, style: TextStyle(fontFamily: 'Cairo',
-                      fontSize: 10, color: AppColors.g400)),
-                    Flexible(child: Text(n.titleByLang('ar'), style: TextStyle(fontFamily: 'Cairo',
-                      fontSize: 13,
-                      fontWeight: n.isRead ? FontWeight.w600 : FontWeight.w800,
-                      color: AppColors.tx1),
-                      maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.right)),
+                      fontSize: 10, color: c.gray400)),
+                    Flexible(child: Text(
+                      n.titleByLang(Localizations.localeOf(context).languageCode),
+                      style: TextStyle(fontFamily: 'Cairo',
+                        fontSize: 13,
+                        fontWeight: n.isRead ? FontWeight.w600 : FontWeight.w800,
+                        color: c.textPrimary),
+                      maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.start)),
                   ]),
                   const SizedBox(height: 4),
-                  Text(n.bodyByLang('ar'), style: TextStyle(fontFamily: 'Cairo',
-                    fontSize: 12, color: AppColors.tx3, height: 1.6),
-                    textAlign: TextAlign.right, maxLines: 2, overflow: TextOverflow.ellipsis),
+                  Text(
+                    n.bodyByLang(Localizations.localeOf(context).languageCode),
+                    style: TextStyle(fontFamily: 'Cairo',
+                      fontSize: 12, color: c.textMuted, height: 1.6),
+                    textAlign: TextAlign.start, maxLines: 2, overflow: TextOverflow.ellipsis),
                 ])),
                 const SizedBox(width: 10),
                 // Icon

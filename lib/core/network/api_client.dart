@@ -177,6 +177,11 @@ class ApiClient {
       rethrow;
     } on DioException catch (e) {
       print('└── ❌ DioException: ${e.type} ${e.requestOptions.path} — ${e.message}');
+      if (_isTimeout(e.type)) {
+        try {
+          await sessionManager.onTokenExpired();
+        } catch (_) {}
+      }
       throw _mapDioException(e);
     } catch (e, stack) {
       print('└── ❌ Unexpected: $e');
@@ -216,6 +221,13 @@ class ApiClient {
           message: 'An unexpected network error occurred.',
         );
     }
+  }
+
+  /// Whether the Dio error is a timeout.
+  bool _isTimeout(DioExceptionType type) {
+    return type == DioExceptionType.connectionTimeout ||
+           type == DioExceptionType.sendTimeout ||
+           type == DioExceptionType.receiveTimeout;
   }
 
   /// API error codes that must force logout / re-auth.

@@ -25,10 +25,10 @@ class LeaveRepository {
     int? page,
   }) async {
     final queryParameters = <String, dynamic>{
-      if (year != null) 'year': year,
-      if (status != null) 'status': status,
-      if (perPage != null) 'per_page': perPage,
-      if (page != null) 'page': page,
+      'year': ?year,
+      'status': ?status,
+      'per_page': ?perPage,
+      'page': ?page,
     };
 
     return _apiClient.get<LeavesListData>(
@@ -53,8 +53,8 @@ class LeaveRepository {
         'leave_type_id': leaveTypeId,
         'start_date': startDate,
         'end_date': endDate,
-        if (dayPart != null) 'day_part': dayPart,
-        if (reason != null) 'reason': reason,
+        'day_part': ?dayPart,
+        'reason': ?reason,
       },
       fromJson: (json) =>
           LeaveRequest.fromJson(json as Map<String, dynamic>),
@@ -90,11 +90,11 @@ class LeaveRepository {
     int? page,
   }) async {
     final queryParameters = <String, dynamic>{
-      if (status != null) 'status': status,
-      if (employeeId != null) 'employee_id': employeeId,
-      if (year != null) 'year': year,
-      if (perPage != null) 'per_page': perPage,
-      if (page != null) 'page': page,
+      'status': ?status,
+      'employee_id': ?employeeId,
+      'year': ?year,
+      'per_page': ?perPage,
+      'page': ?page,
     };
 
     return _apiClient.get<ManagerLeavesData>(
@@ -124,7 +124,7 @@ class LeaveRepository {
       ApiConstants.managerLeaveDecide(id),
       data: {
         'status': status,
-        if (responseNotes != null) 'response_notes': responseNotes,
+        'response_notes': ?responseNotes,
       },
       fromJson: (json) =>
           LeaveRequest.fromJson(json as Map<String, dynamic>),

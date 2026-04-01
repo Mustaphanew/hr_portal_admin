@@ -26,11 +26,11 @@ class AttendanceRepository {
       fromJson: (json) =>
           AttendanceHistoryData.fromJson(json as Map<String, dynamic>),
       queryParameters: {
-        if (month != null) 'month': month,
-        if (dateFrom != null) 'date_from': dateFrom,
-        if (dateTo != null) 'date_to': dateTo,
-        if (perPage != null) 'per_page': perPage,
-        if (page != null) 'page': page,
+        'month': ?month,
+        'date_from': ?dateFrom,
+        'date_to': ?dateTo,
+        'per_page': ?perPage,
+        'page': ?page,
       },
     );
     return response.data!;
@@ -50,12 +50,12 @@ class AttendanceRepository {
       fromJson: (json) =>
           AdminAttendanceData.fromJson(json as Map<String, dynamic>),
       queryParameters: {
-        if (date != null) 'date': date,
-        if (departmentId != null) 'department_id': departmentId,
-        if (status != null) 'status': status,
-        if (search != null) 'search': search,
-        if (perPage != null) 'per_page': perPage,
-        if (page != null) 'page': page,
+        'date': ?date,
+        'department_id': ?departmentId,
+        'status': ?status,
+        'search': ?search,
+        'per_page': ?perPage,
+        'page': ?page,
       },
     );
     return response.data!;
@@ -73,9 +73,9 @@ class AttendanceRepository {
       fromJson: (json) =>
           EmployeeAttendanceData.fromJson(json as Map<String, dynamic>),
       queryParameters: {
-        if (month != null) 'month': month,
-        if (dateFrom != null) 'date_from': dateFrom,
-        if (dateTo != null) 'date_to': dateTo,
+        'month': ?month,
+        'date_from': ?dateFrom,
+        'date_to': ?dateTo,
       },
     );
     return response.data!;

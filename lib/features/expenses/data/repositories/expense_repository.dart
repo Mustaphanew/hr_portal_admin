@@ -27,11 +27,11 @@ class ExpenseRepository {
       fromJson: (json) =>
           ExpensesData.fromJson(json as Map<String, dynamic>),
       queryParameters: {
-        if (status != null) 'status': status,
-        if (category != null) 'category': category,
-        if (employeeId != null) 'employee_id': employeeId,
-        if (perPage != null) 'per_page': perPage,
-        if (page != null) 'page': page,
+        'status': ?status,
+        'category': ?category,
+        'employee_id': ?employeeId,
+        'per_page': ?perPage,
+        'page': ?page,
       },
     );
     return response.data!;
@@ -54,7 +54,7 @@ class ExpenseRepository {
       fromJson: (json) =>
           Expense.fromJson(json as Map<String, dynamic>),
       data: {
-        if (notes != null) 'notes': notes,
+        'notes': ?notes,
       },
     );
     return response.data!;
@@ -67,7 +67,7 @@ class ExpenseRepository {
       fromJson: (json) =>
           Expense.fromJson(json as Map<String, dynamic>),
       data: {
-        if (notes != null) 'notes': notes,
+        'notes': ?notes,
       },
     );
     return response.data!;

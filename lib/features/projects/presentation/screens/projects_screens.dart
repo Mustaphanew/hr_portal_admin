@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/providers/admin_providers.dart';
+import '../../../../core/providers/paginated_providers.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
+import '../../../../core/widgets/paginated_list_view.dart';
 import '../../data/models/project_models.dart';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -48,12 +50,14 @@ class ProjectProgressCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    return GestureDetector(
     onTap: onTap,
     child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.bgCard,
+        color: c.bgCard,
         borderRadius: BorderRadius.circular(18),
         boxShadow: AppShadows.card,
         border: Border(
@@ -82,7 +86,7 @@ class ProjectProgressCard extends StatelessWidget {
                 fontSize: 13, fontWeight: FontWeight.w800),
                 textAlign: TextAlign.right, maxLines: 2, overflow: TextOverflow.ellipsis),
               Text(project.code, style: TextStyle(fontFamily: 'Cairo',
-                fontSize: 10, color: AppColors.g400, letterSpacing: 0.5)),
+                fontSize: 10, color: c.gray400, letterSpacing: 0.5)),
             ])),
           ]),
           const SizedBox(height: 10),
@@ -96,17 +100,17 @@ class ProjectProgressCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: project.progress,
-                  backgroundColor: AppColors.g100,
+                  backgroundColor: c.gray100,
                   valueColor: AlwaysStoppedAnimation(_statusColor),
                   minHeight: 6)))),
             Text('tasks_progress'.tr(context, params: {'completed': '${project.completedTasks}', 'total': '${project.taskCount}'}),
-              style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: AppColors.tx3)),
+              style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: c.textMuted)),
           ]),
           const SizedBox(height: 10),
           // Footer meta
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('${project.startDate ?? '-'} → ${project.endDate ?? '-'}',
-              style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: AppColors.tx3),
+              style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: c.textMuted),
               ),
             Row(children: [
               if (project.manager != null) ...[
@@ -116,13 +120,14 @@ class ProjectProgressCard extends StatelessWidget {
                 const SizedBox(width: 6),
               ],
               Text(project.department ?? '', style: TextStyle(fontFamily: 'Cairo',
-                fontSize: 11, color: AppColors.tx3)),
+                fontSize: 11, color: c.textMuted)),
             ]),
           ]),
         ]),
       ),
     ),
   );
+  }
 }
 
 class MilestoneTimelineCard extends StatelessWidget {
@@ -133,9 +138,10 @@ class MilestoneTimelineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final Color color = milestone.isCompleted ? AppColors.success
       : milestone.isDelayed ? AppColors.error
-      : milestone.status == 'pending' ? AppColors.g300 : AppColors.navyMid;
+      : milestone.status == 'pending' ? c.gray300 : AppColors.navyMid;
 
     return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Column(children: [
@@ -167,7 +173,7 @@ class MilestoneTimelineCard extends StatelessWidget {
           Flexible(child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Text(milestone.title, style: TextStyle(fontFamily: 'Cairo',
               fontSize: 12, fontWeight: FontWeight.w700,
-              color: milestone.isCompleted ? AppColors.tx3 : AppColors.tx1),
+              color: milestone.isCompleted ? c.textMuted : c.textPrimary),
               textAlign: TextAlign.right, maxLines: 2, overflow: TextOverflow.ellipsis),
             if (milestone.isDelayed)
               Text('⚠️ ${'Deadline exceeded'.tr(context)}', style: TextStyle(fontFamily: 'Cairo',
@@ -188,10 +194,11 @@ class ProjectsOverviewScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final projectsAsync = ref.watch(projectsProvider);
+    final c = context.appColors;
+    final projectsAsync = ref.watch(paginatedProjectsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: projectsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Column(
@@ -201,11 +208,11 @@ class ProjectsOverviewScreen extends ConsumerWidget {
               fontSize: 14, color: AppColors.error)),
             const SizedBox(height: 8),
             OutlineBtn(text: 'Retry'.tr(context),
-              onTap: () => ref.invalidate(projectsProvider)),
+              onTap: () => ref.invalidate(paginatedProjectsProvider)),
           ],
         )),
-        data: (data) {
-          final projects = data.projects;
+        data: (paginated) {
+          final projects = paginated.items;
           final active    = projects.where((p) => p.status == 'active').length;
           final onHold    = projects.where((p) => p.status == 'on_hold').length;
           final completed = projects.where((p) => p.status == 'completed').length;
@@ -249,7 +256,10 @@ class ProjectsOverviewScreen extends ConsumerWidget {
               ]),
             ),
             Expanded(child: RefreshIndicator(
-              onRefresh: () async => ref.invalidate(projectsProvider),
+              onRefresh: () async {
+                ref.invalidate(paginatedProjectsProvider);
+                await ref.read(paginatedProjectsProvider.future);
+              },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 80),
@@ -263,15 +273,15 @@ class ProjectsOverviewScreen extends ConsumerWidget {
                   // KPI cards row
                   SectionHeader(title: 'Operational overview'.tr(context)),
                   Row(children: [
-                    _kpiTile(projects.isNotEmpty
+                    _kpiTile(context, projects.isNotEmpty
                       ? '${(projects.fold(0.0, (s, p) => s + p.progress) / projects.length * 100).toInt()}%'
                       : '0%',
                       'Average completion'.tr(context), AppColors.navyMid, '📊'),
                     const SizedBox(width: 10),
-                    _kpiTile('${projects.fold(0, (s, p) => s + p.taskCount)}',
+                    _kpiTile(context, '${projects.fold(0, (s, p) => s + p.taskCount)}',
                       'Total tasks'.tr(context), AppColors.teal, '✅'),
                     const SizedBox(width: 10),
-                    _kpiTile('$delayed',
+                    _kpiTile(context, '$delayed',
                       'Delayed projects'.tr(context), AppColors.error, '⏰'),
                   ]),
                   const SizedBox(height: 16),
@@ -330,18 +340,18 @@ class ProjectsOverviewScreen extends ConsumerWidget {
       Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.white70)),
     ])));
 
-  Widget _kpiTile(String v, String l, Color c, String ico) => Expanded(child: Container(
+  Widget _kpiTile(BuildContext context, String v, String l, Color col, String ico) => Expanded(child: Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: AppColors.bgCard, borderRadius: BorderRadius.circular(14),
+      color: context.appColors.bgCard, borderRadius: BorderRadius.circular(14),
       boxShadow: AppShadows.card,
-      border: Border(bottom: BorderSide(color: c, width: 3))),
+      border: Border(bottom: BorderSide(color: col, width: 3))),
     child: Column(children: [
       Text(ico, style: const TextStyle(fontSize: 18)),
       const SizedBox(height: 4),
       Text(v, style: TextStyle(fontFamily: 'Cairo',
-        fontSize: 20, fontWeight: FontWeight.w900, color: c, height: 1.1)),
-      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: AppColors.tx3),
+        fontSize: 20, fontWeight: FontWeight.w900, color: col, height: 1.1)),
+      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: col.withOpacity(0.6)),
         textAlign: TextAlign.center),
     ])));
 }
@@ -362,21 +372,22 @@ class _ProjectsListState extends ConsumerState<ProjectsListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final projectsAsync = ref.watch(projectsProvider);
+    final c = context.appColors;
+    final projectsAsync = ref.watch(paginatedProjectsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: Column(children: [
         AdminAppBar(title: 'Projects'.tr(context),
-          subtitle: projectsAsync.whenOrNull(data: (d) => 'projects_total'.tr(context, params: {'count': '${d.projects.length}'})) ?? '',
+          subtitle: projectsAsync.whenOrNull(data: (d) => 'projects_total'.tr(context, params: {'count': '${d.items.length}'})) ?? '',
           onBack: () => context.pop()),
-        Container(color: AppColors.bgCard,
+        Container(color: c.bgCard,
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
           child: TextField(
             style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
             onChanged: (v) => setState(() => _search = v),
-            decoration: fieldDec('Search'.tr(context)).copyWith(
-              prefixIcon: const Icon(Icons.search, color: AppColors.g400, size: 20),
+            decoration: fieldDec(context, 'Search'.tr(context)).copyWith(
+              prefixIcon: Icon(Icons.search, color: c.gray400, size: 20),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10)))),
         FilterBar(tabs: ['All'.tr(context), 'Active'.tr(context), 'On Hold'.tr(context), 'Completed'.tr(context), 'Cancelled'.tr(context)],
           selected: _tab, onSelect: (i) => setState(() => _tab = i)),
@@ -388,11 +399,11 @@ class _ProjectsListState extends ConsumerState<ProjectsListScreen> {
               Text('Error loading projects'.tr(context), style: TextStyle(fontFamily: 'Cairo', color: AppColors.error)),
               const SizedBox(height: 8),
               OutlineBtn(text: 'Retry'.tr(context),
-                onTap: () => ref.invalidate(projectsProvider)),
+                onTap: () => ref.invalidate(paginatedProjectsProvider)),
             ],
           )),
-          data: (data) {
-            final filtered = data.projects.where((p) {
+          data: (paginated) {
+            final filtered = paginated.items.where((p) {
               final matchSearch = _search.isEmpty ||
                 p.name.contains(_search) || p.code.contains(_search);
               final statusFilter = _statusFilters[_tab];
@@ -400,20 +411,23 @@ class _ProjectsListState extends ConsumerState<ProjectsListScreen> {
               return matchSearch && matchTab;
             }).toList();
 
-            if (filtered.isEmpty) {
-              return EmptyState(icon: '🏗', title: 'No projects'.tr(context),
-                subtitle: 'No matching projects'.tr(context));
-            }
-
             return RefreshIndicator(
-              onRefresh: () async => ref.invalidate(projectsProvider),
-              child: ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                itemCount: filtered.length,
-                itemBuilder: (_, i) => ProjectProgressCard(
-                  project: filtered[i],
-                  onTap: () => context.push('/project-detail/${filtered[i].id}'))),
+              onRefresh: () async {
+                ref.invalidate(paginatedProjectsProvider);
+                await ref.read(paginatedProjectsProvider.future);
+              },
+              child: PaginatedListView<Project>(
+                items: filtered,
+                isLoadingMore: paginated.isLoadingMore,
+                hasMore: _tab == 0 && _search.isEmpty ? paginated.hasMore : false,
+                loadMoreError: paginated.loadMoreError,
+                onFetchMore: () => ref.read(paginatedProjectsProvider.notifier).fetchMore(),
+                emptyWidget: Center(child: EmptyState(icon: '🏗', title: 'No projects'.tr(context),
+                  subtitle: 'No matching projects'.tr(context))),
+                itemBuilder: (_, p, i) => ProjectProgressCard(
+                  project: p,
+                  onTap: () => context.push('/project-detail/${p.id}')),
+              ),
             );
           },
         )),
@@ -432,11 +446,12 @@ class ProjectDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.appColors;
     final projectAsync = ref.watch(projectDetailProvider(projectId));
     final milestonesAsync = ref.watch(projectMilestonesProvider(projectId));
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: projectAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Column(
@@ -504,7 +519,7 @@ class ProjectDetailScreen extends ConsumerWidget {
                       _heroStat('${p.completedTasks}/${p.taskCount}', 'المهام', '✅'),
                       milestonesAsync.when(
                         loading: () => _heroStat('...', 'المراحل', '🏁'),
-                        error: (_, __) => _heroStat('-', 'المراحل', '🏁'),
+                        error: (_, _) => _heroStat('-', 'المراحل', '🏁'),
                         data: (ms) => _heroStat(
                           '${ms.where((m) => m.isCompleted).length}/${ms.length}',
                           'المراحل', '🏁'),
@@ -558,7 +573,7 @@ class ProjectDetailScreen extends ConsumerWidget {
                         fontSize: 14, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 8),
                       Text(p.description!, style: TextStyle(fontFamily: 'Cairo',
-                        fontSize: 13, color: AppColors.tx2, height: 1.8)),
+                        fontSize: 13, color: c.textSecondary, height: 1.8)),
                     ])),
 
                   // Milestones preview
@@ -569,7 +584,7 @@ class ProjectDetailScreen extends ConsumerWidget {
                     loading: () => const Center(child: Padding(
                       padding: EdgeInsets.all(16),
                       child: CircularProgressIndicator())),
-                    error: (_, __) => AppCard(mb: 14, child: const EmptyState(
+                    error: (_, _) => AppCard(mb: 14, child: const EmptyState(
                       icon: '🏁', title: 'خطأ في تحميل المراحل', subtitle: '')),
                     data: (milestones) => milestones.isEmpty
                       ? AppCard(mb: 14, child: EmptyState(
@@ -658,21 +673,21 @@ class ProjectDetailScreen extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.bgCard, borderRadius: BorderRadius.circular(12),
+          color: ctx.appColors.bgCard, borderRadius: BorderRadius.circular(12),
           boxShadow: AppShadows.sm),
         child: Center(child: Text(label, style: TextStyle(fontFamily: 'Cairo',
           fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.navyMid),
           textAlign: TextAlign.center)))));
 
-  Widget _taskStat(String v, String l, Color c) => Expanded(child: Container(
+  Widget _taskStat(String v, String l, Color col) => Expanded(child: Container(
     padding: const EdgeInsets.symmetric(vertical: 10),
     decoration: BoxDecoration(
-      color: c.withOpacity(0.08), borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: c.withOpacity(0.2))),
+      color: col.withOpacity(0.08), borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: col.withOpacity(0.2))),
     child: Column(children: [
       Text(v, style: TextStyle(fontFamily: 'Cairo',
-        fontSize: 20, fontWeight: FontWeight.w900, color: c, height: 1.1)),
-      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: AppColors.tx3)),
+        fontSize: 20, fontWeight: FontWeight.w900, color: col, height: 1.1)),
+      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: col.withOpacity(0.6))),
     ])));
 }
 
@@ -692,6 +707,7 @@ class _ProjectTasksState extends ConsumerState<ProjectTasksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final tasksAsync = ref.watch(projectTasksProvider(widget.projectId));
     final projectAsync = ref.watch(projectDetailProvider(widget.projectId));
 
@@ -700,7 +716,7 @@ class _ProjectTasksState extends ConsumerState<ProjectTasksScreen> {
     ) ?? '';
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: Column(children: [
         AdminAppBar(title: 'Project tasks'.tr(context),
           subtitle: subtitleText,
@@ -708,8 +724,8 @@ class _ProjectTasksState extends ConsumerState<ProjectTasksScreen> {
         // Summary strip
         tasksAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
-          data: (tasks) => Container(color: AppColors.bgCard,
+          error: (_, _) => const SizedBox.shrink(),
+          data: (tasks) => Container(color: c.bgCard,
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
             child: Row(children: [
               _statChip('${tasks.length}', 'All'.tr(context), AppColors.navyMid),
@@ -763,13 +779,13 @@ class _ProjectTasksState extends ConsumerState<ProjectTasksScreen> {
     );
   }
 
-  Widget _statChip(String v, String l, Color c) => Expanded(child: Container(
+  Widget _statChip(String v, String l, Color col) => Expanded(child: Container(
     padding: const EdgeInsets.symmetric(vertical: 8),
-    decoration: BoxDecoration(color: c.withOpacity(0.08),
-      borderRadius: BorderRadius.circular(10), border: Border.all(color: c.withOpacity(0.2))),
+    decoration: BoxDecoration(color: col.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(10), border: Border.all(color: col.withOpacity(0.2))),
     child: Column(children: [
-      Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.w900, color: c, height: 1.1)),
-      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: AppColors.tx3)),
+      Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.w900, color: col, height: 1.1)),
+      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: col.withOpacity(0.6))),
     ])));
 }
 
@@ -799,11 +815,12 @@ class _ProjectTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.bgCard, borderRadius: BorderRadius.circular(14),
+        color: c.bgCard, borderRadius: BorderRadius.circular(14),
         boxShadow: AppShadows.card,
         border: Border(right: BorderSide(color: _statusColor, width: 3))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -825,11 +842,11 @@ class _ProjectTaskCard extends StatelessWidget {
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           if (task.dueDate != null)
             Text('📅 ${task.dueDate}', style: TextStyle(fontFamily: 'Cairo',
-              fontSize: 10, color: AppColors.tx3)),
+              fontSize: 10, color: c.textMuted)),
           if (task.assignedTo != null)
             Row(children: [
               Text(task.assignedTo!.name, style: TextStyle(fontFamily: 'Cairo',
-                fontSize: 11, color: AppColors.tx3)),
+                fontSize: 11, color: c.textMuted)),
               const SizedBox(width: 4),
               AdminAvatar(
                 initials: task.assignedTo!.name.length >= 2
@@ -852,10 +869,11 @@ class ProjectMilestonesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.appColors;
     final milestonesAsync = ref.watch(projectMilestonesProvider(projectId));
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: Column(children: [
         AdminAppBar(title: 'Project milestones'.tr(context),
           subtitle: milestonesAsync.whenOrNull(
@@ -885,20 +903,20 @@ class ProjectMilestonesScreen extends ConsumerWidget {
 
             return Expanded(child: Column(children: [
               // Progress strip
-              Container(color: AppColors.bgCard,
+              Container(color: c.bgCard,
                 padding: const EdgeInsets.all(16),
                 child: Column(children: [
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                     Text('${(completed / milestones.length * 100).toInt()}%', style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.navyMid)),
                     Text('$completed/${milestones.length} مراحل مكتملة', style: TextStyle(fontFamily: 'Cairo',
-                      fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.tx2)),
+                      fontSize: 13, fontWeight: FontWeight.w700, color: c.textSecondary)),
                   ]),
                   const SizedBox(height: 8),
                   ClipRRect(borderRadius: BorderRadius.circular(6),
                     child: LinearProgressIndicator(
                       value: completed / milestones.length,
-                      backgroundColor: AppColors.g100,
+                      backgroundColor: c.gray100,
                       valueColor: const AlwaysStoppedAnimation(AppColors.navyMid),
                       minHeight: 10)),
                   if (delayed > 0) ...[
@@ -934,10 +952,11 @@ class ProjectFollowUpScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final projectsAsync = ref.watch(projectsProvider);
+    final c = context.appColors;
+    final projectsAsync = ref.watch(paginatedProjectsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: projectsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Column(
@@ -946,12 +965,12 @@ class ProjectFollowUpScreen extends ConsumerWidget {
             Text('Error loading projects'.tr(context), style: TextStyle(fontFamily: 'Cairo', color: AppColors.error)),
             const SizedBox(height: 8),
             OutlineBtn(text: 'Retry'.tr(context),
-              onTap: () => ref.invalidate(projectsProvider)),
+              onTap: () => ref.invalidate(paginatedProjectsProvider)),
           ],
         )),
-        data: (data) {
-          final delayedProjects = data.projects.where((p) => p.isDelayed).toList();
-          final activeProjects = data.projects.where((p) => p.status == 'active').toList();
+        data: (paginated) {
+          final delayedProjects = paginated.items.where((p) => p.isDelayed).toList();
+          final activeProjects = paginated.items.where((p) => p.status == 'active').toList();
           final followUpProjects = [...delayedProjects, ...activeProjects.where((p) => !p.isDelayed)];
 
           return Column(children: [
@@ -976,7 +995,7 @@ class ProjectFollowUpScreen extends ConsumerWidget {
               ]),
             ),
             Expanded(child: RefreshIndicator(
-              onRefresh: () async => ref.invalidate(projectsProvider),
+              onRefresh: () async => ref.invalidate(paginatedProjectsProvider),
               child: followUpProjects.isEmpty
                 ? SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -1012,6 +1031,7 @@ class _FollowUpProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final isDelayed = project.isDelayed;
     final borderColor = isDelayed ? AppColors.error : AppColors.warning;
 
@@ -1021,7 +1041,7 @@ class _FollowUpProjectCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.bgCard,
+          color: c.bgCard,
           borderRadius: BorderRadius.circular(14),
           boxShadow: AppShadows.card,
           border: Border.all(color: borderColor.withOpacity(0.3))),
@@ -1048,10 +1068,10 @@ class _FollowUpProjectCard extends StatelessWidget {
               fontSize: 13, fontWeight: FontWeight.w700),
               textAlign: TextAlign.right, maxLines: 2, overflow: TextOverflow.ellipsis),
             Text(project.code, style: TextStyle(fontFamily: 'Cairo',
-              fontSize: 10, color: AppColors.g400)),
+              fontSize: 10, color: c.gray400)),
             if (project.manager != null)
               Text(project.manager!.name, style: TextStyle(fontFamily: 'Cairo',
-                fontSize: 11, color: AppColors.tx3)),
+                fontSize: 11, color: c.textMuted)),
           ])),
           const SizedBox(width: 8),
           Text(isDelayed ? '⚠️' : '📋', style: const TextStyle(fontSize: 22)),
@@ -1071,11 +1091,12 @@ class ProjectAnalyticsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.appColors;
     final analyticsAsync = ref.watch(projectAnalyticsProvider(projectId));
     final projectAsync = ref.watch(projectDetailProvider(projectId));
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: analyticsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Column(
@@ -1132,7 +1153,7 @@ class ProjectAnalyticsScreen extends ConsumerWidget {
                     ClipRRect(borderRadius: BorderRadius.circular(6),
                       child: LinearProgressIndicator(
                         value: analytics.progress,
-                        backgroundColor: AppColors.g100,
+                        backgroundColor: c.gray100,
                         valueColor: const AlwaysStoppedAnimation(AppColors.navyMid),
                         minHeight: 10)),
                     const SizedBox(height: 12),
@@ -1151,6 +1172,7 @@ class ProjectAnalyticsScreen extends ConsumerWidget {
                     crossAxisCount: 2, shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.35,
+                    padding: EdgeInsets.zero,
                     children: [
                       KpiCard(label: 'Total tasks'.tr(context),  value: '${analytics.tasks.total}',
                         change: '${analytics.tasks.completed} مكتملة', icon: '📋',
@@ -1187,14 +1209,14 @@ class ProjectAnalyticsScreen extends ConsumerWidget {
                         style: TextStyle(fontFamily: 'Cairo', fontSize: 14,
                           fontWeight: FontWeight.w800, color: AppColors.navyMid)),
                       Text('Budget'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-                        fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.tx2)),
+                        fontSize: 13, fontWeight: FontWeight.w700, color: c.textSecondary)),
                     ]),
                     const SizedBox(height: 8),
                     ClipRRect(borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: analytics.budget.allocated > 0
                           ? analytics.budget.spent / analytics.budget.allocated : 0,
-                        backgroundColor: AppColors.g100,
+                        backgroundColor: c.gray100,
                         valueColor: AlwaysStoppedAnimation(
                           analytics.budget.remaining < 0 ? AppColors.error : AppColors.teal),
                         minHeight: 8)),
@@ -1205,7 +1227,7 @@ class ProjectAnalyticsScreen extends ConsumerWidget {
                           color: analytics.budget.remaining < 0 ? AppColors.error : AppColors.success,
                           fontWeight: FontWeight.w600)),
                       Text('المصروف: ${analytics.budget.spent.toStringAsFixed(0)}',
-                        style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.tx3)),
+                        style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: c.textMuted)),
                     ]),
                   ])),
 
@@ -1228,10 +1250,10 @@ class ProjectAnalyticsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _circStat(String v, String l, Color c) => Column(children: [
+  Widget _circStat(String v, String l, Color col) => Column(children: [
     Text(v, style: TextStyle(fontFamily: 'Cairo',
-      fontSize: 22, fontWeight: FontWeight.w900, color: c, height: 1.1)),
-    Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: AppColors.tx3, height: 1.3)),
+      fontSize: 22, fontWeight: FontWeight.w900, color: col, height: 1.1)),
+    Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: col.withOpacity(0.6), height: 1.3)),
   ]);
 
   Widget _timelineStat(String ico, String label, Color c) => Row(children: [

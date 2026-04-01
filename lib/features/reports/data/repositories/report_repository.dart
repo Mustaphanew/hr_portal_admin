@@ -51,7 +51,7 @@ class ReportRepository {
       fromJson: (json) =>
           LeaveAnalysisData.fromJson(json as Map<String, dynamic>),
       queryParameters: {
-        if (year != null) 'year': year,
+        'year': ?year,
       },
     );
     return response.data!;

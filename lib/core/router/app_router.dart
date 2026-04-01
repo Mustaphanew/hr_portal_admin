@@ -58,11 +58,11 @@ final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
   routes: [
     // ── Auth ──────────────────────────────────────────────
-    GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
-    GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
-    GoRoute(path: '/otp', builder: (_, __) => const OTPScreen()),
-    GoRoute(path: '/forgot-password', builder: (_, __) => const LoginScreen()),
-    GoRoute(path: '/guest-settings', builder: (_, __) => const AdminSettingsScreen()),
+    GoRoute(path: '/splash', builder: (_, _) => const SplashScreen()),
+    GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+    GoRoute(path: '/otp', builder: (_, _) => const OTPScreen()),
+    GoRoute(path: '/forgot-password', builder: (_, _) => const LoginScreen()),
+    GoRoute(path: '/guest-settings', builder: (_, _) => const AdminSettingsScreen()),
 
     // ── Main Shell with persistent bottom nav ─────────────
     StatefulShellRoute.indexedStack(
@@ -73,64 +73,68 @@ final GoRouter appRouter = GoRouter(
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/home',
-            builder: (_, __) => const AdminDashboardScreen(),
+            builder: (_, _) => const AdminDashboardScreen(),
+          ),
+          GoRoute(
+            path: '/notifications',
+            builder: (_, _) => const NotificationsCenterScreen(),
           ),
         ]),
         // Tab 1: Requests
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/requests',
-            builder: (_, __) => const RequestsManagementScreen(),
+            builder: (_, _) => const RequestsManagementScreen(),
           ),
         ]),
         // Tab 2: Tasks
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/tasks',
-            builder: (_, __) => const TasksDashboardScreen(),
+            builder: (_, _) => const TasksDashboardScreen(),
           ),
         ]),
         // Tab 3: Follow-up
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/follow-up',
-            builder: (_, __) => const FollowUpScreen(),
+            builder: (_, _) => const FollowUpScreen(),
           ),
         ]),
         // Tab 4: Settings
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/settings',
-            builder: (_, __) => const AdminSettingsScreen(),
+            builder: (_, _) => const AdminSettingsScreen(),
           ),
         ]),
       ],
     ),
 
     // ── Departments ───────────────────────────────────────
-    GoRoute(path: '/departments', builder: (_, __) => const DepartmentsScreen()),
+    GoRoute(path: '/departments', builder: (_, _) => const DepartmentsScreen()),
     GoRoute(path: '/department-detail/:id', builder: (_, state) =>
       DepartmentDetailScreen(departmentId: _extractId(state))),
     GoRoute(path: '/department-detail', builder: (_, state) =>
       DepartmentDetailScreen(departmentId: _extractId(state))),
 
     // ── Employees ─────────────────────────────────────────
-    GoRoute(path: '/employees', builder: (_, __) => const EmployeesScreen()),
+    GoRoute(path: '/employees', builder: (_, _) => const EmployeesScreen()),
     GoRoute(path: '/employee-detail/:id', builder: (_, state) =>
       EmployeeDetailScreen(employeeId: _extractId(state))),
     GoRoute(path: '/employee-detail', builder: (_, state) =>
       EmployeeDetailScreen(employeeId: _extractId(state))),
 
     // ── Requests (sub-pages) ──────────────────────────────
-    GoRoute(path: '/all-requests', builder: (_, __) => const AllRequestsScreen()),
+    GoRoute(path: '/all-requests', builder: (_, _) => const AllRequestsScreen()),
     GoRoute(path: '/request-detail/:id', builder: (_, state) =>
       RequestDetailScreen(requestId: _extractId(state))),
     GoRoute(path: '/request-detail', builder: (_, state) =>
       RequestDetailScreen(requestId: _extractId(state))),
-    GoRoute(path: '/approvals', builder: (_, __) => const ApprovalsScreen()),
+    GoRoute(path: '/approvals', builder: (_, _) => const ApprovalsScreen()),
 
     // ── Tasks (sub-pages) ─────────────────────────────────
-    GoRoute(path: '/all-tasks', builder: (_, __) => const AllTasksScreen()),
+    GoRoute(path: '/all-tasks', builder: (_, _) => const AllTasksScreen()),
     GoRoute(path: '/task-detail/:id', builder: (_, state) =>
       TaskDetailScreen(taskId: _extractId(state))),
     GoRoute(path: '/task-detail', builder: (_, state) =>
@@ -143,36 +147,36 @@ final GoRouter appRouter = GoRouter(
       FollowUpDetailScreen(followUpId: _extractId(state))),
 
     // ── Attendance ────────────────────────────────────────
-    GoRoute(path: '/attendance', builder: (_, __) => const AttendanceManagementScreen()),
+    GoRoute(path: '/attendance', builder: (_, _) => const AttendanceManagementScreen()),
     GoRoute(path: '/attendance-detail', builder: (_, state) =>
       AttendanceDetailScreen(record: state.extra as dynamic)),
 
     // ── Leave ─────────────────────────────────────────────
-    GoRoute(path: '/leave', builder: (_, __) => const LeaveManagementScreen()),
-    GoRoute(path: '/leave-detail', builder: (_, __) => const LeaveDetailAdminScreen()),
+    GoRoute(path: '/leave', builder: (_, _) => const LeaveManagementScreen()),
+    GoRoute(path: '/leave-detail/:id', builder: (_, state) => LeaveDetailAdminScreen(
+      leaveId: int.parse(state.pathParameters['id']!))),
 
     // ── Announcements ─────────────────────────────────────
-    GoRoute(path: '/announcements', builder: (_, __) => const AnnouncementsManagementScreen()),
+    GoRoute(path: '/announcements', builder: (_, _) => const AnnouncementsManagementScreen()),
     GoRoute(path: '/announcement-detail/:id', builder: (_, state) =>
       AnnouncementDetailScreen(announcementId: _extractId(state))),
     GoRoute(path: '/announcement-detail', builder: (_, state) =>
       AnnouncementDetailScreen(announcementId: _extractId(state))),
 
-    // ── Documents + Notifications ─────────────────────────
-    GoRoute(path: '/documents', builder: (_, __) => const DocumentsOverviewScreen()),
-    GoRoute(path: '/notifications', builder: (_, __) => const NotificationsCenterScreen()),
+    // ── Documents ─────────────────────────────────────────
+    GoRoute(path: '/documents', builder: (_, _) => const DocumentsOverviewScreen()),
 
     // ── Reports ───────────────────────────────────────────
-    GoRoute(path: '/reports', builder: (_, __) => const ReportsKpiScreen()),
+    GoRoute(path: '/reports', builder: (_, _) => const ReportsKpiScreen()),
 
     // ── Settings (sub-pages) ──────────────────────────────
-    GoRoute(path: '/admin-profile', builder: (_, __) => const AdminProfileScreen()),
-    GoRoute(path: '/support', builder: (_, __) => const SupportScreen()),
-    GoRoute(path: '/about', builder: (_, __) => const AboutScreen()),
+    GoRoute(path: '/admin-profile', builder: (_, _) => const AdminProfileScreen()),
+    GoRoute(path: '/support', builder: (_, _) => const SupportScreen()),
+    GoRoute(path: '/about', builder: (_, _) => const AboutScreen()),
 
     // ── Projects ──────────────────────────────────────────
-    GoRoute(path: '/projects', builder: (_, __) => const ProjectsOverviewScreen()),
-    GoRoute(path: '/projects-list', builder: (_, __) => const ProjectsListScreen()),
+    GoRoute(path: '/projects', builder: (_, _) => const ProjectsOverviewScreen()),
+    GoRoute(path: '/projects-list', builder: (_, _) => const ProjectsListScreen()),
     GoRoute(path: '/project-detail/:id', builder: (_, state) =>
       ProjectDetailScreen(projectId: _extractId(state))),
     GoRoute(path: '/project-detail', builder: (_, state) =>
@@ -185,21 +189,21 @@ final GoRouter appRouter = GoRouter(
       ProjectMilestonesScreen(projectId: _extractId(state))),
     GoRoute(path: '/project-milestones', builder: (_, state) =>
       ProjectMilestonesScreen(projectId: _extractId(state))),
-    GoRoute(path: '/project-follow-up', builder: (_, __) => const ProjectFollowUpScreen()),
+    GoRoute(path: '/project-follow-up', builder: (_, _) => const ProjectFollowUpScreen()),
     GoRoute(path: '/project-analytics/:id', builder: (_, state) =>
       ProjectAnalyticsScreen(projectId: _extractId(state))),
     GoRoute(path: '/project-analytics', builder: (_, state) =>
       ProjectAnalyticsScreen(projectId: _extractId(state))),
 
     // ── Expenses ──────────────────────────────────────────
-    GoRoute(path: '/expenses', builder: (_, __) => const ExpensesOverviewScreen()),
-    GoRoute(path: '/expense-requests', builder: (_, __) => const ExpenseRequestsListScreen()),
+    GoRoute(path: '/expenses', builder: (_, _) => const ExpensesOverviewScreen()),
+    GoRoute(path: '/expense-requests', builder: (_, _) => const ExpenseRequestsListScreen()),
     GoRoute(path: '/expense-detail/:id', builder: (_, state) =>
       ExpenseRequestDetailScreen(expenseId: _extractId(state))),
     GoRoute(path: '/expense-detail', builder: (_, state) =>
       ExpenseRequestDetailScreen(expenseId: _extractId(state))),
-    GoRoute(path: '/expense-categories', builder: (_, __) => const ExpenseCategoriesScreen()),
-    GoRoute(path: '/expense-analytics', builder: (_, __) => const ExpenseAnalyticsScreen()),
-    GoRoute(path: '/expense-follow-up', builder: (_, __) => const ExpenseFollowUpScreen()),
+    GoRoute(path: '/expense-categories', builder: (_, _) => const ExpenseCategoriesScreen()),
+    GoRoute(path: '/expense-analytics', builder: (_, _) => const ExpenseAnalyticsScreen()),
+    GoRoute(path: '/expense-follow-up', builder: (_, _) => const ExpenseFollowUpScreen()),
   ],
 );

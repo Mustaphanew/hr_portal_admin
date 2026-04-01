@@ -38,12 +38,12 @@ class DocumentRepository {
       fromJson: (json) =>
           AdminDocumentsData.fromJson(json as Map<String, dynamic>),
       queryParameters: {
-        if (category != null) 'category': category,
-        if (employeeId != null) 'employee_id': employeeId,
-        if (departmentId != null) 'department_id': departmentId,
-        if (search != null) 'search': search,
-        if (perPage != null) 'per_page': perPage,
-        if (page != null) 'page': page,
+        'category': ?category,
+        'employee_id': ?employeeId,
+        'department_id': ?departmentId,
+        'search': ?search,
+        'per_page': ?perPage,
+        'page': ?page,
       },
     );
     return response.data!;

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../providers/auth_providers.dart';
@@ -133,8 +132,10 @@ class _LoginState extends ConsumerState<LoginScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-      backgroundColor: AppColors.bg,
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    return Scaffold(
+      backgroundColor: c.bg,
       body: SingleChildScrollView(child: Column(children: [
         Container(
           decoration: const BoxDecoration(gradient: AppColors.navyGradient),
@@ -181,21 +182,21 @@ class _LoginState extends ConsumerState<LoginScreen> {
           padding: const EdgeInsets.all(22),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Text('Admin email'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-              fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.tx2), textAlign: TextAlign.right),
+              fontSize: 12, fontWeight: FontWeight.w600, color: c.textSecondary), textAlign: TextAlign.right),
             const SizedBox(height: 6),
             TextField(controller: _userCtrl, textDirection: TextDirection.ltr,
               textAlign: TextAlign.right,
-              style: TextStyle(fontFamily: 'Cairo', fontSize: 13), decoration: fieldDec('Admin email'.tr(context))),
+              style: TextStyle(fontFamily: 'Cairo', fontSize: 13), decoration: fieldDec(context, 'Admin email'.tr(context))),
             const SizedBox(height: 14),
             Text('Enter password'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-              fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.tx2), textAlign: TextAlign.right),
+              fontSize: 12, fontWeight: FontWeight.w600, color: c.textSecondary), textAlign: TextAlign.right),
             const SizedBox(height: 6),
             TextField(controller: _pwCtrl, obscureText: !_showPw,
               style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
-              decoration: fieldDec('Enter password'.tr(context)).copyWith(
+              decoration: fieldDec(context, 'Enter password'.tr(context)).copyWith(
                 suffixIcon: IconButton(
                   icon: Icon(_showPw ? Icons.visibility_off : Icons.visibility,
-                    color: AppColors.g400, size: 20),
+                    color: c.gray400, size: 20),
                   onPressed: () => setState(() => _showPw = !_showPw)))),
             const SizedBox(height: 10),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -204,7 +205,7 @@ class _LoginState extends ConsumerState<LoginScreen> {
                 child: Text('Forgot password?'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 12, color: AppColors.navyLight, fontWeight: FontWeight.w600))),
               Row(children: [
-                Text('Remember me'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.tx3)),
+                Text('Remember me'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: c.textMuted)),
                 const SizedBox(width: 6),
                 Transform.scale(scale: 0.9, child: Checkbox(
                   value: _remember, activeColor: AppColors.navyMid,
@@ -215,11 +216,12 @@ class _LoginState extends ConsumerState<LoginScreen> {
             PrimaryBtn(text: 'Secure Login'.tr(context), onTap: _login, loading: _loading, icon: '🔐'),
             const SizedBox(height: 28),
             Center(child: Text('Portal for management only'.tr(context),
-              style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.g400), textAlign: TextAlign.center)),
+              style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: c.gray400), textAlign: TextAlign.center)),
           ]),
         ),
       ])),
-  );
+    );
+  }
 }
 
 // ── OTP ───────────────────────────────────────────────────
@@ -241,51 +243,54 @@ class _OTPState extends State<OTPScreen> {
     }
   }
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.bg,
-    body: Column(children: [
-      AdminAppBar(title: 'التحقق الثنائي', subtitle: 'إجراء أمني إلزامي',
-        onBack: () => context.pop()),
-      Expanded(child: SingleChildScrollView(
-        padding: const EdgeInsets.all(22),
-        child: Column(children: [
-          const SizedBox(height: 20),
-          Container(width: 80, height: 80, decoration: BoxDecoration(
-            color: AppColors.navySoft, shape: BoxShape.circle),
-            child: const Center(child: Text('📱', style: TextStyle(fontSize: 36)))),
-          const SizedBox(height: 16),
-          Text('رمز التحقق', style: TextStyle(fontFamily: 'Cairo', fontSize: 18, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 8),
-          RichText(text: TextSpan(children: [
-            TextSpan(text: 'تم إرسال رمز التحقق إلى ', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.tx3)),
-            TextSpan(text: '+966 50 *** 2200', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.navyMid)),
-          ])),
-          const SizedBox(height: 30),
-          Row(mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(5, (i) => Container(
-              width: 52, height: 60, margin: const EdgeInsets.symmetric(horizontal: 4),
-              child: TextField(maxLength: 1, textAlign: TextAlign.center,
-                keyboardType: TextInputType.number,
-                style: TextStyle(fontFamily: 'Cairo', fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.navyMid),
-                decoration: InputDecoration(counterText: '', filled: true, fillColor: AppColors.navySoft,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.navyBorder)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.navyBorder)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.navyMid, width: 2)))))),
-          ),
-          const SizedBox(height: 24),
-          _timer > 0
-            ? Text('إعادة الإرسال بعد ${_timer}s', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.tx3))
-            : TextButton(onPressed: () => setState(() { _timer = 60; _startTimer(); }),
-                child: Text('إعادة إرسال الرمز', style: TextStyle(fontFamily: 'Cairo',
-                  fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.navyMid, decoration: TextDecoration.underline))),
-          const SizedBox(height: 30),
-          PrimaryBtn(text: 'تأكيد الدخول',
-            onTap: () => context.go('/home')),
-        ]),
-      )),
-    ]),
-  );
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    return Scaffold(
+      backgroundColor: c.bg,
+      body: Column(children: [
+        AdminAppBar(title: 'التحقق الثنائي', subtitle: 'إجراء أمني إلزامي',
+          onBack: () => context.pop()),
+        Expanded(child: SingleChildScrollView(
+          padding: const EdgeInsets.all(22),
+          child: Column(children: [
+            const SizedBox(height: 20),
+            Container(width: 80, height: 80, decoration: BoxDecoration(
+              color: AppColors.navySoft, shape: BoxShape.circle),
+              child: const Center(child: Text('📱', style: TextStyle(fontSize: 36)))),
+            const SizedBox(height: 16),
+            Text('رمز التحقق', style: TextStyle(fontFamily: 'Cairo', fontSize: 18, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            RichText(text: TextSpan(children: [
+              TextSpan(text: 'تم إرسال رمز التحقق إلى ', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: c.textMuted)),
+              TextSpan(text: '+966 50 *** 2200', style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.navyMid)),
+            ])),
+            const SizedBox(height: 30),
+            Row(mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(5, (i) => Container(
+                width: 52, height: 60, margin: const EdgeInsets.symmetric(horizontal: 4),
+                child: TextField(maxLength: 1, textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(fontFamily: 'Cairo', fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.navyMid),
+                  decoration: InputDecoration(counterText: '', filled: true, fillColor: AppColors.navySoft,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.navyBorder)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.navyBorder)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.navyMid, width: 2)))))),
+            ),
+            const SizedBox(height: 24),
+            _timer > 0
+              ? Text('إعادة الإرسال بعد ${_timer}s', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: c.textMuted))
+              : TextButton(onPressed: () => setState(() { _timer = 60; _startTimer(); }),
+                  child: Text('إعادة إرسال الرمز', style: TextStyle(fontFamily: 'Cairo',
+                    fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.navyMid, decoration: TextDecoration.underline))),
+            const SizedBox(height: 30),
+            PrimaryBtn(text: 'تأكيد الدخول',
+              onTap: () => context.go('/home')),
+          ]),
+        )),
+      ]),
+    );
+  }
 }

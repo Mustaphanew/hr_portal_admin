@@ -51,10 +51,10 @@ final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
   routes: [
     // ── Auth ──────────────────────────────────────────────
-    GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
-    GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
-    GoRoute(path: '/otp', builder: (_, __) => const OTPScreen()),
-    GoRoute(path: '/forgot-password', builder: (_, __) => const LoginScreen()),
+    GoRoute(path: '/splash', builder: (_, _) => const SplashScreen()),
+    GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+    GoRoute(path: '/otp', builder: (_, _) => const OTPScreen()),
+    GoRoute(path: '/forgot-password', builder: (_, _) => const LoginScreen()),
 
     // ── Main Shell with persistent bottom nav ─────────────
     StatefulShellRoute.indexedStack(
@@ -65,101 +65,101 @@ final GoRouter appRouter = GoRouter(
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/home',
-            builder: (_, __) => const AdminDashboardScreen(),
+            builder: (_, _) => const AdminDashboardScreen(),
           ),
         ]),
         // Tab 1: Requests
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/requests',
-            builder: (_, __) => const RequestsManagementScreen(),
+            builder: (_, _) => const RequestsManagementScreen(),
           ),
         ]),
         // Tab 2: Tasks
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/tasks',
-            builder: (_, __) => const TasksDashboardScreen(),
+            builder: (_, _) => const TasksDashboardScreen(),
           ),
         ]),
         // Tab 3: Follow-up
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/follow-up',
-            builder: (_, __) => const FollowUpScreen(),
+            builder: (_, _) => const FollowUpScreen(),
           ),
         ]),
         // Tab 4: Settings
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/settings',
-            builder: (_, __) => const AdminSettingsScreen(),
+            builder: (_, _) => const AdminSettingsScreen(),
           ),
         ]),
       ],
     ),
 
     // ── Departments ───────────────────────────────────────
-    GoRoute(path: '/departments', builder: (_, __) => const DepartmentsScreen()),
-    GoRoute(path: '/department-detail', builder: (_, __) => const DepartmentDetailScreen()),
+    GoRoute(path: '/departments', builder: (_, _) => const DepartmentsScreen()),
+    GoRoute(path: '/department-detail', builder: (_, _) => const DepartmentDetailScreen()),
 
     // ── Employees ─────────────────────────────────────────
-    GoRoute(path: '/employees', builder: (_, __) => const EmployeesScreen()),
-    GoRoute(path: '/employee-detail', builder: (_, __) => const EmployeeDetailScreen()),
+    GoRoute(path: '/employees', builder: (_, _) => const EmployeesScreen()),
+    GoRoute(path: '/employee-detail', builder: (_, _) => const EmployeeDetailScreen()),
 
     // ── Requests (sub-pages) ──────────────────────────────
-    GoRoute(path: '/all-requests', builder: (_, __) => const AllRequestsScreen()),
-    GoRoute(path: '/request-detail', builder: (_, __) => const RequestDetailScreen()),
-    GoRoute(path: '/approvals', builder: (_, __) => const ApprovalsScreen()),
+    GoRoute(path: '/all-requests', builder: (_, _) => const AllRequestsScreen()),
+    GoRoute(path: '/request-detail', builder: (_, _) => const RequestDetailScreen()),
+    GoRoute(path: '/approvals', builder: (_, _) => const ApprovalsScreen()),
 
     // ── Tasks (sub-pages) ─────────────────────────────────
-    GoRoute(path: '/all-tasks', builder: (_, __) => const AllTasksScreen()),
-    GoRoute(path: '/task-detail', builder: (_, __) => const TaskDetailScreen()),
-    GoRoute(path: '/create-task', builder: (_, __) => const TaskDetailScreen()),
+    GoRoute(path: '/all-tasks', builder: (_, _) => const AllTasksScreen()),
+    GoRoute(path: '/task-detail', builder: (_, _) => const TaskDetailScreen()),
+    GoRoute(path: '/create-task', builder: (_, _) => const TaskDetailScreen()),
 
     // ── Follow-up (sub-pages) ─────────────────────────────
-    GoRoute(path: '/follow-up-detail', builder: (_, __) => const FollowUpDetailScreen()),
+    GoRoute(path: '/follow-up-detail', builder: (_, _) => const FollowUpDetailScreen()),
 
     // ── Attendance ────────────────────────────────────────
-    GoRoute(path: '/attendance', builder: (_, __) => const AttendanceManagementScreen()),
-    GoRoute(path: '/attendance-detail', builder: (_, __) => const AttendanceDetailScreen()),
+    GoRoute(path: '/attendance', builder: (_, _) => const AttendanceManagementScreen()),
+    GoRoute(path: '/attendance-detail', builder: (_, _) => const AttendanceDetailScreen()),
 
     // ── Leave ─────────────────────────────────────────────
-    GoRoute(path: '/leave', builder: (_, __) => const LeaveManagementScreen()),
-    GoRoute(path: '/leave-detail', builder: (_, __) => const LeaveDetailAdminScreen()),
+    GoRoute(path: '/leave', builder: (_, _) => const LeaveManagementScreen()),
+    GoRoute(path: '/leave-detail', builder: (_, _) => const LeaveDetailAdminScreen()),
 
     // ── Announcements ─────────────────────────────────────
-    GoRoute(path: '/announcements', builder: (_, __) => const AnnouncementsManagementScreen()),
-    GoRoute(path: '/announcement-detail', builder: (_, __) => const AnnouncementDetailScreen()),
-    GoRoute(path: '/create-announcement', builder: (_, __) => const AnnouncementDetailScreen()),
+    GoRoute(path: '/announcements', builder: (_, _) => const AnnouncementsManagementScreen()),
+    GoRoute(path: '/announcement-detail', builder: (_, _) => const AnnouncementDetailScreen()),
+    GoRoute(path: '/create-announcement', builder: (_, _) => const AnnouncementDetailScreen()),
 
     // ── Documents + Notifications ─────────────────────────
-    GoRoute(path: '/documents', builder: (_, __) => const DocumentsOverviewScreen()),
-    GoRoute(path: '/notifications', builder: (_, __) => const NotificationsCenterScreen()),
+    GoRoute(path: '/documents', builder: (_, _) => const DocumentsOverviewScreen()),
+    GoRoute(path: '/notifications', builder: (_, _) => const NotificationsCenterScreen()),
 
     // ── Reports ───────────────────────────────────────────
-    GoRoute(path: '/reports', builder: (_, __) => const ReportsKpiScreen()),
+    GoRoute(path: '/reports', builder: (_, _) => const ReportsKpiScreen()),
 
     // ── Settings (sub-pages) ──────────────────────────────
-    GoRoute(path: '/admin-profile', builder: (_, __) => const AdminProfileScreen()),
-    GoRoute(path: '/support', builder: (_, __) => const SupportScreen()),
-    GoRoute(path: '/about', builder: (_, __) => const AboutScreen()),
+    GoRoute(path: '/admin-profile', builder: (_, _) => const AdminProfileScreen()),
+    GoRoute(path: '/support', builder: (_, _) => const SupportScreen()),
+    GoRoute(path: '/about', builder: (_, _) => const AboutScreen()),
 
     // ── Projects ──────────────────────────────────────────
-    GoRoute(path: '/projects', builder: (_, __) => const ProjectsOverviewScreen()),
-    GoRoute(path: '/projects-list', builder: (_, __) => const ProjectsListScreen()),
-    GoRoute(path: '/project-detail', builder: (_, __) => const ProjectDetailScreen()),
-    GoRoute(path: '/project-tasks', builder: (_, __) => const ProjectTasksScreen()),
-    GoRoute(path: '/project-milestones', builder: (_, __) => const ProjectMilestonesScreen()),
-    GoRoute(path: '/project-follow-up', builder: (_, __) => const ProjectFollowUpScreen()),
-    GoRoute(path: '/project-analytics', builder: (_, __) => const ProjectAnalyticsScreen()),
+    GoRoute(path: '/projects', builder: (_, _) => const ProjectsOverviewScreen()),
+    GoRoute(path: '/projects-list', builder: (_, _) => const ProjectsListScreen()),
+    GoRoute(path: '/project-detail', builder: (_, _) => const ProjectDetailScreen()),
+    GoRoute(path: '/project-tasks', builder: (_, _) => const ProjectTasksScreen()),
+    GoRoute(path: '/project-milestones', builder: (_, _) => const ProjectMilestonesScreen()),
+    GoRoute(path: '/project-follow-up', builder: (_, _) => const ProjectFollowUpScreen()),
+    GoRoute(path: '/project-analytics', builder: (_, _) => const ProjectAnalyticsScreen()),
 
     // ── Expenses ──────────────────────────────────────────
-    GoRoute(path: '/expenses', builder: (_, __) => const ExpensesOverviewScreen()),
-    GoRoute(path: '/expense-requests', builder: (_, __) => const ExpenseRequestsListScreen()),
-    GoRoute(path: '/expense-detail', builder: (_, __) => const ExpenseRequestDetailScreen()),
-    GoRoute(path: '/expense-categories', builder: (_, __) => const ExpenseCategoriesScreen()),
-    GoRoute(path: '/expense-analytics', builder: (_, __) => const ExpenseAnalyticsScreen()),
-    GoRoute(path: '/expense-follow-up', builder: (_, __) => const ExpenseFollowUpScreen()),
+    GoRoute(path: '/expenses', builder: (_, _) => const ExpensesOverviewScreen()),
+    GoRoute(path: '/expense-requests', builder: (_, _) => const ExpenseRequestsListScreen()),
+    GoRoute(path: '/expense-detail', builder: (_, _) => const ExpenseRequestDetailScreen()),
+    GoRoute(path: '/expense-categories', builder: (_, _) => const ExpenseCategoriesScreen()),
+    GoRoute(path: '/expense-analytics', builder: (_, _) => const ExpenseAnalyticsScreen()),
+    GoRoute(path: '/expense-follow-up', builder: (_, _) => const ExpenseFollowUpScreen()),
   ],
 );

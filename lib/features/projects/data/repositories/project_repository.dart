@@ -27,10 +27,10 @@ class ProjectRepository {
       fromJson: (json) =>
           ProjectsData.fromJson(json as Map<String, dynamic>),
       queryParameters: {
-        if (status != null) 'status': status,
-        if (departmentId != null) 'department_id': departmentId,
-        if (perPage != null) 'per_page': perPage,
-        if (page != null) 'page': page,
+        'status': ?status,
+        'department_id': ?departmentId,
+        'per_page': ?perPage,
+        'page': ?page,
       },
     );
     return response.data!;

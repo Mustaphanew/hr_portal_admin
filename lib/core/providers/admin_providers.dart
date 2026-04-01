@@ -243,6 +243,11 @@ final managerLeavesProvider = FutureProvider.autoDispose<ManagerLeavesData>((ref
   return response.data!;
 });
 
+final managerLeaveDetailProvider = FutureProvider.autoDispose.family<LeaveRequest, int>((ref, id) async {
+  final response = await ref.watch(leaveRepositoryProvider).getManagerLeaveDetail(id);
+  return response.data!;
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Requests (Manager)
 // ═══════════════════════════════════════════════════════════════════════════

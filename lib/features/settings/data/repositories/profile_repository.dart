@@ -34,14 +34,12 @@ class ProfileRepository {
     String? emergencyContactPhone,
   }) async {
     final data = <String, dynamic>{
-      if (phone != null) 'phone': phone,
-      if (mobile != null) 'mobile': mobile,
-      if (email != null) 'email': email,
-      if (address != null) 'address': address,
-      if (emergencyContactName != null)
-        'emergency_contact_name': emergencyContactName,
-      if (emergencyContactPhone != null)
-        'emergency_contact_phone': emergencyContactPhone,
+      'phone': ?phone,
+      'mobile': ?mobile,
+      'email': ?email,
+      'address': ?address,
+      'emergency_contact_name': ?emergencyContactName,
+      'emergency_contact_phone': ?emergencyContactPhone,
     };
 
     final response = await _client.put<EmployeeProfile>(

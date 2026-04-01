@@ -35,9 +35,9 @@ class NotificationRepository {
         'body_ar': bodyAr,
         'title_en': titleEn,
         'body_en': bodyEn,
-        if (image != null) 'image': image,
-        if (url != null) 'url': url,
-        if (route != null) 'route': route,
+        'image': ?image,
+        'url': ?url,
+        'route': ?route,
       },
     );
     return response.data!;
@@ -64,9 +64,9 @@ class NotificationRepository {
         'body_ar': bodyAr,
         'title_en': titleEn,
         'body_en': bodyEn,
-        if (image != null) 'image': image,
-        if (url != null) 'url': url,
-        if (route != null) 'route': route,
+        'image': ?image,
+        'url': ?url,
+        'route': ?route,
       },
     );
     return response.data!;

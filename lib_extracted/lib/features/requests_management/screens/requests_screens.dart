@@ -161,7 +161,8 @@ class _RequestDetailState extends State<RequestDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final r = AdminData.requests.first;
-    if (_decision != null) return Scaffold(
+    if (_decision != null) {
+      return Scaffold(
       backgroundColor: AppColors.bg,
       body: Column(children: [
         AdminAppBar(title: 'تفاصيل الطلب', onBack: () => context.pop()),
@@ -182,6 +183,7 @@ class _RequestDetailState extends State<RequestDetailScreen> {
           OutlineBtn(text: 'رجوع للطلبات', onTap: () => context.pop(), fullWidth: false),
         ]))),
       ]));
+    }
 
     return Scaffold(
       backgroundColor: AppColors.bg,

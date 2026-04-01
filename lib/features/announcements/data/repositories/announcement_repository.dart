@@ -26,9 +26,9 @@ class AnnouncementRepository {
       fromJson: (json) =>
           AnnouncementsData.fromJson(json as Map<String, dynamic>),
       queryParameters: {
-        if (status != null) 'status': status,
-        if (perPage != null) 'per_page': perPage,
-        if (page != null) 'page': page,
+        'status': ?status,
+        'per_page': ?perPage,
+        'page': ?page,
       },
     );
     return response.data!;
@@ -51,7 +51,7 @@ class AnnouncementRepository {
         'body': body,
         'category': category,
         'audience': audience,
-        if (isPinned != null) 'is_pinned': isPinned,
+        'is_pinned': ?isPinned,
       },
     );
     return response.data!;
@@ -71,11 +71,11 @@ class AnnouncementRepository {
       fromJson: (json) =>
           Announcement.fromJson(json as Map<String, dynamic>),
       data: {
-        if (title != null) 'title': title,
-        if (body != null) 'body': body,
-        if (category != null) 'category': category,
-        if (audience != null) 'audience': audience,
-        if (isPinned != null) 'is_pinned': isPinned,
+        'title': ?title,
+        'body': ?body,
+        'category': ?category,
+        'audience': ?audience,
+        'is_pinned': ?isPinned,
       },
     );
     return response.data!;

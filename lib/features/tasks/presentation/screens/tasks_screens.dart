@@ -4,26 +4,44 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/providers/admin_providers.dart';
+import '../../../../core/providers/paginated_providers.dart';
+import '../../../../core/providers/paginated_notifier.dart';
+import '../../../../core/widgets/paginated_list_view.dart';
 import '../../../../core/widgets/admin_widgets.dart';
+import '../../data/models/task_models.dart';
 
 // ── Tasks Dashboard ───────────────────────────────────────
-class TasksDashboardScreen extends ConsumerWidget {
+class TasksDashboardScreen extends ConsumerStatefulWidget {
   const TasksDashboardScreen({super.key});
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tasksAsync = ref.watch(tasksProvider);
+  ConsumerState<TasksDashboardScreen> createState() => _TasksDashboardState();
+}
+class _TasksDashboardState extends ConsumerState<TasksDashboardScreen> {
+  bool _refreshing = false;
+
+  Future<void> _refresh() async {
+    setState(() => _refreshing = true);
+    ref.invalidate(paginatedTasksProvider);
+    await ref.read(paginatedTasksProvider.future);
+    if (mounted) setState(() => _refreshing = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    final tasksAsync = ref.watch(paginatedTasksProvider);
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: tasksAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('${'Error'.tr(context)}: $e',
           style: TextStyle(fontFamily: 'Cairo', fontSize: 14))),
-        data: (data) {
-          final tasks = data.tasks;
-          final stats = data.stats;
-          final overdue = stats.overdue;
-          final inProgress = stats.inProgress;
-          final pending = stats.pending;
+        data: (paginated) {
+          final tasks = paginated.items;
+          final stats = ref.read(paginatedTasksProvider.notifier).stats;
+          final overdue = stats?.overdue ?? 0;
+          final inProgress = stats?.inProgress ?? 0;
+          final pending = stats?.pending ?? 0;
           return Column(children: [
             Container(
               decoration: const BoxDecoration(gradient: AppColors.navyGradient),
@@ -32,20 +50,56 @@ class TasksDashboardScreen extends ConsumerWidget {
                 bottom: 16, left: 18, right: 18),
               child: Column(children: [
                 Row(children: [
-                  GestureDetector(
-                    onTap: () => context.push('/all-tasks'),
-                    child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                      child: Text('View all'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w600)))),
-                  Expanded(child: Column(children: [
+                  // START: زر الرجوع (يظهر فقط إذا كان هناك شيء للرجوع إليه)
+                  if (context.canPop()) ...[
+                    GestureDetector(
+                      onTap: () => context.pop(),
+                      child: Container(
+                        padding: EdgeInsetsDirectional.only(start: 6),
+                        alignment: AlignmentDirectional.center,
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10)),
+                        child: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 18))),
+                    const SizedBox(width: 6),
+                  ],
+                  // CENTER: العنوان
+                  Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     Text('Task Management'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-                    Text('tasks_total'.tr(context, params: {'count': '${stats.total}'}), style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.goldLight)),
+                    Text('tasks_total'.tr(context, params: {'count': '${stats?.total ?? 0}'}), style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: AppColors.goldLight)),
                   ])),
-                  const SizedBox(width: 36),
+                  // END: تحديث + عرض الكل
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    GestureDetector(
+                      onTap: _refreshing ? null : _refresh,
+                      child: Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10)),
+                        child: Center(
+                          child: _refreshing
+                            ? const SizedBox(width: 16, height: 16,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Icon(Icons.refresh, color: Colors.white, size: 18)))),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => context.push('/all-tasks'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(9)),
+                        child: Text('View all'.tr(context), style: TextStyle(fontFamily: 'Cairo',
+                          fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70)))),
+                  ]),
                 ]),
                 const SizedBox(height: 14),
                 Row(children: [
-                  _topStat('${stats.total}', 'All'.tr(context),    AppColors.navySoft,    AppColors.goldLight),
+                  _topStat('${stats?.total ?? 0}', 'All'.tr(context),    AppColors.navySoft,    AppColors.goldLight),
                   const SizedBox(width: 8),
                   _topStat('$inProgress',  'In Progress'.tr(context),  AppColors.tealSoft,    AppColors.tealLight),
                   const SizedBox(width: 8),
@@ -56,7 +110,10 @@ class TasksDashboardScreen extends ConsumerWidget {
               ]),
             ),
             Expanded(child: RefreshIndicator(
-              onRefresh: () async => ref.invalidate(tasksProvider),
+              onRefresh: () async {
+                ref.invalidate(paginatedTasksProvider);
+                await ref.read(paginatedTasksProvider.future);
+              },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
@@ -115,9 +172,10 @@ class _AllTasksState extends ConsumerState<AllTasksScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tasksAsync = ref.watch(tasksProvider);
+    final c = context.appColors;
+    final tasksAsync = ref.watch(paginatedTasksProvider);
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: Column(children: [
         AdminAppBar(title: 'All Tasks'.tr(context), onBack: () => context.pop()),
         FilterBar(tabs: ['All'.tr(context),'In Progress'.tr(context),'Pending'.tr(context),'Overdue'.tr(context),'Completed'.tr(context)],
@@ -129,20 +187,21 @@ class _AllTasksState extends ConsumerState<AllTasksScreen> {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('${'Error'.tr(context)}: $e',
             style: TextStyle(fontFamily: 'Cairo', fontSize: 14))),
-          data: (data) {
-            final tasks = data.tasks;
-            if (tasks.isEmpty) {
-              return Center(child: Text('No tasks'.tr(context),
-                style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.g400)));
-            }
+          data: (paginated) {
             return RefreshIndicator(
-              onRefresh: () async => ref.invalidate(tasksProvider),
-              child: ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                itemCount: tasks.length,
-                itemBuilder: (_, i) {
-                  final t = tasks[i];
+              onRefresh: () async {
+                ref.invalidate(paginatedTasksProvider);
+                await ref.read(paginatedTasksProvider.future);
+              },
+              child: PaginatedListView<AdminTaskItem>(
+                items: paginated.items,
+                isLoadingMore: paginated.isLoadingMore,
+                hasMore: paginated.hasMore,
+                loadMoreError: paginated.loadMoreError,
+                onFetchMore: () => ref.read(paginatedTasksProvider.notifier).fetchMore(),
+                emptyWidget: Center(child: Text('No tasks'.tr(context),
+                  style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: c.gray400))),
+                itemBuilder: (context, t, index) {
                   return TaskCard(id: t.id.toString(), title: t.title, assignedTo: t.assignedTo.name,
                     dept: t.department.name, dueDate: t.dueDate, status: t.status, priority: t.priority,
                     onTap: () => context.push('/task-detail/${t.id}'));
@@ -162,9 +221,10 @@ class TaskDetailScreen extends ConsumerWidget {
   const TaskDetailScreen({super.key, required this.taskId});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.appColors;
     final taskAsync = ref.watch(taskDetailProvider(taskId));
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: taskAsync.when(
         loading: () => Column(children: [
           AdminAppBar(title: 'Task Details'.tr(context), onBack: () => context.pop()),
@@ -193,7 +253,7 @@ class TaskDetailScreen extends ConsumerWidget {
                   const SizedBox(height: 10),
                   Align(alignment: Alignment.centerRight, child: Text(t.title,
                     style: TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.w800))),
-                  const Divider(height: 20, color: AppColors.g100),
+                  Divider(height: 20, color: c.gray100),
                   InfoRow(label: 'Assigned To'.tr(context),  value: t.assignedTo.name, icon: '👤'),
                   InfoRow(label: 'Department'.tr(context),       value: t.department.name, icon: '🏢'),
                   InfoRow(label: 'Creation Date'.tr(context), value: t.createdDate,     icon: '📅'),
@@ -216,7 +276,7 @@ class TaskDetailScreen extends ConsumerWidget {
                   const SizedBox(height: 10),
                   TextField(maxLines: 3, 
                     style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
-                    decoration: fieldDec('سجّل تعليق متابعة...')),
+                    decoration: fieldDec(context, 'سجّل تعليق متابعة...')),
                 ])),
               ]),
             ),

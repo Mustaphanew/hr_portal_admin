@@ -5,6 +5,9 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/providers/admin_providers.dart';
 import '../../../../core/providers/core_providers.dart';
+import '../../../../core/providers/paginated_providers.dart';
+import '../../../../core/providers/paginated_notifier.dart';
+import '../../../../core/widgets/paginated_list_view.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../../data/models/request_models.dart';
@@ -12,10 +15,13 @@ import '../../data/models/request_models.dart';
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 String _statusTr(BuildContext context, String s) => switch (s) {
-  'pending'  => 'Pending'.tr(context),
-  'approved' => 'Approved'.tr(context),
-  'rejected' => 'Rejected'.tr(context),
-  _          => s,
+  'pending'    => 'Pending'.tr(context),
+  'processing' => 'Processing'.tr(context),
+  'approved'   => 'Approved'.tr(context),
+  'rejected'   => 'Rejected'.tr(context),
+  'completed'  => 'Completed'.tr(context),
+  'cancelled'  => 'Cancelled'.tr(context),
+  _            => s,
 };
 
 String _typeTr(BuildContext context, String t) => switch (t) {
@@ -42,111 +48,185 @@ String _fmtDate(String iso) {
 }
 
 // ── Requests Dashboard ──────────────────────────────────────────────────────
-class RequestsManagementScreen extends ConsumerWidget {
+class RequestsManagementScreen extends ConsumerStatefulWidget {
   const RequestsManagementScreen({super.key});
+  @override ConsumerState<RequestsManagementScreen> createState() => _RequestsMgmtState();
+}
+
+class _RequestsMgmtState extends ConsumerState<RequestsManagementScreen> {
+  int _tab = 0; // 0=pending (default)
+  bool _refreshing = false;
+
+  // pending, all, processing, approved, rejected, completed, cancelled
+  static const _statusMap = ['pending', null, 'processing', 'approved', 'rejected', 'completed', 'cancelled'];
+
+  Future<void> _refresh() async {
+    setState(() => _refreshing = true);
+    ref.invalidate(paginatedRequestsProvider);
+    try { await ref.read(paginatedRequestsProvider.future); } catch (_) {}
+    if (mounted) setState(() => _refreshing = false);
+  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncRequests = ref.watch(managerRequestsProvider);
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    final asyncRequests = ref.watch(paginatedRequestsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: asyncRequests.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('${'Error'.tr(context)}: $e',
-            style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.error))),
-        data: (data) {
-          final all = data.requests;
-          final pending  = all.where((r) => r.status == 'pending').toList();
-          final approved = all.where((r) => r.status == 'approved').length;
-          final rejected = all.where((r) => r.status == 'rejected').length;
+      backgroundColor: c.bg,
+      body: Column(children: [
 
-          return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(managerRequestsProvider),
-            child: Column(children: [
-              // ── header ──
-              Container(
-                decoration: const BoxDecoration(gradient: AppColors.navyGradient),
-                padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).padding.top + 12,
-                  bottom: 16, left: 18, right: 18),
-                child: Column(children: [
-                  Row(children: [
-                    GestureDetector(
-                      onTap: () => context.push('/all-requests'),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10)),
-                        child: Text('View all'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-                          fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70)))),
-                    Expanded(child: Column(children: [
-                      Text('Request Management'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-                        fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-                      Text('requests_review'.tr(context, params: {'count': '${pending.length}'}), style: TextStyle(fontFamily: 'Cairo',
-                        fontSize: 11, color: AppColors.goldLight)),
-                    ])),
-                    const SizedBox(width: 36),
-                  ]),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(12)),
-                    child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-                      _strip('${pending.length}', 'Pending'.tr(context), AppColors.warning),
-                      _strip('${all.length}', 'All'.tr(context), AppColors.goldLight),
-                      _strip('$approved', 'Approved'.tr(context), AppColors.tealLight),
-                      _strip('$rejected', 'Rejected'.tr(context), AppColors.error),
-                    ])),
-                ]),
-              ),
-
-              // ── body ──
-              Expanded(child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                child: Column(children: [
-                  SectionHeader(title: 'Pending requests section'.tr(context),
-                    actionLabel: 'View all'.tr(context), onAction: () => context.push('/approvals')),
-                  if (pending.isEmpty)
-                    Padding(padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Text('No pending requests'.tr(context), style: TextStyle(
-                        fontFamily: 'Cairo', fontSize: 13, color: AppColors.tx3)))
-                  else
-                    ...pending.take(5).map((r) => RequestCard(
-                      id: '#${r.id}',
-                      empName: r.employee?.name ?? '—',
-                      dept: r.employee?.code ?? '',
-                      type: _typeTr(context,r.requestType),
-                      date: _fmtDate(r.createdAt),
-                      status: r.status,
-                      priority: 'normal',
-                      onTap: () => context.push('/request-detail', extra: r.id))),
-                  const SizedBox(height: 8),
-                  SectionHeader(title: 'Recent Requests'.tr(context)),
-                  ...all.take(10).map((r) => RequestCard(
-                    id: '#${r.id}',
-                    empName: r.employee?.name ?? '—',
-                    dept: r.employee?.code ?? '',
-                    type: _typeTr(context,r.requestType),
-                    date: _fmtDate(r.createdAt),
-                    status: r.status,
-                    priority: 'normal',
-                    onTap: () => context.push('/request-detail', extra: r.id))),
-                ]),
-              )),
+        // ── HEADER ──────────────────────────────────────
+        Container(
+          decoration: const BoxDecoration(gradient: AppColors.navyGradient),
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).padding.top + 12,
+            bottom: 16, left: 18, right: 18),
+          child: Column(children: [
+            Row(children: [
+              if (context.canPop()) ...[
+                GestureDetector(
+                  onTap: () => context.pop(),
+                  child: Container(
+                    padding: EdgeInsetsDirectional.only(start: 6),
+                    alignment: AlignmentDirectional.center,
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 18))),
+                const SizedBox(width: 8),
+              ],
+              Expanded(child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                Text('Request Management'.tr(context), style: TextStyle(fontFamily: 'Cairo',
+                  fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
+                Text('Request overview'.tr(context), style: TextStyle(fontFamily: 'Cairo',
+                  fontSize: 11, color: AppColors.goldLight)),
+              ])),
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                GestureDetector(
+                  onTap: _refreshing ? null : _refresh,
+                  child: Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10)),
+                    child: Center(
+                      child: _refreshing
+                        ? const SizedBox(width: 16, height: 16,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Icon(Icons.refresh, color: Colors.white, size: 18)))),
+              ]),
             ]),
-          );
-        },
-      ),
+            const SizedBox(height: 14),
+            // ── Filter pills (scrollable) ──
+            asyncRequests.when(
+              data: (paginated) {
+                final all = paginated.items;
+                int _count(String s) => all.where((r) => r.status == s).length;
+                return _buildFilterRow(context, [
+                  _count('pending'), all.length, _count('processing'), _count('approved'),
+                  _count('rejected'), _count('completed'), _count('cancelled'),
+                ]);
+              },
+              loading: () => _buildFilterRow(context, null),
+              error: (_, __) => _buildFilterRow(context, null),
+            ),
+          ]),
+        ),
+
+        // ── BODY ─────────────────────────────────────────────
+        Expanded(child: asyncRequests.when(
+          loading: () => const Center(child: CircularProgressIndicator(color: AppColors.navyMid)),
+          error: (e, _) => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            const SizedBox(height: 12),
+            Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: c.textSecondary)),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => ref.invalidate(paginatedRequestsProvider),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: Text('Retry'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 13))),
+          ])),
+          data: (paginated) {
+            final filtered = _statusMap[_tab] == null
+              ? paginated.items
+              : paginated.items.where((r) => r.status == _statusMap[_tab]).toList();
+            return RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(paginatedRequestsProvider);
+                await ref.read(paginatedRequestsProvider.future);
+              },
+              child: PaginatedListView<EmployeeRequest>(
+                items: filtered,
+                isLoadingMore: paginated.isLoadingMore,
+                hasMore: _tab == 1 ? paginated.hasMore : false,
+                loadMoreError: paginated.loadMoreError,
+                onFetchMore: () => ref.read(paginatedRequestsProvider.notifier).fetchMore(),
+                emptyWidget: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.inbox_outlined, size: 48, color: c.gray300),
+                  const SizedBox(height: 12),
+                  Text('No requests'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: c.textMuted)),
+                ])),
+                padding: const EdgeInsets.all(16),
+                itemBuilder: (context, r, i) => RequestCard(
+                  id: '#${r.id}',
+                  empName: r.employee?.name ?? '—',
+                  dept: r.employee?.code ?? '',
+                  type: _typeTr(context, r.requestType),
+                  date: _fmtDate(r.createdAt),
+                  status: r.status,
+                  priority: 'normal',
+                  onTap: () => context.push('/request-detail', extra: r.id)),
+              ),
+            );
+          },
+        )),
+      ]),
     );
   }
 
-  static Widget _strip(String v, String l, Color c) => Column(children: [
-    Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 18, fontWeight: FontWeight.w900, color: c, height: 1.1)),
-    Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.white60)),
-  ]);
+  static const _labels = ['Pending', 'All', 'Processing', 'Approved', 'Rejected', 'Completed', 'Cancelled'];
+  static const _colors = [AppColors.warning, AppColors.goldLight, AppColors.navyMid, AppColors.tealLight, AppColors.error, AppColors.success, AppColors.g400];
+
+  Widget _buildFilterRow(BuildContext context, List<int>? counts) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(children: List.generate(_labels.length, (i) {
+        final v = counts != null ? '${counts[i]}' : '...';
+        return Padding(
+          padding: EdgeInsetsDirectional.only(end: i < _labels.length - 1 ? 6 : 0),
+          child: _filterPill(v, _labels[i].tr(context), _colors[i], i),
+        );
+      })),
+    );
+  }
+
+  Widget _filterPill(String v, String l, Color accentColor, int index) {
+    final selected = _tab == index;
+    return GestureDetector(
+      onTap: () => setState(() => _tab = index),
+      child: Container(
+        width: 80,
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? Colors.white.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? Colors.white.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.15),
+            width: selected ? 1.5 : 1)),
+        child: Column(children: [
+          Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 20, fontWeight: FontWeight.w900,
+            color: accentColor, height: 1.1)),
+          Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 10,
+            color: selected ? Colors.white : Colors.white54)),
+        ]),
+      ),
+    );
+  }
 }
 
 // ── All Requests List ───────────────────────────────────────────────────────
@@ -158,12 +238,13 @@ class AllRequestsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.appColors;
     final currentFilter = ref.watch(managerRequestsStatusFilter);
     final selectedIdx = _statusMap.indexOf(currentFilter).clamp(0, _tabKeys.length - 1);
-    final asyncRequests = ref.watch(managerRequestsProvider);
+    final asyncRequests = ref.watch(paginatedRequestsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: Column(children: [
         AdminAppBar(title: 'Request Management'.tr(context), subtitle: 'All Requests'.tr(context),
           onBack: () => context.pop()),
@@ -172,27 +253,30 @@ class AllRequestsScreen extends ConsumerWidget {
           selected: selectedIdx,
           onSelect: (i) => ref.read(managerRequestsStatusFilter.notifier).state = _statusMap[i]),
         Expanded(child: asyncRequests.when(
+
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('${'Error'.tr(context)}: $e',
               style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.error))),
-          data: (data) {
-            final requests = data.requests;
-            if (requests.isEmpty) {
-              return Center(child: Text('No requests'.tr(context), style: TextStyle(
-                fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx3)));
-            }
+          data: (paginated) {
             return RefreshIndicator(
-              onRefresh: () async => ref.invalidate(managerRequestsProvider),
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                itemCount: requests.length,
-                itemBuilder: (_, i) {
-                  final r = requests[i];
+              onRefresh: () async {
+                ref.invalidate(paginatedRequestsProvider);
+                await ref.read(paginatedRequestsProvider.future);
+              },
+              child: PaginatedListView<EmployeeRequest>(
+                items: paginated.items,
+                isLoadingMore: paginated.isLoadingMore,
+                hasMore: paginated.hasMore,
+                loadMoreError: paginated.loadMoreError,
+                onFetchMore: () => ref.read(paginatedRequestsProvider.notifier).fetchMore(),
+                emptyWidget: Center(child: Text('No requests'.tr(context), style: TextStyle(
+                  fontFamily: 'Cairo', fontSize: 14, color: c.textMuted))),
+                itemBuilder: (context, r, index) {
                   return RequestCard(
                     id: '#${r.id}',
                     empName: r.employee?.name ?? '—',
                     dept: r.employee?.code ?? '',
-                    type: _typeTr(context,r.requestType),
+                    type: _typeTr(context, r.requestType),
                     date: _fmtDate(r.createdAt),
                     status: r.status,
                     priority: 'normal',
@@ -234,7 +318,7 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
         status: status,
         responseNotes: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
       );
-      ref.invalidate(managerRequestsProvider);
+      ref.invalidate(paginatedRequestsProvider);
       ref.invalidate(managerRequestDetailProvider(widget.requestId));
       if (mounted) setState(() { _decision = status; _processing = false; });
     } catch (e) {
@@ -248,12 +332,13 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final asyncDetail = ref.watch(managerRequestDetailProvider(widget.requestId));
 
     // ── success view after decision ──
     if (_decision != null) {
       return Scaffold(
-        backgroundColor: AppColors.bg,
+        backgroundColor: c.bg,
         body: Column(children: [
           AdminAppBar(title: 'Request details'.tr(context), onBack: () => context.pop()),
           Expanded(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -269,7 +354,7 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
               style: TextStyle(fontFamily: 'Cairo', fontSize: 18, fontWeight: FontWeight.w800)),
             const SizedBox(height: 6),
             Text('Employee notified'.tr(context),
-              style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.tx3)),
+              style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: c.textMuted)),
             const SizedBox(height: 24),
             OutlineBtn(text: 'Back to requests'.tr(context), onTap: () => context.pop(), fullWidth: false),
           ]))),
@@ -278,8 +363,9 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: asyncDetail.when(
+        
         loading: () => Column(children: [
           AdminAppBar(title: 'Request details'.tr(context), onBack: () => context.pop()),
           const Expanded(child: Center(child: CircularProgressIndicator())),
@@ -363,7 +449,7 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
                       const SizedBox(height: 8),
                       Align(alignment: Alignment.centerRight,
                         child: Text(r.responseNotes!, style: TextStyle(fontFamily: 'Cairo',
-                          fontSize: 13, color: AppColors.tx3))),
+                          fontSize: 13, color: c.textMuted))),
                     ])),
 
                   // ── note input (only for pending) ──
@@ -375,7 +461,7 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
                       TextField(controller: _noteCtrl, maxLines: 3,
                         
                         style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
-                        decoration: fieldDec('Add your comment'.tr(context))),
+                        decoration: fieldDec(context, 'Add your comment'.tr(context))),
                     ])),
                 ]),
               ),
@@ -407,12 +493,14 @@ class ApprovalsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.appColors;
     // Force pending filter for this screen
-    final asyncRequests = ref.watch(managerRequestsProvider);
+    final asyncRequests = ref.watch(paginatedRequestsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: asyncRequests.when(
+
         loading: () => Column(children: [
           AdminAppBar(title: 'Approvals inbox'.tr(context), onBack: () => context.pop()),
           const Expanded(child: Center(child: CircularProgressIndicator())),
@@ -422,17 +510,17 @@ class ApprovalsScreen extends ConsumerWidget {
           Expanded(child: Center(child: Text('${'Error'.tr(context)}: $e',
               style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.error)))),
         ]),
-        data: (data) {
-          final pending = data.requests.where((r) => r.status == 'pending').toList();
+        data: (paginated) {
+          final pending = paginated.items.where((r) => r.status == 'pending').toList();
           return Column(children: [
             AdminAppBar(title: 'Approvals inbox'.tr(context),
               subtitle: 'requests_review'.tr(context, params: {'count': '${pending.length}'}),
               onBack: () => context.pop()),
             Expanded(child: pending.isEmpty
               ? Center(child: Text('No pending requests'.tr(context), style: TextStyle(
-                  fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx3)))
+                  fontFamily: 'Cairo', fontSize: 14, color: c.textMuted)))
               : RefreshIndicator(
-                  onRefresh: () async => ref.invalidate(managerRequestsProvider),
+                  onRefresh: () async => ref.invalidate(paginatedRequestsProvider),
                   child: ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                     itemCount: pending.length,
@@ -441,7 +529,7 @@ class ApprovalsScreen extends ConsumerWidget {
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
-                          color: AppColors.bgCard,
+                          color: c.bgCard,
                           borderRadius: BorderRadius.circular(18),
                           boxShadow: AppShadows.card,
                           border: Border(right: BorderSide(
@@ -449,13 +537,13 @@ class ApprovalsScreen extends ConsumerWidget {
                         child: Padding(padding: const EdgeInsets.all(14), child: Column(children: [
                           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                             Text(_fmtDate(r.createdAt), style: TextStyle(fontFamily: 'Cairo',
-                              fontSize: 11, color: AppColors.tx3)),
+                              fontSize: 11, color: c.textMuted)),
                             Row(children: [
                               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                                 Text(r.employee?.name ?? '—', style: TextStyle(fontFamily: 'Cairo',
                                   fontSize: 13, fontWeight: FontWeight.w700)),
                                 Text(r.employee?.code ?? '', style: TextStyle(fontFamily: 'Cairo',
-                                  fontSize: 11, color: AppColors.tx3)),
+                                  fontSize: 11, color: c.textMuted)),
                               ]),
                               const SizedBox(width: 10),
                               AdminAvatar(
@@ -465,13 +553,13 @@ class ApprovalsScreen extends ConsumerWidget {
                           ]),
                           const SizedBox(height: 10),
                           Container(width: double.infinity, padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(color: AppColors.bg,
+                            decoration: BoxDecoration(color: c.bg,
                               borderRadius: BorderRadius.circular(10)),
                             child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                               Text(_typeTr(context,r.requestType), style: TextStyle(fontFamily: 'Cairo',
                                 fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.navyMid)),
                               Text(r.subject, style: TextStyle(fontFamily: 'Cairo',
-                                fontSize: 11, color: AppColors.tx3)),
+                                fontSize: 11, color: c.textMuted)),
                             ])),
                           const SizedBox(height: 10),
                           Row(children: [

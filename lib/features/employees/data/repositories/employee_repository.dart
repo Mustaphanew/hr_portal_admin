@@ -26,12 +26,12 @@ class EmployeeRepository {
       fromJson: (json) =>
           AdminEmployeesData.fromJson(json as Map<String, dynamic>),
       queryParameters: {
-        if (departmentId != null) 'department_id': departmentId,
-        if (status != null) 'employment_status': status,
-        if (attendanceStatus != null) 'attendance_status': attendanceStatus,
-        if (search != null) 'search': search,
-        if (perPage != null) 'per_page': perPage,
-        if (page != null) 'page': page,
+        'department_id': ?departmentId,
+        'employment_status': ?status,
+        'attendance_status': ?attendanceStatus,
+        'search': ?search,
+        'per_page': ?perPage,
+        'page': ?page,
       },
     );
     return response.data!;

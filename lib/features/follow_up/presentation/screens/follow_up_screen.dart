@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/providers/admin_providers.dart';
+import '../../../../core/providers/paginated_providers.dart';
 import '../../../../core/widgets/admin_widgets.dart';
+import '../../../../core/widgets/paginated_list_view.dart';
+import '../../data/models/follow_up_models.dart';
 
 // ── Follow-Up List Screen ─────────────────────────────────
 class FollowUpScreen extends ConsumerStatefulWidget {
@@ -37,10 +40,11 @@ class _FollowUpState extends ConsumerState<FollowUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final asyncData = ref.watch(followUpsProvider);
+    final c = context.appColors;
+    final asyncData = ref.watch(paginatedFollowUpsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: asyncData.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(
@@ -48,14 +52,14 @@ class _FollowUpState extends ConsumerState<FollowUpScreen> {
             Text('Error'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
             const SizedBox(height: 8),
             TextButton(
-              onPressed: () => ref.invalidate(followUpsProvider),
+              onPressed: () => ref.invalidate(paginatedFollowUpsProvider),
               child: Text('Retry'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 13)),
             ),
           ]),
         ),
-        data: (data) {
-          final stats = data.stats;
-          final items = data.followUps;
+        data: (paginated) {
+          final stats = ref.read(paginatedFollowUpsProvider.notifier).stats;
+          final items = paginated.items;
 
           // Local filtering for escalated tab (not a status value)
           final filtered = _tab == 2
@@ -75,20 +79,20 @@ class _FollowUpState extends ConsumerState<FollowUpScreen> {
                   Expanded(child: Column(children: [
                     Text('Follow-up Board'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-                    Text('items_followup'.tr(context, params: {'count': '${stats.total}'}), style: TextStyle(fontFamily: 'Cairo',
+                    Text('items_followup'.tr(context, params: {'count': '${stats?.total ?? 0}'}), style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 11, color: AppColors.goldLight)),
                   ])),
                   const SizedBox(width: 36),
                 ]),
                 const SizedBox(height: 14),
                 Row(children: [
-                  _pill('Overdue'.tr(context), '${stats.overdue}',     AppColors.error,       AppColors.errorSoft.withOpacity(0.3)),
+                  _pill('Overdue'.tr(context), '${stats?.overdue ?? 0}',     AppColors.error,       AppColors.errorSoft.withOpacity(0.3)),
                   const SizedBox(width: 8),
-                  _pill('Escalated'.tr(context), '${stats.escalated}', AppColors.warningDark,  AppColors.warningSoft.withOpacity(0.3)),
+                  _pill('Escalated'.tr(context), '${stats?.escalated ?? 0}', AppColors.warningDark,  AppColors.warningSoft.withOpacity(0.3)),
                   const SizedBox(width: 8),
-                  _pill('In Progress'.tr(context),   '${stats.inProgress}', AppColors.tealLight,   AppColors.tealSoft.withOpacity(0.3)),
+                  _pill('In Progress'.tr(context),   '${stats?.inProgress ?? 0}', AppColors.tealLight,   AppColors.tealSoft.withOpacity(0.3)),
                   const SizedBox(width: 8),
-                  _pill('Pending'.tr(context),   '${stats.pending}',    AppColors.goldLight,   AppColors.goldSoft.withOpacity(0.3)),
+                  _pill('Pending'.tr(context),   '${stats?.pending ?? 0}',    AppColors.goldLight,   AppColors.goldSoft.withOpacity(0.3)),
                 ]),
               ]),
             ),
@@ -103,26 +107,46 @@ class _FollowUpState extends ConsumerState<FollowUpScreen> {
             // ── List ──
             Expanded(
               child: RefreshIndicator(
-                onRefresh: () async => ref.invalidate(followUpsProvider),
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  children: [
-                    if (stats.overdue > 0 || stats.escalated > 0)
-                      AlertBanner(
-                        message: 'overdue_escalated_alert'.tr(context, params: {'overdue': '${stats.overdue}', 'escalated': '${stats.escalated}'}),
-                        type: 'error'),
-                    ...filtered.map((f) => FollowUpCard(
-                      id: '${f.id}',
-                      title: f.title,
-                      responsible: f.responsible.name,
-                      dept: f.department.name,
-                      dueDate: f.dueDate,
-                      status: f.status,
-                      isOverdue: f.isOverdue,
-                      isEscalated: f.isEscalated,
-                      onTap: () => context.push('/follow-up-detail/${f.id}'),
-                    )),
-                  ],
+                onRefresh: () async {
+                  ref.invalidate(paginatedFollowUpsProvider);
+                  await ref.read(paginatedFollowUpsProvider.future);
+                },
+                child: PaginatedListView<FollowUpItem>(
+                  items: filtered,
+                  isLoadingMore: paginated.isLoadingMore,
+                  hasMore: _tab == 0 ? paginated.hasMore : false,
+                  loadMoreError: paginated.loadMoreError,
+                  onFetchMore: () => ref.read(paginatedFollowUpsProvider.notifier).fetchMore(),
+                  emptyWidget: ListView(
+                    children: [
+                      if (stats != null && (stats.overdue > 0 || stats.escalated > 0))
+                        AlertBanner(
+                          message: 'overdue_escalated_alert'.tr(context, params: {'overdue': '${stats.overdue}', 'escalated': '${stats.escalated}'}),
+                          type: 'error'),
+                      const SizedBox(height: 80),
+                      EmptyState(icon: '📋', title: 'No follow-ups'.tr(context),
+                        subtitle: 'No follow-ups'.tr(context)),
+                    ],
+                  ),
+                  itemBuilder: (_, f, i) => Column(
+                    children: [
+                      if (i == 0 && stats != null && (stats.overdue > 0 || stats.escalated > 0))
+                        AlertBanner(
+                          message: 'overdue_escalated_alert'.tr(context, params: {'overdue': '${stats.overdue}', 'escalated': '${stats.escalated}'}),
+                          type: 'error'),
+                      FollowUpCard(
+                        id: '${f.id}',
+                        title: f.title,
+                        responsible: f.responsible.name,
+                        dept: f.department.name,
+                        dueDate: f.dueDate,
+                        status: f.status,
+                        isOverdue: f.isOverdue,
+                        isEscalated: f.isEscalated,
+                        onTap: () => context.push('/follow-up-detail/${f.id}'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -149,10 +173,11 @@ class FollowUpDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.appColors;
     final asyncDetail = ref.watch(followUpDetailProvider(followUpId));
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: asyncDetail.when(
         loading: () => Column(children: [
           AdminAppBar(title: 'تفاصيل المتابعة', subtitle: '#$followUpId',
@@ -202,7 +227,7 @@ class FollowUpDetailScreen extends ConsumerWidget {
                     ]),
                     Flexible(child: Text(f.title, style: TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w800), textAlign: TextAlign.right)),
                   ]),
-                  const Divider(height: 20, color: AppColors.g100),
+                  Divider(height: 20, color: c.gray100),
                   InfoRow(label: 'المسؤول',       value: f.responsible.name, icon: '👤'),
                   InfoRow(label: 'الإدارة',       value: f.department.name,  icon: '🏢'),
                   InfoRow(label: 'الموعد النهائي', value: f.dueDate,         icon: '📅'),
@@ -235,7 +260,7 @@ class FollowUpDetailScreen extends ConsumerWidget {
                   const SizedBox(height: 10),
                   TextField(maxLines: 3, 
                     style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
-                    decoration: fieldDec('سجّل الإجراء المتخذ...')),
+                    decoration: fieldDec(context, 'سجّل الإجراء المتخذ...')),
                 ])),
               ]),
             ),

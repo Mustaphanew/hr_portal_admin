@@ -15,9 +15,10 @@ class _DepartmentsState extends ConsumerState<DepartmentsScreen> {
   String _search = '';
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final deptsAsync = ref.watch(departmentsProvider);
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: deptsAsync.when(
         loading: () => Column(children: [
           AdminAppBar(title: 'Departments'.tr(context), subtitle: '...', onBack: () => context.pop()),
@@ -28,7 +29,7 @@ class _DepartmentsState extends ConsumerState<DepartmentsScreen> {
           Expanded(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 12),
-            Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx3)),
+            Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: c.textMuted)),
             const SizedBox(height: 12),
             OutlineBtn(text: 'Retry'.tr(context), onTap: () => ref.invalidate(departmentsProvider)),
           ]))),
@@ -45,27 +46,27 @@ class _DepartmentsState extends ConsumerState<DepartmentsScreen> {
               onBack: () => context.pop()),
             // Stats strip
             Container(
-              color: AppColors.bgCard,
+              color: c.bgCard,
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
               child: Row(children: [
-                _orgStat('$totalEmployees', 'employee_word'.tr(context), AppColors.navyMid, '👥'),
+                _orgStat('$totalEmployees', 'employee_word'.tr(context), AppColors.navyMid, '👥', c),
                 const SizedBox(width: 10),
-                _orgStat('${allDepts.length}', 'department_word'.tr(context), AppColors.teal, '🏢'),
+                _orgStat('${allDepts.length}', 'department_word'.tr(context), AppColors.teal, '🏢', c),
                 const SizedBox(width: 10),
-                _orgStat('$totalPending', 'pending_request_word'.tr(context), AppColors.warning, '📋'),
+                _orgStat('$totalPending', 'pending_request_word'.tr(context), AppColors.warning, '📋', c),
                 const SizedBox(width: 10),
-                _orgStat('$totalIssues', 'exception_word'.tr(context), AppColors.error, '⚠️'),
+                _orgStat('$totalIssues', 'exception_word'.tr(context), AppColors.error, '⚠️', c),
               ]),
             ),
             // Search
-            Container(color: AppColors.bgCard,
+            Container(color: c.bgCard,
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
               child: TextField(
-                
+
                 style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
                 onChanged: (v) => setState(() => _search = v),
-                decoration: fieldDec('Search department'.tr(context)).copyWith(
-                  prefixIcon: const Icon(Icons.search, color: AppColors.g400, size: 20),
+                decoration: fieldDec(context, 'Search department'.tr(context)).copyWith(
+                  prefixIcon: Icon(Icons.search, color: c.gray400, size: 20),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10)))),
             Expanded(child: RefreshIndicator(
               onRefresh: () async => ref.invalidate(departmentsProvider),
@@ -92,14 +93,14 @@ class _DepartmentsState extends ConsumerState<DepartmentsScreen> {
       ),
     );
   }
-  Widget _orgStat(String v, String l, Color c, String ico) => Expanded(child: Container(
+  Widget _orgStat(String v, String l, Color col, String ico, AppColorsExtension c) => Expanded(child: Container(
     padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-    decoration: BoxDecoration(color: c.withOpacity(0.08),
-      borderRadius: BorderRadius.circular(10), border: Border.all(color: c.withOpacity(0.2))),
+    decoration: BoxDecoration(color: col.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(10), border: Border.all(color: col.withOpacity(0.2))),
     child: Column(children: [
       Text(ico, style: const TextStyle(fontSize: 14)),
-      Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.w900, color: c, height: 1.1)),
-      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: AppColors.tx3), textAlign: TextAlign.center),
+      Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.w900, color: col, height: 1.1)),
+      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: c.textMuted), textAlign: TextAlign.center),
     ]),
   ));
 }
@@ -110,9 +111,10 @@ class DepartmentDetailScreen extends ConsumerWidget {
   const DepartmentDetailScreen({super.key, required this.departmentId});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.appColors;
     final detailAsync = ref.watch(departmentDetailProvider(departmentId));
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: detailAsync.when(
         loading: () => Column(children: [
           Container(
@@ -149,7 +151,7 @@ class DepartmentDetailScreen extends ConsumerWidget {
           Expanded(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 12),
-            Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx3)),
+            Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: c.textMuted)),
             const SizedBox(height: 12),
             OutlineBtn(text: 'Retry'.tr(context), onTap: () => ref.invalidate(departmentDetailProvider(departmentId))),
           ]))),
@@ -199,7 +201,7 @@ class DepartmentDetailScreen extends ConsumerWidget {
                     ClipRRect(borderRadius: BorderRadius.circular(6),
                       child: LinearProgressIndicator(
                         value: d.performanceScore! / 100,
-                        backgroundColor: AppColors.g100,
+                        backgroundColor: c.gray100,
                         valueColor: AlwaysStoppedAnimation(
                           d.performanceScore! >= 90 ? AppColors.success
                             : d.performanceScore! >= 75 ? AppColors.warning : AppColors.error),

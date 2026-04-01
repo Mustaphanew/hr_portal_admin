@@ -4,8 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/providers/admin_providers.dart';
+import '../../../../core/providers/paginated_providers.dart';
 import '../../../../core/widgets/admin_widgets.dart';
+import '../../../../core/widgets/paginated_list_view.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../data/models/employee_models.dart';
 
 // ── Employees Directory ───────────────────────────────────
 class EmployeesScreen extends ConsumerStatefulWidget {
@@ -25,17 +28,18 @@ class _EmployeesState extends ConsumerState<EmployeesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final employeesAsync = ref.watch(employeesProvider);
+    final c = context.appColors;
+    final employeesAsync = ref.watch(paginatedEmployeesProvider);
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: Column(children: [
         AdminAppBar(title: 'Employees'.tr(context),
           subtitle: employeesAsync.whenOrNull(
-            data: (d) => 'active_employees'.tr(context, params: {'count': '${d.employees.length}'}),
+            data: (d) => 'active_employees'.tr(context, params: {'count': '${d.items.length}'}),
           ),
           onBack: () => context.pop()),
         Container(
-          color: AppColors.bgCard,
+          color: c.bgCard,
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
           child: Column(children: [
             TextField(
@@ -43,8 +47,8 @@ class _EmployeesState extends ConsumerState<EmployeesScreen> {
               onChanged: (v) {
                 ref.read(employeesSearchProvider.notifier).state = v;
               },
-              decoration: fieldDec('Search employee'.tr(context)).copyWith(
-                prefixIcon: const Icon(Icons.search, color: AppColors.g400, size: 20),
+              decoration: fieldDec(context, 'Search employee'.tr(context)).copyWith(
+                prefixIcon: Icon(Icons.search, color: c.gray400, size: 20),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10))),
             const SizedBox(height: 8),
           ]),
@@ -64,22 +68,25 @@ class _EmployeesState extends ConsumerState<EmployeesScreen> {
               Text('Error'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.error)),
               const SizedBox(height: 8),
               OutlineBtn(text: 'Retry'.tr(context), small: true, fullWidth: false,
-                onTap: () => ref.invalidate(employeesProvider)),
+                onTap: () => ref.invalidate(paginatedEmployeesProvider)),
             ],
           )),
-          data: (data) {
-            final employees = data.employees;
-            if (employees.isEmpty) {
-              return Center(child: Text('No employees'.tr(context),
-                style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: AppColors.tx3)));
-            }
+          data: (paginated) {
+            final employees = paginated.items;
             return RefreshIndicator(
-              onRefresh: () async => ref.invalidate(employeesProvider),
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                itemCount: employees.length,
-                itemBuilder: (_, i) {
-                  final e = employees[i];
+              onRefresh: () async {
+                ref.invalidate(paginatedEmployeesProvider);
+                await ref.read(paginatedEmployeesProvider.future);
+              },
+              child: PaginatedListView<AdminEmployee>(
+                items: employees,
+                isLoadingMore: paginated.isLoadingMore,
+                hasMore: paginated.hasMore,
+                loadMoreError: paginated.loadMoreError,
+                onFetchMore: () => ref.read(paginatedEmployeesProvider.notifier).fetchMore(),
+                emptyWidget: Center(child: Text('No employees'.tr(context),
+                  style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: c.textMuted))),
+                itemBuilder: (_, e, i) {
                   return EmployeeListCard(
                     initials: e.initials ?? '',
                     name: e.name,
@@ -105,9 +112,10 @@ class EmployeeDetailScreen extends ConsumerWidget {
   const EmployeeDetailScreen({super.key, required this.employeeId});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.appColors;
     final detailAsync = ref.watch(employeeDetailProvider(employeeId));
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: detailAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Column(
@@ -119,12 +127,12 @@ class EmployeeDetailScreen extends ConsumerWidget {
               onTap: () => ref.invalidate(employeeDetailProvider(employeeId))),
           ],
         )),
-        data: (e) => _buildDetail(context, ref, e),
+        data: (e) => _buildDetail(context, ref, e, c),
       ),
     );
   }
 
-  Widget _buildDetail(BuildContext context, WidgetRef ref, dynamic e) {
+  Widget _buildDetail(BuildContext context, WidgetRef ref, dynamic e, AppColorsExtension c) {
     final att = e.attendanceSummary;
     final leave = e.leaveSummary;
     return Column(children: [
@@ -169,11 +177,11 @@ class EmployeeDetailScreen extends ConsumerWidget {
           child: Column(children: [
             // Quick stats
             Row(children: [
-              _stat(e.hireDate ?? '-', 'تاريخ التحاق', '🏅'),
+              _stat(e.hireDate ?? '-', 'تاريخ التحاق', '🏅', c),
               const SizedBox(width: 10),
-              _stat('${e.pendingRequests}', 'طلبات', '📋'),
+              _stat('${e.pendingRequests}', 'طلبات', '📋', c),
               const SizedBox(width: 10),
-              _stat('${e.activeTasks}', 'مهام', '✅'),
+              _stat('${e.activeTasks}', 'مهام', '✅', c),
             ]),
             const SizedBox(height: 14),
             // Work info
@@ -203,13 +211,13 @@ class EmployeeDetailScreen extends ConsumerWidget {
                 ]),
                 const SizedBox(height: 12),
                 Row(children: [
-                  _attStat('${att.presentDays}', 'حاضر', AppColors.success),
+                  _attStat('${att.presentDays}', 'حاضر', AppColors.success, c),
                   const SizedBox(width: 8),
-                  _attStat('${att.lateDays}', 'متأخر', AppColors.warning),
+                  _attStat('${att.lateDays}', 'متأخر', AppColors.warning, c),
                   const SizedBox(width: 8),
-                  _attStat('${att.leaveDays}', 'إجازة', AppColors.teal),
+                  _attStat('${att.leaveDays}', 'إجازة', AppColors.teal, c),
                   const SizedBox(width: 8),
-                  _attStat('${att.absentDays}', 'غياب', AppColors.error),
+                  _attStat('${att.absentDays}', 'غياب', AppColors.error, c),
                 ]),
               ])),
             // Leave summary
@@ -221,8 +229,8 @@ class EmployeeDetailScreen extends ConsumerWidget {
                   const Text('رصيد الإجازات', style: TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w800)),
                 ]),
                 const SizedBox(height: 12),
-                _leaveRow('سنوية', '${leave.annualTotal}', '${leave.annualUsed}', '${leave.annualAvailable}'),
-                _leaveRow('مرضية', '${leave.sickTotal}', '${leave.sickUsed}', '${leave.sickAvailable}'),
+                _leaveRow('سنوية', '${leave.annualTotal}', '${leave.annualUsed}', '${leave.annualAvailable}', c),
+                _leaveRow('مرضية', '${leave.sickTotal}', '${leave.sickUsed}', '${leave.sickAvailable}', c),
               ])),
           ]),
         ),
@@ -235,32 +243,32 @@ class EmployeeDetailScreen extends ConsumerWidget {
     ]);
   }
 
-  Widget _stat(String v, String l, String ico) => Expanded(child: Container(
+  Widget _stat(String v, String l, String ico, AppColorsExtension c) => Expanded(child: Container(
     padding: const EdgeInsets.symmetric(vertical: 12),
-    decoration: BoxDecoration(color: AppColors.bgCard,
+    decoration: BoxDecoration(color: c.bgCard,
       borderRadius: BorderRadius.circular(12), boxShadow: AppShadows.sm),
     child: Column(children: [
       Text(ico, style: const TextStyle(fontSize: 20)),
       const SizedBox(height: 4),
       Text(v, style: const TextStyle(fontFamily: 'Cairo', fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.navyMid)),
-      Text(l, style: const TextStyle(fontFamily: 'Cairo', fontSize: 10, color: AppColors.tx3)),
+      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: c.textMuted)),
     ])));
-  Widget _attStat(String v, String l, Color c) => Expanded(child: Container(
+  Widget _attStat(String v, String l, Color col, AppColorsExtension c) => Expanded(child: Container(
     padding: const EdgeInsets.symmetric(vertical: 8),
-    decoration: BoxDecoration(color: c.withOpacity(0.08),
-      borderRadius: BorderRadius.circular(10), border: Border.all(color: c.withOpacity(0.2))),
+    decoration: BoxDecoration(color: col.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(10), border: Border.all(color: col.withOpacity(0.2))),
     child: Column(children: [
-      Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 18, fontWeight: FontWeight.w900, color: c, height: 1.1)),
-      Text(l, style: const TextStyle(fontFamily: 'Cairo', fontSize: 9, color: AppColors.tx3)),
+      Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 18, fontWeight: FontWeight.w900, color: col, height: 1.1)),
+      Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: c.textMuted)),
     ])));
-  Widget _leaveRow(String type, String total, String used, String rem) =>
+  Widget _leaveRow(String type, String total, String used, String rem, AppColorsExtension c) =>
     Container(padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.g100))),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: c.gray100))),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Row(children: [
           Text(rem, style: const TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.navyMid)),
-          const Text(' متبقي', style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: AppColors.tx3)),
+          Text(' متبقي', style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: c.textMuted)),
         ]),
-        Text('$type — من $total', style: const TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.tx2)),
+        Text('$type — من $total', style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: c.textSecondary)),
       ]));
 }
