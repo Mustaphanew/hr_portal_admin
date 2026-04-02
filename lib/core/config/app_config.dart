@@ -35,7 +35,7 @@ class AppConfig {
       case 'staging':
         return const AppConfig(
           flavor: AppFlavor.staging,
-          baseUrl: 'https://staging-api.company.com/api/v1',
+          baseUrl: 'https://account.alzajeltravel.com/api/v1',
           envName: 'Staging',
           enableDebugLogs: true,
           showEnvBanner: true,
@@ -46,8 +46,8 @@ class AppConfig {
       default:
         return const AppConfig(
           flavor: AppFlavor.dev,
-          // baseUrl: 'http://192.168.1.41:8000/api/v1',
-          baseUrl: 'https://account.alzajeltravel.com/api/v1',
+          baseUrl: 'http://192.168.1.41:8000/api/v1',
+          // baseUrl: 'https://account.alzajeltravel.com/api/v1',
           envName: 'Development',
           enableDebugLogs: true,
           showEnvBanner: true,

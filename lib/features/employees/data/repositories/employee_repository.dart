@@ -15,6 +15,8 @@ class EmployeeRepository {
   /// Fetch the paginated list of employees with optional filters.
   Future<AdminEmployeesData> getEmployees({
     int? departmentId,
+    int? companyId,
+    int? branchId,
     String? status,
     String? attendanceStatus,
     String? search,
@@ -27,6 +29,8 @@ class EmployeeRepository {
           AdminEmployeesData.fromJson(json as Map<String, dynamic>),
       queryParameters: {
         'department_id': ?departmentId,
+        'company_id': ?companyId,
+        'branch_id': ?branchId,
         'employment_status': ?status,
         'attendance_status': ?attendanceStatus,
         'search': ?search,

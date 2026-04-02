@@ -14,7 +14,28 @@ import '../../features/projects/data/models/project_models.dart';
 import '../../features/reports/data/models/report_models.dart';
 import '../../features/requests_management/data/models/request_models.dart';
 import '../../features/tasks/data/models/task_models.dart';
+import '../../features/auth/data/models/auth_models.dart';
+import '../../features/admin_dashboard/data/models/branch_models.dart';
 import 'core_providers.dart';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Profile (from server)
+// ═══════════════════════════════════════════════════════════════════════════
+
+final adminProfileProvider = FutureProvider.autoDispose<EmployeeProfile>((ref) {
+  return ref.watch(authRepositoryProvider).getProfile();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Branches
+// ═══════════════════════════════════════════════════════════════════════════
+
+final branchesProvider = FutureProvider.autoDispose<BranchesData>((ref) {
+  return ref.watch(dashboardRepositoryProvider).getBranches();
+});
+
+/// Selected company/branch for this session. Default = all.
+final selectedBranchProvider = StateProvider<BranchSelection>((ref) => const BranchSelection());
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Dashboard

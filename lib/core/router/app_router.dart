@@ -79,6 +79,10 @@ final GoRouter appRouter = GoRouter(
             path: '/notifications',
             builder: (_, _) => const NotificationsCenterScreen(),
           ),
+          GoRoute(
+            path: '/admin-profile',
+            builder: (_, _) => const AdminProfileScreen(),
+          ),
         ]),
         // Tab 1: Requests
         StatefulShellBranch(routes: [
@@ -170,7 +174,6 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: '/reports', builder: (_, _) => const ReportsKpiScreen()),
 
     // ── Settings (sub-pages) ──────────────────────────────
-    GoRoute(path: '/admin-profile', builder: (_, _) => const AdminProfileScreen()),
     GoRoute(path: '/support', builder: (_, _) => const SupportScreen()),
     GoRoute(path: '/about', builder: (_, _) => const AboutScreen()),
 

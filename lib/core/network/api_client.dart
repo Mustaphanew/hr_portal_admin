@@ -129,7 +129,8 @@ class ApiClient {
       final json = response.data;
 
       // ── Debug log ──
-      print('┌── API ${response.requestOptions.method} $path [${response.statusCode}]');
+      final fullUrl = response.requestOptions.uri.toString();
+      print('┌── API ${response.requestOptions.method} $fullUrl [${response.statusCode}]');
 
       if (json is! Map<String, dynamic>) {
         print('└── ❌ Response is not JSON: ${json.runtimeType}');

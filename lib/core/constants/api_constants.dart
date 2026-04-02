@@ -55,6 +55,9 @@ class ApiConstants {
   static const String notificationsSend = '/notifications/send';
   static const String notificationsSendToUser = '/notifications/send-to-user';
 
+  // ── J0. Branches (Admin) ─────────────────────────────────────
+  static const String adminBranches = '/admin/branches';
+
   // ── J. Dashboard (Admin) ─────────────────────────────────────
   static const String adminDashboard = '/admin/dashboard';
 

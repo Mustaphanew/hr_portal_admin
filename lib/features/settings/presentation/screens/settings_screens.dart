@@ -7,6 +7,9 @@ import '../../../../core/localization/locale_provider.dart';
 import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../auth/data/models/auth_models.dart';
+import '../../../../core/providers/core_providers.dart';
+import '../../../../core/providers/admin_providers.dart';
 import 'package:go_router/go_router.dart';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -232,101 +235,212 @@ class _SettingsTile extends StatelessWidget {
 // ADMIN PROFILE
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-class AdminProfileScreen extends ConsumerWidget {
+class AdminProfileScreen extends ConsumerStatefulWidget {
   const AdminProfileScreen({super.key});
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdminProfileScreen> createState() => _AdminProfileState();
+}
+
+class _AdminProfileState extends ConsumerState<AdminProfileScreen> {
+  bool _refreshing = false;
+
+  Future<void> _refresh() async {
+    setState(() => _refreshing = true);
+    ref.invalidate(adminProfileProvider);
+    try { await ref.read(adminProfileProvider.future); } catch (_) {}
+    if (mounted) setState(() => _refreshing = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final c = context.appColors;
-    final employee = ref.watch(authProvider).employee;
-    final adminName = employee?.name ?? 'Admin'.tr(context);
-    final adminRole = employee?.jobTitle ?? 'System Manager'.tr(context);
-    final adminInitials = employee?.initials ?? '—';
-    final adminCode = employee?.code ?? '';
-    final adminEmail = employee?.email ?? 'Not specified'.tr(context);
-    final adminPhone = employee?.mobile ?? employee?.phone ?? 'Not specified'.tr(context);
-    final adminDept = employee?.department?.name ?? 'Not specified'.tr(context);
+    final profileAsync = ref.watch(adminProfileProvider);
+
     return Scaffold(
       backgroundColor: c.bg,
-      body: Column(children: [
-        Container(
-          decoration: const BoxDecoration(gradient: AppColors.navyGradient),
-          padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 12,
-            bottom: 24, left: 18, right: 18),
-          child: Column(children: [
-            Row(children: [
-              GestureDetector(onTap: () => context.pop(),
-                child: Container(width: 36, height: 36,
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 17))),
-              Expanded(child: Column(children: [
-                AdminAvatar(initials: adminInitials, size: 70, fontSize: 24),
-                const SizedBox(height: 10),
-                Text(adminName, style: TextStyle(fontFamily: 'Cairo',
-                  fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white)),
-                Text(adminRole, style: TextStyle(fontFamily: 'Cairo',
-                  fontSize: 12, color: AppColors.goldLight)),
-              ])),
-              Container(width: 36, height: 36,
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                child: const Center(child: Text('✏️', style: TextStyle(fontSize: 16)))),
-            ]),
-          ]),
-        ),
-        Expanded(child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(children: [
-            // Permissions
-            AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('Permissions Roles'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-                fontSize: 14, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 12),
-              Wrap(spacing: 8, runSpacing: 8,
+      body: profileAsync.when(
+        loading: () => CustomScrollView(slivers: [
+          _buildSliverAppBar(context, null, null, '—', ''),
+          const SliverFillRemaining(child: Center(child: CircularProgressIndicator())),
+        ]),
+        error: (e, _) => CustomScrollView(slivers: [
+          _buildSliverAppBar(context, null, null, '—', ''),
+          SliverFillRemaining(child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            const SizedBox(height: 12),
+            Text('Error loading data'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: c.textSecondary)),
+            const SizedBox(height: 16),
+            PrimaryBtn(text: 'Retry'.tr(context), small: true, fullWidth: false,
+              onTap: _refresh),
+          ]))),
+        ]),
+        data: (employee) => _buildBody(context, ref, employee),
+      ),
+    );
+  }
+
+  SliverAppBar _buildSliverAppBar(BuildContext context, String? name, String? role, String initials, String code) {
+    return SliverAppBar(
+      expandedHeight: 150,
+      collapsedHeight: kToolbarHeight,
+      pinned: true,
+      automaticallyImplyLeading: false,
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(gradient: AppColors.navyGradient),
+        child: FlexibleSpaceBar(
+          collapseMode: CollapseMode.pin,
+          background: Padding(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + kToolbarHeight + 4,
+              left: 18, right: 18, bottom: 16),
+            child: Row(children: [
+              Container(width: 56, height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle, color: AppColors.goldLight,
+                  border: Border.all(color: Colors.white24, width: 2)),
+                child: Center(child: Text(initials, style: TextStyle(fontFamily: 'Cairo',
+                  fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)))),
+              const SizedBox(width: 14),
+              Expanded(child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  'HR Management',
-                  'Approve Requests',
-                  'Review Reports',
-                  'Employee Management',
-                  'Announcements',
-                  'Task Management',
-                ].map((p) => Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: AppColors.tealSoft, borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.teal.withOpacity(0.3))),
-                  child: Text(p.tr(context), style: TextStyle(fontFamily: 'Cairo',
-                    fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.teal))
-                )).toList()),
-            ])),
-            // Account info
-            AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('Account Info'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-                fontSize: 14, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 10),
-              InfoRow(label: 'Employee Number'.tr(context),   value: adminCode,    icon: '🔖'),
-              InfoRow(label: 'Job Title'.tr(context),          value: adminRole,   icon: '💼'),
-              InfoRow(label: 'Department'.tr(context),         value: adminDept,   icon: '🏢'),
-              InfoRow(label: 'Email'.tr(context),              value: adminEmail,  icon: '✉️'),
-              InfoRow(label: 'Phone'.tr(context),              value: adminPhone,  icon: '📱'),
-              InfoRow(label: 'Access Level'.tr(context),       value: 'Senior admin full access'.tr(context), icon: '🛡', border: false),
-            ])),
-            // Activity stats
-            AppCard(child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('Activity Stats'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-                fontSize: 14, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 12),
-              Row(children: [
+                  Text(name ?? '...', style: TextStyle(fontFamily: 'Cairo',
+                    fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white),
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                  if (role != null)
+                    Text(role, style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: AppColors.goldLight),
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                  if (code.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                      decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(12)),
+                      child: Text(code, style: TextStyle(fontFamily: 'Cairo',
+                        fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white70))),
+                  ],
+                ])),
+            ]),
+          ),
+        ),
+      ),
+      title: Row(children: [
+        if (context.canPop())
+          GestureDetector(
+            onTap: () => context.pop(),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(10)),
+              child: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 18))),
+        if (context.canPop()) const SizedBox(width: 12),
+        Expanded(child: Text('Profile'.tr(context), style: TextStyle(fontFamily: 'Cairo',
+          fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white))),
+        GestureDetector(
+          onTap: _refreshing ? null : _refresh,
+          child: Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+            child: Center(
+              child: _refreshing
+                ? const SizedBox(width: 16, height: 16,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : const Icon(Icons.refresh, color: Colors.white, size: 18)))),
+      ]),
+      titleSpacing: 18,
+    );
+  }
+
+  Widget _buildBody(BuildContext context, WidgetRef ref, EmployeeProfile employee) {
+    final c = context.appColors;
+    final na = 'Not specified'.tr(context);
+    return CustomScrollView(slivers: [
+      _buildSliverAppBar(context, employee.name, employee.jobTitle,
+        employee.initials ?? '—', employee.code),
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+        sliver: SliverList(delegate: SliverChildListDelegate([
+
+          // ── Permissions & Roles ──
+          _AdminExpansionSection(
+            icon: Icons.shield_outlined, iconColor: AppColors.teal,
+            title: 'Permissions Roles'.tr(context),
+            child: Wrap(spacing: 8, runSpacing: 8,
+              children: ['HR Management', 'Approve Requests', 'Review Reports',
+                'Employee Management', 'Announcements', 'Task Management',
+              ].map((p) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.tealSoft, borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.teal.withOpacity(0.3))),
+                child: Text(p.tr(context), style: TextStyle(fontFamily: 'Cairo',
+                  fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.teal))
+              )).toList()),
+          ),
+          const SizedBox(height: 12),
+
+          // ── Change Password ──
+          const _AdminChangePasswordSection(),
+          const SizedBox(height: 12),
+
+          // ── Personal Info ──
+          _ProfileSectionCard(title: 'Personal information'.tr(context), icon: Icons.person_outline_rounded, children: [
+            _ProfileInfoTile(icon: Icons.email_outlined, label: 'Email'.tr(context), value: employee.email ?? na),
+            _ProfileInfoTile(icon: Icons.phone_android_rounded, label: 'Phone'.tr(context),
+              value: employee.mobile ?? employee.phone ?? na),
+            if (employee.gender != null)
+              _ProfileInfoTile(icon: Icons.wc_rounded, label: 'Gender'.tr(context),
+                value: employee.gender == 'male' ? 'Male'.tr(context) : 'Female'.tr(context)),
+            if (employee.dateOfBirth != null)
+              _ProfileInfoTile(icon: Icons.cake_outlined, label: 'Date of birth'.tr(context), value: employee.dateOfBirth!),
+            if (employee.nationality != null)
+              _ProfileInfoTile(icon: Icons.flag_outlined, label: 'Nationality'.tr(context), value: employee.nationality!),
+            if (employee.idNumber != null)
+              _ProfileInfoTile(icon: Icons.badge_outlined, label: 'ID number'.tr(context), value: employee.idNumber!),
+            if (employee.address != null)
+              _ProfileInfoTile(icon: Icons.location_on_outlined, label: 'Address'.tr(context), value: employee.address!),
+            if (employee.emergencyContactName != null)
+              _ProfileInfoTile(icon: Icons.emergency_outlined, label: 'Emergency contact'.tr(context), value: employee.emergencyContactName!),
+            if (employee.emergencyContactPhone != null)
+              _ProfileInfoTile(icon: Icons.phone_outlined, label: 'Emergency phone'.tr(context), value: employee.emergencyContactPhone!),
+          ]),
+          const SizedBox(height: 12),
+
+          // ── Work Info ──
+          _ProfileSectionCard(title: 'Work information'.tr(context), icon: Icons.work_outline_rounded, children: [
+            _ProfileInfoTile(icon: Icons.badge_rounded, label: 'Employee Number'.tr(context), value: employee.code),
+            _ProfileInfoTile(icon: Icons.work_rounded, label: 'Job Title'.tr(context), value: employee.jobTitle ?? na),
+            _ProfileInfoTile(icon: Icons.business_rounded, label: 'Department'.tr(context), value: employee.department?.name ?? na),
+            if (employee.company?.name != null)
+              _ProfileInfoTile(icon: Icons.apartment_rounded, label: 'Company'.tr(context), value: employee.company!.name!),
+            _ProfileInfoTile(icon: Icons.shield_rounded, label: 'Access Level'.tr(context),
+              value: employee.isManager ? 'Senior admin full access'.tr(context) : 'Standard'.tr(context)),
+            if (employee.hireDate != null)
+              _ProfileInfoTile(icon: Icons.calendar_today_outlined, label: 'Hire date'.tr(context), value: employee.hireDate!),
+          ]),
+          const SizedBox(height: 12),
+
+          // ── Manager Info ──
+          if (employee.manager != null) ...[
+            _ProfileSectionCard(title: 'Direct manager'.tr(context), icon: Icons.supervisor_account_outlined, children: [
+              _ProfileInfoTile(icon: Icons.person_rounded, label: 'Name'.tr(context), value: employee.manager!.name),
+              _ProfileInfoTile(icon: Icons.work_rounded, label: 'Job Title'.tr(context), value: employee.manager!.jobTitle),
+            ]),
+            const SizedBox(height: 12),
+          ],
+
+          // ── Activity Stats ──
+          _ProfileSectionCard(title: 'Activity Stats'.tr(context), icon: Icons.analytics_outlined, children: [
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(children: [
                 _actStat('42', 'Approvals this month'.tr(context), AppColors.success, c),
                 const SizedBox(width: 8),
-                _actStat('8',  'Rejected this month'.tr(context), AppColors.error, c),
+                _actStat('8', 'Rejected this month'.tr(context), AppColors.error, c),
                 const SizedBox(width: 8),
                 _actStat('15', 'Assigned tasks'.tr(context), AppColors.navyMid, c),
-              ]),
-            ])),
+              ])),
           ]),
-        )),
-      ]),
-    );
+        ]))),
+    ]);
   }
 
   Widget _actStat(String v, String l, Color col, AppColorsExtension c) => Expanded(child: Container(
@@ -338,6 +452,261 @@ class AdminProfileScreen extends ConsumerWidget {
       Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 22, fontWeight: FontWeight.w900, color: col, height: 1.1)),
       Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: c.textMuted, height: 1.3), textAlign: TextAlign.center),
     ])));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Profile Section Card (like employee app)
+// ═══════════════════════════════════════════════════════════════════
+
+class _ProfileSectionCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final List<Widget> children;
+  const _ProfileSectionCard({required this.title, required this.icon, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    if (children.isEmpty) return const SizedBox.shrink();
+    final c = context.appColors;
+    return Container(
+      decoration: BoxDecoration(
+        color: c.bgCard, borderRadius: BorderRadius.circular(16),
+        boxShadow: AppShadows.card),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Padding(padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+          child: Row(children: [
+            Container(padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.navyMid.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10)),
+              child: Icon(icon, size: 18, color: AppColors.navyMid)),
+            const SizedBox(width: 10),
+            Text(title, style: TextStyle(fontFamily: 'Cairo',
+              fontSize: 14, fontWeight: FontWeight.w700, color: c.textPrimary)),
+          ])),
+        const SizedBox(height: 8),
+        const Divider(height: 1),
+        ...children,
+        const SizedBox(height: 4),
+      ]),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Profile Info Tile (like employee app)
+// ═══════════════════════════════════════════════════════════════════
+
+class _ProfileInfoTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  const _ProfileInfoTile({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    return Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(icon, size: 18, color: c.textMuted),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(label, style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: c.textMuted)),
+          const SizedBox(height: 2),
+          Text(value, style: TextStyle(fontFamily: 'Cairo', fontSize: 13,
+            fontWeight: FontWeight.w600, color: c.textPrimary)),
+        ])),
+      ]),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Admin Expansion Section (for permissions, password)
+// ═══════════════════════════════════════════════════════════════════
+
+class _AdminExpansionSection extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final Widget child;
+  const _AdminExpansionSection({required this.icon, required this.iconColor, required this.title, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    return Container(
+      decoration: BoxDecoration(
+        color: c.bgCard, borderRadius: BorderRadius.circular(16),
+        boxShadow: AppShadows.card),
+      clipBehavior: Clip.antiAlias,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          leading: Container(padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, size: 18, color: iconColor)),
+          title: Text(title, style: TextStyle(fontFamily: 'Cairo',
+            fontSize: 14, fontWeight: FontWeight.w700, color: c.textPrimary)),
+          children: [child],
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Change Password Section (ExpansionTile like employee app)
+// ═══════════════════════════════════════════════════════════════════
+
+class _AdminChangePasswordSection extends ConsumerStatefulWidget {
+  const _AdminChangePasswordSection();
+  @override ConsumerState<_AdminChangePasswordSection> createState() => _AdminChangePasswordState();
+}
+
+class _AdminChangePasswordState extends ConsumerState<_AdminChangePasswordSection> {
+  final _formKey = GlobalKey<FormState>();
+  final _currentCtrl = TextEditingController();
+  final _newCtrl = TextEditingController();
+  final _confirmCtrl = TextEditingController();
+  bool _loading = false;
+  bool _obscureCurrent = true;
+  bool _obscureNew = true;
+  bool _obscureConfirm = true;
+
+  @override
+  void dispose() {
+    _currentCtrl.dispose();
+    _newCtrl.dispose();
+    _confirmCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _loading = true);
+    try {
+      await ref.read(authRepositoryProvider).changePassword(
+        currentPassword: _currentCtrl.text.trim(),
+        password: _newCtrl.text.trim(),
+        passwordConfirmation: _confirmCtrl.text.trim(),
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Password changed successfully'.tr(context), style: const TextStyle(fontFamily: 'Cairo')),
+        backgroundColor: AppColors.success));
+      ref.read(authProvider.notifier).logout();
+      context.go('/login');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('$e', style: const TextStyle(fontFamily: 'Cairo')),
+        backgroundColor: AppColors.error));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    return Container(
+      decoration: BoxDecoration(
+        color: c.bgCard, borderRadius: BorderRadius.circular(16),
+        boxShadow: AppShadows.card),
+      clipBehavior: Clip.antiAlias,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          leading: Container(padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10)),
+            child: const Icon(Icons.lock_outline_rounded, size: 18, color: AppColors.warning)),
+          title: Text('Change password'.tr(context), style: TextStyle(fontFamily: 'Cairo',
+            fontSize: 14, fontWeight: FontWeight.w700, color: c.textPrimary)),
+          children: [
+            Form(key: _formKey, child: Column(children: [
+              const SizedBox(height: 8),
+              _AdminPasswordField(controller: _currentCtrl, label: 'Current password'.tr(context),
+                obscure: _obscureCurrent, onToggle: () => setState(() => _obscureCurrent = !_obscureCurrent),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'This field is required'.tr(context) : null),
+              const SizedBox(height: 12),
+              _AdminPasswordField(controller: _newCtrl, label: 'New password'.tr(context),
+                obscure: _obscureNew, onToggle: () => setState(() => _obscureNew = !_obscureNew),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'This field is required'.tr(context);
+                  if (v.trim().length < 8) return 'Password must be at least 8 characters'.tr(context);
+                  return null;
+                }),
+              const SizedBox(height: 12),
+              _AdminPasswordField(controller: _confirmCtrl, label: 'Confirm password'.tr(context),
+                obscure: _obscureConfirm, onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'This field is required'.tr(context);
+                  if (v.trim() != _newCtrl.text.trim()) return 'Passwords do not match'.tr(context);
+                  return null;
+                }),
+              const SizedBox(height: 16),
+              SizedBox(width: double.infinity, height: 44,
+                child: ElevatedButton(
+                  onPressed: _loading ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.navyMid, foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  child: _loading
+                    ? const SizedBox(width: 20, height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : Text('Change password'.tr(context), style: TextStyle(fontFamily: 'Cairo',
+                        fontSize: 14, fontWeight: FontWeight.w700)))),
+            ])),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdminPasswordField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final bool obscure;
+  final VoidCallback onToggle;
+  final String? Function(String?)? validator;
+  const _AdminPasswordField({required this.controller, required this.label,
+    required this.obscure, required this.onToggle, this.validator});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    return TextFormField(
+      controller: controller, obscureText: obscure, validator: validator,
+      style: const TextStyle(fontFamily: 'Cairo', fontSize: 14),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: c.textMuted),
+        filled: true, fillColor: c.bg,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: c.gray200)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.navyMid, width: 1.5)),
+        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.error)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        suffixIcon: IconButton(
+          icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+            size: 20, color: c.textMuted),
+          onPressed: onToggle),
+      ),
+    );
+  }
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

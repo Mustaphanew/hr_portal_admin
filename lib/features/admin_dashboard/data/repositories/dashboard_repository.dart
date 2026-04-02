@@ -1,6 +1,7 @@
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/dashboard_models.dart';
+import '../models/branch_models.dart';
 
 /// Repository handling admin dashboard operations.
 ///
@@ -18,6 +19,15 @@ class DashboardRepository {
       ApiConstants.adminDashboard,
       fromJson: (json) =>
           DashboardData.fromJson(json as Map<String, dynamic>),
+    );
+    return response.data!;
+  }
+
+  /// Fetch all branches for branch selector.
+  Future<BranchesData> getBranches() async {
+    final response = await _client.get<BranchesData>(
+      ApiConstants.adminBranches,
+      fromJson: (json) => BranchesData.fromJson(json as Map<String, dynamic>),
     );
     return response.data!;
   }

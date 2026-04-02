@@ -74,6 +74,15 @@ class AuthRepository {
     return response.data!;
   }
 
+  /// Fetch the authenticated user's profile from the server.
+  Future<EmployeeProfile> getProfile() async {
+    final response = await _client.get<EmployeeProfile>(
+      ApiConstants.profile,
+      fromJson: (json) => EmployeeProfile.fromJson(json as Map<String, dynamic>),
+    );
+    return response.data!;
+  }
+
   /// Change the authenticated user's password.
   Future<void> changePassword({
     required String currentPassword,
