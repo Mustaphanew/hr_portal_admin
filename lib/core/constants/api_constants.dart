@@ -44,6 +44,11 @@ class ApiConstants {
   static String managerLeaveDetail(int id) => '/manager/leaves/$id';
   static String managerLeaveDecide(int id) => '/manager/leaves/$id/decide';
 
+  // ── F2. Admin Leave Requests (new) ──────────────────────────
+  static const String adminLeaveRequests = '/admin/leave-requests';
+  static String adminLeaveRequestDetail(int id) => '/admin/leave-requests/$id';
+  static String adminLeaveRequestDecide(int id) => '/admin/leave-requests/$id/decide';
+
   // ── G. Attendance (Employee) ─────────────────────────────────
   static const String attendanceHistory = '/attendance/history';
 

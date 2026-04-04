@@ -81,34 +81,40 @@ class LeaveRepository {
   // F. Manager Leaves
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /// F1 — List leaves pending manager review.
+  /// F1 — List admin leave requests.
   Future<BaseResponse<ManagerLeavesData>> getManagerLeaves({
     String? status,
     int? employeeId,
-    int? year,
+    int? companyId,
+    int? departmentId,
+    int? leaveTypeId,
+    String? search,
     int? perPage,
     int? page,
   }) async {
     final queryParameters = <String, dynamic>{
       'status': ?status,
       'employee_id': ?employeeId,
-      'year': ?year,
+      'company_id': ?companyId,
+      'department_id': ?departmentId,
+      'leave_type_id': ?leaveTypeId,
+      'search': ?search,
       'per_page': ?perPage,
       'page': ?page,
     };
 
     return _apiClient.get<ManagerLeavesData>(
-      ApiConstants.managerLeaves,
+      ApiConstants.adminLeaveRequests,
       queryParameters: queryParameters,
       fromJson: (json) =>
           ManagerLeavesData.fromJson(json as Map<String, dynamic>),
     );
   }
 
-  /// F2 — Get a single leave in manager view.
+  /// F2 — Get a single leave request detail.
   Future<BaseResponse<LeaveRequest>> getManagerLeaveDetail(int id) async {
     return _apiClient.get<LeaveRequest>(
-      ApiConstants.managerLeaveDetail(id),
+      ApiConstants.adminLeaveRequestDetail(id),
       fromJson: (json) =>
           LeaveRequest.fromJson(json as Map<String, dynamic>),
     );
@@ -117,14 +123,14 @@ class LeaveRepository {
   /// F3 — Approve or reject a leave request.
   Future<BaseResponse<LeaveRequest>> decideLeave(
     int id, {
-    required String status,
-    String? responseNotes,
+    required String decision,
+    String? notes,
   }) async {
     return _apiClient.post<LeaveRequest>(
-      ApiConstants.managerLeaveDecide(id),
+      ApiConstants.adminLeaveRequestDecide(id),
       data: {
-        'status': status,
-        'response_notes': ?responseNotes,
+        'decision': decision,
+        'notes': ?notes,
       },
       fromJson: (json) =>
           LeaveRequest.fromJson(json as Map<String, dynamic>),

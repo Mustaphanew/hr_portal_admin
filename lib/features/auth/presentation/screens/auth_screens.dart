@@ -89,20 +89,15 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 class _LoginState extends ConsumerState<LoginScreen> {
   bool _showPw = false, _loading = false, _remember = true;
+  final _formKey = GlobalKey<FormState>();
   final _userCtrl = TextEditingController();
   final _pwCtrl   = TextEditingController();
 
   void _login() async {
+    if (!_formKey.currentState!.validate()) return;
+
     final username = _userCtrl.text.trim();
     final password = _pwCtrl.text.trim();
-
-    if (username.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Please enter credentials'.tr(context),
-          style: TextStyle(fontFamily: 'Cairo')),
-        backgroundColor: AppColors.error));
-      return;
-    }
 
     setState(() => _loading = true);
     try {
@@ -180,44 +175,72 @@ class _LoginState extends ConsumerState<LoginScreen> {
         ),
         Padding(
           padding: const EdgeInsets.all(22),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text('Admin email'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-              fontSize: 12, fontWeight: FontWeight.w600, color: c.textSecondary), textAlign: TextAlign.right),
-            const SizedBox(height: 6),
-            TextField(controller: _userCtrl, textDirection: TextDirection.ltr,
-              textAlign: TextAlign.right,
-              style: TextStyle(fontFamily: 'Cairo', fontSize: 13), decoration: fieldDec(context, 'Admin email'.tr(context))),
-            const SizedBox(height: 14),
-            Text('Enter password'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-              fontSize: 12, fontWeight: FontWeight.w600, color: c.textSecondary), textAlign: TextAlign.right),
-            const SizedBox(height: 6),
-            TextField(controller: _pwCtrl, obscureText: !_showPw,
-              style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
-              decoration: fieldDec(context, 'Enter password'.tr(context)).copyWith(
-                suffixIcon: IconButton(
-                  icon: Icon(_showPw ? Icons.visibility_off : Icons.visibility,
-                    color: c.gray400, size: 20),
-                  onPressed: () => setState(() => _showPw = !_showPw)))),
-            const SizedBox(height: 10),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              TextButton(
-                onPressed: () => context.push('/forgot-password'),
-                child: Text('Forgot password?'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-                  fontSize: 12, color: AppColors.navyLight, fontWeight: FontWeight.w600))),
-              Row(children: [
-                Text('Remember me'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: c.textMuted)),
-                const SizedBox(width: 6),
-                Transform.scale(scale: 0.9, child: Checkbox(
-                  value: _remember, activeColor: AppColors.navyMid,
-                  onChanged: (v) => setState(() => _remember = v ?? true))),
+          child: Form(
+            key: _formKey,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Text('Admin email'.tr(context), style: TextStyle(fontFamily: 'Cairo',
+                fontSize: 12, fontWeight: FontWeight.w600, color: c.textSecondary), textAlign: TextAlign.right),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _userCtrl,
+                textDirection: TextDirection.ltr,
+                textAlign: TextAlign.right,
+                style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
+                decoration: fieldDec(context, 'Admin email'.tr(context)),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return 'This field is required'.tr(context);
+                  }
+                  if (v.trim().length < 3) {
+                    return 'Username must be at least 3 characters'.tr(context);
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 14),
+              Text('Enter password'.tr(context), style: TextStyle(fontFamily: 'Cairo',
+                fontSize: 12, fontWeight: FontWeight.w600, color: c.textSecondary), textAlign: TextAlign.right),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _pwCtrl,
+                obscureText: !_showPw,
+                style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
+                decoration: fieldDec(context, 'Enter password'.tr(context)).copyWith(
+                  suffixIcon: IconButton(
+                    icon: Icon(_showPw ? Icons.visibility_off : Icons.visibility,
+                      color: c.gray400, size: 20),
+                    onPressed: () => setState(() => _showPw = !_showPw))),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return 'This field is required'.tr(context);
+                  }
+                  if (v.trim().length < 6) {
+                    return 'Password must be at least 6 characters'.tr(context);
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 10),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                TextButton(
+                  onPressed: () => context.push('/forgot-password'),
+                  child: Text('Forgot password?'.tr(context), style: TextStyle(fontFamily: 'Cairo',
+                    fontSize: 12, color: AppColors.navyLight, fontWeight: FontWeight.w600))),
+                Row(children: [
+                  Text('Remember me'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: c.textMuted)),
+                  const SizedBox(width: 6),
+                  Transform.scale(scale: 0.9, child: Checkbox(
+                    value: _remember, activeColor: AppColors.navyMid,
+                    onChanged: (v) => setState(() => _remember = v ?? true))),
+                ]),
               ]),
+              const SizedBox(height: 20),
+              PrimaryBtn(text: 'Secure Login'.tr(context), onTap: _login, loading: _loading, icon: '🔐'),
+              const SizedBox(height: 28),
+              Center(child: Text('Portal for management only'.tr(context),
+                style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: c.gray400), textAlign: TextAlign.center)),
             ]),
-            const SizedBox(height: 20),
-            PrimaryBtn(text: 'Secure Login'.tr(context), onTap: _login, loading: _loading, icon: '🔐'),
-            const SizedBox(height: 28),
-            Center(child: Text('Portal for management only'.tr(context),
-              style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: c.gray400), textAlign: TextAlign.center)),
-          ]),
+          ),
         ),
       ])),
     );

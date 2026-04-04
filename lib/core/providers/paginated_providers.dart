@@ -22,14 +22,19 @@ class PaginatedManagerLeavesNotifier extends PaginatedNotifier<LeaveRequest> {
   @override
   Future<PaginatedState<LeaveRequest>> build() async {
     ref.watch(managerLeavesStatusFilter);
+    ref.watch(selectedBranchProvider);
     return super.build();
   }
 
   @override
   FetchPage<LeaveRequest> get fetchPage => (page, perPage) async {
     final status = ref.read(managerLeavesStatusFilter);
+    final sel = ref.read(selectedBranchProvider);
     final response = await ref.read(leaveRepositoryProvider).getManagerLeaves(
-      status: status, perPage: perPage, page: page,
+      status: status,
+      companyId: sel.isBranch ? null : sel.companyId,
+      perPage: perPage,
+      page: page,
     );
     final data = response.data!;
     return PaginatedResponse(items: data.leaves, pagination: data.pagination);

@@ -215,9 +215,125 @@ class LeaveEmployee extends Equatable {
   List<Object?> get props => [id, name, code, jobTitle];
 }
 
+// ── LeaveCompany ────────────────────────────────────────────────────────────
+
+class LeaveCompany extends Equatable {
+  final int id;
+  final String? name;
+  final String? nameEn;
+
+  const LeaveCompany({required this.id, this.name, this.nameEn});
+
+  factory LeaveCompany.fromJson(Map<String, dynamic> json) => LeaveCompany(
+    id: json['id'] as int,
+    name: json['name'] as String?,
+    nameEn: json['name_en'] as String?,
+  );
+
+  @override
+  List<Object?> get props => [id, name, nameEn];
+}
+
+// ── LeaveBranch ─────────────────────────────────────────────────────────────
+
+class LeaveBranch extends Equatable {
+  final int id;
+  final String? name;
+  final String? nameEn;
+
+  const LeaveBranch({required this.id, this.name, this.nameEn});
+
+  factory LeaveBranch.fromJson(Map<String, dynamic> json) => LeaveBranch(
+    id: json['id'] as int,
+    name: json['name'] as String?,
+    nameEn: json['name_en'] as String?,
+  );
+
+  @override
+  List<Object?> get props => [id, name, nameEn];
+}
+
+// ── LeaveApprover ───────────────────────────────────────────────────────────
+
+class LeaveApprover extends Equatable {
+  final int id;
+  final String name;
+  final String? code;
+  final String? jobTitle;
+  final int? approvalLevel;
+  final String? decision;
+  final String? decidedAt;
+  final String? notes;
+
+  const LeaveApprover({
+    required this.id,
+    required this.name,
+    this.code,
+    this.jobTitle,
+    this.approvalLevel,
+    this.decision,
+    this.decidedAt,
+    this.notes,
+  });
+
+  factory LeaveApprover.fromJson(Map<String, dynamic> json) => LeaveApprover(
+    id: json['id'] as int,
+    name: (json['name'] as String?) ?? '',
+    code: json['code'] as String?,
+    jobTitle: json['job_title'] as String?,
+    approvalLevel: (json['approval_level'] as num?)?.toInt(),
+    decision: json['decision'] as String?,
+    decidedAt: json['decided_at'] as String?,
+    notes: json['notes'] as String?,
+  );
+
+  @override
+  List<Object?> get props => [id, name, decision, decidedAt];
+}
+
+// ── LeaveApprovalHistory ────────────────────────────────────────────────────
+
+class LeaveApprovalHistory extends Equatable {
+  final int id;
+  final LeaveApprover approver;
+  final int approvalLevel;
+  final String decision;
+  final String? decidedAt;
+  final String? notes;
+  final bool isCurrent;
+
+  const LeaveApprovalHistory({
+    required this.id,
+    required this.approver,
+    required this.approvalLevel,
+    required this.decision,
+    this.decidedAt,
+    this.notes,
+    required this.isCurrent,
+  });
+
+  factory LeaveApprovalHistory.fromJson(Map<String, dynamic> json) {
+    final approverJson = json['approver'];
+    return LeaveApprovalHistory(
+      id: json['id'] as int,
+      approver: approverJson is Map<String, dynamic>
+        ? LeaveApprover.fromJson(approverJson)
+        : LeaveApprover(id: 0, name: ''),
+      approvalLevel: (json['approval_level'] as num?)?.toInt() ?? 1,
+      decision: json['decision'] as String? ?? 'pending',
+      decidedAt: json['decided_at'] as String?,
+      notes: json['notes'] as String?,
+      isCurrent: json['is_current'] as bool? ?? false,
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, approvalLevel, decision, isCurrent];
+}
+
 // ── LeaveRequest ─────────────────────────────────────────────────────────────
 
-/// A single leave request (employee or manager view).
+/// A single leave request (employee or admin view).
 class LeaveRequest extends Equatable {
   final int id;
   final String requestNumber;
@@ -233,13 +349,25 @@ class LeaveRequest extends Equatable {
   final String? approvedAt;
   final String createdAt;
 
-  /// Only present in manager-view responses.
+  /// Employee info (admin view).
   final LeaveEmployee? employee;
+
+  /// Company info (admin view).
+  final LeaveCompany? company;
+
+  /// Branch info (admin view).
+  final LeaveBranch? branch;
+
+  /// Current approver info (admin view).
+  final LeaveApprover? approver;
+
+  /// Approval history (detail view).
+  final List<LeaveApprovalHistory>? approvalHistory;
 
   /// Day-by-day breakdown of the leave period.
   final List<LeaveDay>? days;
 
-  /// Whether the current manager can approve/reject this leave.
+  /// Whether the current admin can approve/reject this leave.
   final bool? canDecide;
 
   const LeaveRequest({
@@ -257,23 +385,31 @@ class LeaveRequest extends Equatable {
     this.approvedAt,
     required this.createdAt,
     this.employee,
+    this.company,
+    this.branch,
+    this.approver,
+    this.approvalHistory,
     this.days,
     this.canDecide,
   });
 
   factory LeaveRequest.fromJson(Map<String, dynamic> json) {
-    // days may come as List or Map — only parse if it's a List
     final rawDays = json['days'];
     List<LeaveDay>? days;
     if (rawDays is List && rawDays.isNotEmpty) {
       days = rawDays.map((e) => LeaveDay.fromJson(e as Map<String, dynamic>)).toList();
     }
 
+    final rawHistory = json['approval_history'];
+    List<LeaveApprovalHistory>? history;
+    if (rawHistory is List && rawHistory.isNotEmpty) {
+      history = rawHistory.map((e) => LeaveApprovalHistory.fromJson(e as Map<String, dynamic>)).toList();
+    }
+
     return LeaveRequest(
       id: (json['id'] as num?)?.toInt() ?? 0,
       requestNumber: (json['request_number'] ?? '') as String,
-      leaveType:
-          LeaveType.fromJson(json['leave_type'] as Map<String, dynamic>),
+      leaveType: LeaveType.fromJson(json['leave_type'] as Map<String, dynamic>),
       startDate: (json['start_date'] ?? '') as String,
       endDate: (json['end_date'] ?? '') as String,
       totalDays: (json['total_days'] as num?)?.toDouble() ?? 0.0,
@@ -287,49 +423,23 @@ class LeaveRequest extends Equatable {
       employee: json['employee'] is Map
           ? LeaveEmployee.fromJson(json['employee'] as Map<String, dynamic>)
           : null,
+      company: json['company'] is Map
+          ? LeaveCompany.fromJson(json['company'] as Map<String, dynamic>)
+          : null,
+      branch: json['branch'] is Map
+          ? LeaveBranch.fromJson(json['branch'] as Map<String, dynamic>)
+          : null,
+      approver: json['approver'] is Map
+          ? LeaveApprover.fromJson(json['approver'] as Map<String, dynamic>)
+          : null,
+      approvalHistory: history,
       days: days,
       canDecide: json['can_decide'] as bool?,
     );
   }
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'request_number': requestNumber,
-        'leave_type': leaveType.toJson(),
-        'start_date': startDate,
-        'end_date': endDate,
-        'total_days': totalDays,
-        'day_part': dayPart,
-        'reason': reason,
-        'status': status,
-        'rejection_reason': rejectionReason,
-        'approved_by': approvedBy,
-        'approved_at': approvedAt,
-        'created_at': createdAt,
-        if (employee != null) 'employee': employee!.toJson(),
-        if (days != null) 'days': days!.map((d) => d.toJson()).toList(),
-        if (canDecide != null) 'can_decide': canDecide,
-      };
-
   @override
-  List<Object?> get props => [
-        id,
-        requestNumber,
-        leaveType,
-        startDate,
-        endDate,
-        totalDays,
-        dayPart,
-        reason,
-        status,
-        rejectionReason,
-        approvedBy,
-        approvedAt,
-        createdAt,
-        employee,
-        days,
-        canDecide,
-      ];
+  List<Object?> get props => [id, requestNumber, status, createdAt];
 }
 
 // ── LeavesListData ───────────────────────────────────────────────────────────
@@ -376,7 +486,7 @@ class LeavesListData extends Equatable {
 
 // ── ManagerLeavesData ────────────────────────────────────────────────────────
 
-/// Wrapper for the manager leaves endpoint (F1) which uses a `leaves` key.
+/// Wrapper for the admin leave requests endpoint.
 class ManagerLeavesData extends Equatable {
   final List<LeaveRequest> leaves;
   final Pagination? pagination;
@@ -387,11 +497,13 @@ class ManagerLeavesData extends Equatable {
   });
 
   factory ManagerLeavesData.fromJson(Map<String, dynamic> json) {
+    // Support both 'leave_requests' (new API) and 'leaves' (old API)
+    final list = json['leave_requests'] ?? json['leaves'];
     return ManagerLeavesData(
-      leaves: (json['leaves'] as List<dynamic>)
+      leaves: (list as List<dynamic>)
           .map((e) => LeaveRequest.fromJson(e as Map<String, dynamic>))
           .toList(),
-      pagination: (json['meta'] ?? json['pagination']) != null
+      pagination: (json['pagination'] ?? json['meta']) != null
           ? Pagination.fromParent(json)
           : null,
     );
