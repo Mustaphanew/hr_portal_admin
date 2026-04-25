@@ -2,7 +2,9 @@
 
 import 'dart:convert';
 import 'dart:developer';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hr_portal_admin/core/services/awesome_notification_service.dart';
 import 'package:hr_portal_admin/core/services/db/db_helper.dart';
@@ -15,6 +17,35 @@ class NotificationFCMService {
 
   RemoteMessage? _initialMessage;
   bool _inited = false;
+
+  static bool _isFcmServiceUnavailableError(Object e) {
+    return e.toString().toUpperCase().contains('SERVICE_NOT_AVAILABLE');
+  }
+
+  /// جلب [getToken] دون رفع ضجيج في الكونسول لحالات البيئة الشائعة (مثل محاكي بلا GMS).
+  Future<void> _tryGetFcmTokenAndSubscribe() async {
+    try {
+      final token = await FirebaseMessaging.instance
+          .getToken()
+          .timeout(const Duration(seconds: 15), onTimeout: () => null);
+      if (kDebugMode && token != null && token.isNotEmpty) {
+        log('fcmToken: $token');
+      }
+      if (token != null && token.isNotEmpty) {
+        TopicService.subscribe(_defaultTopic);
+      }
+    } catch (e, s) {
+      if (_isFcmServiceUnavailableError(e)) {
+        if (kDebugMode) {
+          debugPrint(
+            '[FCM] getToken: SERVICE_NOT_AVAILABLE (استخدم صورة Google Play في المحاكي أو جهاز بلا حجب Google).',
+          );
+        }
+        return;
+      }
+      log('FCM getToken failed: $e', stackTrace: s);
+    }
+  }
 
   Future<void> initFCM() async {
     if (_inited) return;
@@ -36,30 +67,23 @@ class NotificationFCMService {
             sound: false,
           );
 
-      // 2) Token (with timeout to prevent hanging)
-      final token = await FirebaseMessaging.instance
-          .getToken()
-          .timeout(const Duration(seconds: 10), onTimeout: () => null);
-      log('fcmToken: $token');
+      // 2) FCM token — may fail on emulator without GMS, offline, etc. Non-fatal.
+      await _tryGetFcmTokenAndSubscribe();
 
-      // 3) Subscribe to topic — fire-and-forget
-      TopicService.subscribe(_defaultTopic);
-
-      // 4) Token refresh
       FirebaseMessaging.instance.onTokenRefresh.listen((t) async {
-        log('fcmToken refreshed: $t');
+        if (kDebugMode) {
+          log('fcmToken refreshed: $t');
+        }
         await TopicService.subscribe(_defaultTopic);
       });
 
-      // 5) Terminated
+      // 3) Terminated / foreground / opened — always register
       _initialMessage = await FirebaseMessaging.instance.getInitialMessage();
 
-      // 6) Foreground
       FirebaseMessaging.onMessage.listen((m) async {
         await _onForegroundMessage(m);
       });
 
-      // 7) Opened from system notification
       FirebaseMessaging.onMessageOpenedApp.listen(_handleOpenSafely);
     } catch (e, s) {
       log('initFCM error: $e', stackTrace: s);

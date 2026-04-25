@@ -1,7 +1,11 @@
+import 'dart:developer' as developer;
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/config/app_config.dart';
+import '../../../../core/constants/api_constants.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
@@ -15,14 +19,53 @@ class SplashScreen extends ConsumerStatefulWidget {
 class _SplashState extends ConsumerState<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _scale, _fade;
+  bool _retryingConfig = false;
+
+  bool get _blockStartup {
+    final c = appConfigInstance;
+    return c != null && c.isProduction && !c.hasValidBaseUrl;
+  }
+
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(duration: const Duration(milliseconds: 900), vsync: this);
     _scale = CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut);
     _fade  = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
+    if (_blockStartup) {
+      _ctrl.forward();
+      return;
+    }
     _ctrl.forward();
     _checkSession();
+  }
+
+  Future<void> _retryRemoteConfig() async {
+    final c = appConfigInstance;
+    if (c == null) return;
+    setState(() => _retryingConfig = true);
+    try {
+      await c.loadRemoteConfig();
+      ApiConstants.configure(c);
+      // ignore: avoid_print
+      print(
+        '[AppConfig] root: ${c.baseUrl} | example: ${ApiConstants.baseUrl}${ApiConstants.login} (${c.envName})',
+      );
+      developer.log(
+        'root: ${c.baseUrl} | example: ${ApiConstants.baseUrl}${ApiConstants.login} (${c.envName})',
+        name: 'AppConfig',
+      );
+      if (!mounted) return;
+      if (!c.hasValidBaseUrl) {
+        setState(() {});
+        return;
+      }
+      setState(() {});
+      _ctrl.forward(from: 0);
+      _checkSession();
+    } finally {
+      if (mounted) setState(() => _retryingConfig = false);
+    }
   }
 
   Future<void> _checkSession() async {
@@ -71,10 +114,42 @@ class _SplashState extends ConsumerState<SplashScreen> with SingleTickerProvider
             const SizedBox(height: 4),
             Text('ADMIN MANAGEMENT PORTAL', style: TextStyle(fontFamily: 'Cairo',
               fontSize: 11, color: Colors.white30, letterSpacing: 2)),
+            if (_blockStartup) ...[
+              const SizedBox(height: 32),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  'تعذر جلب عنوان الخادم. تحقق من الاتصال ثم أعد المحاولة.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    color: Colors.white.withOpacity(0.85),
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: _retryingConfig ? null : _retryRemoteConfig,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.gold,
+                  foregroundColor: AppColors.navyDeep,
+                ),
+                child: _retryingConfig
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('إعادة المحاولة', style: TextStyle(fontFamily: 'Cairo')),
+              ),
+            ],
           ])))),
-        Positioned(bottom: 52, left: 0, right: 0, child: Center(
-          child: SizedBox(width: 30, height: 30,
-            child: CircularProgressIndicator(color: AppColors.gold.withOpacity(0.7), strokeWidth: 2)))),
+        if (!_blockStartup)
+          Positioned(bottom: 52, left: 0, right: 0, child: Center(
+            child: SizedBox(width: 30, height: 30,
+              child: CircularProgressIndicator(color: AppColors.gold.withOpacity(0.7), strokeWidth: 2)))),
         Positioned(bottom: 26, left: 0, right: 0, child: Center(
           child: Text('الإصدار 1.0.0', style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.white24, letterSpacing: 2)))),
       ]),

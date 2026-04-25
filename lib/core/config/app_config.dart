@@ -1,15 +1,23 @@
+import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:flutter/foundation.dart';
+
 enum AppFlavor { dev, staging, prod }
+
+/// Set in [main] after construction and [loadRemoteConfig] as needed.
+AppConfig? appConfigInstance;
 
 class AppConfig {
   final AppFlavor flavor;
-  final String baseUrl;
   final String envName;
   final bool enableDebugLogs;
   final bool showEnvBanner;
   final int connectTimeoutMs;
   final int receiveTimeoutMs;
 
-  const AppConfig({
+  /// For [AppFlavor.prod] this is filled by [loadRemoteConfig]; empty means invalid.
+  String baseUrl;
+
+  AppConfig({
     required this.flavor,
     required this.baseUrl,
     required this.envName,
@@ -23,9 +31,9 @@ class AppConfig {
     const flavorStr = String.fromEnvironment('FLAVOR', defaultValue: 'dev');
     switch (flavorStr) {
       case 'prod':
-        return const AppConfig(
+        return AppConfig(
           flavor: AppFlavor.prod,
-          baseUrl: 'https://api.company.com/api/v1',
+          baseUrl: '',
           envName: 'Production',
           enableDebugLogs: false,
           showEnvBanner: false,
@@ -33,9 +41,9 @@ class AppConfig {
           receiveTimeoutMs: 15000,
         );
       case 'staging':
-        return const AppConfig(
+        return AppConfig(
           flavor: AppFlavor.staging,
-          baseUrl: 'https://account.alzajeltravel.com/api/v1',
+          baseUrl: 'https://account.alzajeltravel.com',
           envName: 'Staging',
           enableDebugLogs: true,
           showEnvBanner: true,
@@ -44,10 +52,9 @@ class AppConfig {
         );
       case 'dev':
       default:
-        return const AppConfig(
+        return AppConfig(
           flavor: AppFlavor.dev,
-          baseUrl: 'http://192.168.1.41:8000/api/v1',
-          // baseUrl: 'https://account.alzajeltravel.com/api/v1',
+          baseUrl: 'http://172.16.0.66:8000',
           envName: 'Development',
           enableDebugLogs: true,
           showEnvBanner: true,
@@ -57,9 +64,68 @@ class AppConfig {
     }
   }
 
+  /// [AppFlavor.prod]: fetch [base_url] from Firebase Remote Config (project-level).
+  /// Other flavors: no-op (fixed [baseUrl] from [fromEnvironment]).
+  Future<void> loadRemoteConfig() async {
+    if (flavor != AppFlavor.prod) return;
+
+    final remoteConfig = FirebaseRemoteConfig.instance;
+    try {
+      await remoteConfig.setConfigSettings(
+        RemoteConfigSettings(
+          fetchTimeout: const Duration(minutes: 1),
+          minimumFetchInterval: kDebugMode
+              ? Duration.zero
+              : const Duration(hours: 1),
+        ),
+      );
+      // Matches Console default; also used if fetch fails before activate.
+      await remoteConfig.setDefaults(
+        {_remoteKeyBaseUrl: 'https://account.alzajeltravel.com'},
+      );
+      try {
+        await remoteConfig.fetchAndActivate();
+      } catch (_) {
+        // Still read in-app / last activated values via getString.
+      }
+      final raw = remoteConfig.getString(_remoteKeyBaseUrl);
+      baseUrl = _normalizeRootBaseUrl(raw);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[AppConfig] loadRemoteConfig error: $e');
+      }
+      try {
+        final raw = FirebaseRemoteConfig.instance.getString(_remoteKeyBaseUrl);
+        baseUrl = _normalizeRootBaseUrl(raw);
+      } catch (_) {
+        baseUrl = '';
+      }
+    }
+  }
+
+  static const String _remoteKeyBaseUrl = 'base_url';
+
+  /// جذر الخادم فقط (بدون `/api/v1`). مسارات [ApiConstants] تتضمّن `/api/v1/...`.
+  static String _normalizeRootBaseUrl(String raw) {
+    var s = raw.trim();
+    if (s.isEmpty) return '';
+    s = s.replaceAll(RegExp(r'/+$'), '');
+    if (!s.startsWith('http://') && !s.startsWith('https://')) {
+      s = 'https://$s';
+    }
+    if (s.endsWith('/api/v1')) {
+      s = s.substring(0, s.length - '/api/v1'.length);
+      s = s.replaceAll(RegExp(r'/+$'), '');
+    }
+    return s;
+  }
+
   bool get isProduction => flavor == AppFlavor.prod;
   bool get isStaging => flavor == AppFlavor.staging;
   bool get isDev => flavor == AppFlavor.dev;
+
+  /// Whether API calls may proceed (prod must have a non-empty [baseUrl] from Remote Config).
+  bool get hasValidBaseUrl => baseUrl.trim().isNotEmpty;
 
   @override
   String toString() => 'AppConfig($envName, $baseUrl)';

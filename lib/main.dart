@@ -1,4 +1,8 @@
+// update 2026-04-25
+import 'dart:developer' as developer;
+
 import 'package:firebase_core/firebase_core.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -44,19 +48,22 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await initializeDateFormatting('en', null);
+  await initializeDateFormatting('ar', null);
+
   // ── System UI (mobile only) ──
   if (!kIsWeb) {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+      ),
+    );
   }
 
   // ── Firebase ──
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   // ── Notifications ──
@@ -67,10 +74,20 @@ void main() async {
   // ── Connect navigator key for notification tap navigation ──
   AdminNavigator.navigatorKey = rootNavigatorKey;
 
-  // ── Config ──
+  // ── Config (prod: [base_url] from Firebase Remote Config) ──
   final appConfig = AppConfig.fromEnvironment();
+  appConfigInstance = appConfig;
+  await appConfig.loadRemoteConfig();
   AppLogger.init(appConfig);
   ApiConstants.configure(appConfig);
+  // ignore: avoid_print
+  print(
+    '[AppConfig] root: ${appConfig.baseUrl} | example: ${ApiConstants.baseUrl}${ApiConstants.login} (${appConfig.envName})',
+  );
+  developer.log(
+    'root: ${appConfig.baseUrl} | example: ${ApiConstants.baseUrl}${ApiConstants.login} (${appConfig.envName})',
+    name: 'AppConfig',
+  );
 
   // ── DI ──
   await initDependencies();

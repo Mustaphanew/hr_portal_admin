@@ -36,6 +36,7 @@ dependencies:
   # ── Firebase ──
   firebase_core: ^4.4.0
   firebase_messaging: ^16.1.1
+  firebase_remote_config: ^6.3.0
 
   # ── Notifications ──
   awesome_notifications: ^0.11.0
@@ -62,12 +63,44 @@ dependencies:
 
   # ── Widgets ──
   flutter_slidable: ^4.0.3
+  table_calendar: ^3.2.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^6.0.0
+
+
+#   flutter_native_splash:
+# flutter_native_splash:
+#  color: "#e2e7e9"
+#  color_dark: "#161618"
+#  image: "assets/images/secondary_logo.png"
+#  image_dark: "assets/images/primary_logo.png"
+#  android_12:
+#    image: "assets/images/secondary_logo_android12.png"
+#    image_dark: "assets/images/primary_logo_android12.png"
+#    color: "#e2e7e9"
+#    color_dark: "#161618"
+#    icon_background_color: "#e2e7e9"
+#    icon_background_color_dark: "#161618"
+#  # dart run flutter_native_splash:create
+
+#   flutter_launcher_icons:
+# flutter_icons:
+#   android: "ic_launcher"
+#   ios: true
+#   image_path: "assets/images/icon.png"
+#   adaptive_icon_background: "#e2e7e9"
+#   adaptive_icon_foreground: "assets/images/icon_foreground.png"
+#   web:
+#     generate: true
+#     image_path: "assets/images/icon.png"
+#     background_color: "#e2e7e9"
+#     theme_color: "#e2e7e9"
+#  # flutter pub run flutter_launcher_icons:main
+
 
 flutter:
 

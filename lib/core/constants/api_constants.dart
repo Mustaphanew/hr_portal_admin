@@ -3,11 +3,15 @@ import 'package:hr_portal_admin/core/config/app_config.dart';
 class ApiConstants {
   ApiConstants._();
 
+  /// جذر الخادم فقط، مثال: `http://172.16.0.66:8000` — المسارات تتضمّن `/api/v1/...` أدناه.
   static late String baseUrl;
 
   static void configure(AppConfig config) {
     baseUrl = config.baseUrl;
   }
+
+  /// بادئة الـ API (مثال كامل: `[baseUrl]/api/v1/auth/login`).
+  static const String _v1 = '/api/v1';
 
   static const String contractVersion = '1.0.0';
   static const String versionHeader = 'X-API-Version';
@@ -18,101 +22,101 @@ class ApiConstants {
   static const int sendTimeout = 10000;
 
   // ── A. Auth ──────────────────────────────────────────────────
-  static const String login = '/auth/login';
-  static const String logout = '/auth/logout';
-  static const String logoutAll = '/auth/logout-all';
-  static const String changePassword = '/change-password';
+  static const String login = '$_v1/auth/login';
+  static const String logout = '$_v1/auth/logout';
+  static const String logoutAll = '$_v1/auth/logout-all';
+  static const String changePassword = '$_v1/change-password';
 
   // ── B. Profile ───────────────────────────────────────────────
-  static const String profile = '/profile';
+  static const String profile = '$_v1/profile';
 
   // ── C. Leaves (Employee) ─────────────────────────────────────
-  static const String leaves = '/leaves';
-  static String leaveDetail(int id) => '/leaves/$id';
+  static const String leaves = '$_v1/leaves';
+  static String leaveDetail(int id) => '$_v1/leaves/$id';
 
   // ── D. Requests (Employee) ───────────────────────────────────
-  static const String requests = '/requests';
-  static String requestDetail(int id) => '/requests/$id';
+  static const String requests = '$_v1/requests';
+  static String requestDetail(int id) => '$_v1/requests/$id';
 
   // ── E. Manager Requests ──────────────────────────────────────
-  static const String managerRequests = '/manager/requests';
-  static String managerRequestDetail(int id) => '/manager/requests/$id';
-  static String managerRequestDecide(int id) => '/manager/requests/$id/decide';
+  static const String managerRequests = '$_v1/manager/requests';
+  static String managerRequestDetail(int id) => '$_v1/manager/requests/$id';
+  static String managerRequestDecide(int id) => '$_v1/manager/requests/$id/decide';
 
   // ── F. Manager Leaves ────────────────────────────────────────
-  static const String managerLeaves = '/manager/leaves';
-  static String managerLeaveDetail(int id) => '/manager/leaves/$id';
-  static String managerLeaveDecide(int id) => '/manager/leaves/$id/decide';
+  static const String managerLeaves = '$_v1/manager/leaves';
+  static String managerLeaveDetail(int id) => '$_v1/manager/leaves/$id';
+  static String managerLeaveDecide(int id) => '$_v1/manager/leaves/$id/decide';
 
   // ── F2. Admin Leave Requests (new) ──────────────────────────
-  static const String adminLeaveRequests = '/admin/leave-requests';
-  static String adminLeaveRequestDetail(int id) => '/admin/leave-requests/$id';
-  static String adminLeaveRequestDecide(int id) => '/admin/leave-requests/$id/decide';
+  static const String adminLeaveRequests = '$_v1/admin/leave-requests';
+  static String adminLeaveRequestDetail(int id) => '$_v1/admin/leave-requests/$id';
+  static String adminLeaveRequestDecide(int id) => '$_v1/admin/leave-requests/$id/decide';
 
   // ── G. Attendance (Employee) ─────────────────────────────────
-  static const String attendanceHistory = '/attendance/history';
+  static const String attendanceHistory = '$_v1/attendance/history';
 
   // ── H. Payroll ───────────────────────────────────────────────
-  static const String payroll = '/payroll';
-  static String payslipDetail(String month) => '/payroll/$month';
+  static const String payroll = '$_v1/payroll';
+  static String payslipDetail(String month) => '$_v1/payroll/$month';
 
   // ── I. Notifications ─────────────────────────────────────────
-  static const String notificationsSend = '/notifications/send';
-  static const String notificationsSendToUser = '/notifications/send-to-user';
+  static const String notificationsSend = '$_v1/notifications/send';
+  static const String notificationsSendToUser = '$_v1/notifications/send-to-user';
 
   // ── J0. Branches (Admin) ─────────────────────────────────────
-  static const String adminBranches = '/admin/branches';
+  static const String adminBranches = '$_v1/admin/branches';
 
   // ── J. Dashboard (Admin) ─────────────────────────────────────
-  static const String adminDashboard = '/admin/dashboard';
+  static const String adminDashboard = '$_v1/admin/dashboard';
 
   // ── K. Employees (Admin) ─────────────────────────────────────
-  static const String adminEmployees = '/admin/employees';
-  static String adminEmployeeDetail(int id) => '/admin/employees/$id';
+  static const String adminEmployees = '$_v1/admin/employees';
+  static String adminEmployeeDetail(int id) => '$_v1/admin/employees/$id';
 
   // ── L. Departments (Admin) ───────────────────────────────────
-  static const String adminDepartments = '/admin/departments';
-  static String adminDepartmentDetail(int id) => '/admin/departments/$id';
+  static const String adminDepartments = '$_v1/admin/departments';
+  static String adminDepartmentDetail(int id) => '$_v1/admin/departments/$id';
 
   // ── M. Attendance (Admin) ────────────────────────────────────
-  static const String adminAttendance = '/admin/attendance';
-  static String adminAttendanceEmployee(int id) => '/admin/attendance/$id';
+  static const String adminAttendance = '$_v1/admin/attendance';
+  static String adminAttendanceEmployee(int id) => '$_v1/admin/attendance/$id';
 
   // ── N. Announcements (Admin) ─────────────────────────────────
-  static const String adminAnnouncements = '/admin/announcements';
-  static String adminAnnouncementDetail(int id) => '/admin/announcements/$id';
-  static String adminAnnouncementPublish(int id) => '/admin/announcements/$id/publish';
+  static const String adminAnnouncements = '$_v1/admin/announcements';
+  static String adminAnnouncementDetail(int id) => '$_v1/admin/announcements/$id';
+  static String adminAnnouncementPublish(int id) => '$_v1/admin/announcements/$id/publish';
 
   // ── O. Projects (Admin) ──────────────────────────────────────
-  static const String adminProjects = '/admin/projects';
-  static String adminProjectDetail(int id) => '/admin/projects/$id';
-  static String adminProjectTasks(int id) => '/admin/projects/$id/tasks';
-  static String adminProjectMilestones(int id) => '/admin/projects/$id/milestones';
-  static String adminProjectAnalytics(int id) => '/admin/projects/$id/analytics';
+  static const String adminProjects = '$_v1/admin/projects';
+  static String adminProjectDetail(int id) => '$_v1/admin/projects/$id';
+  static String adminProjectTasks(int id) => '$_v1/admin/projects/$id/tasks';
+  static String adminProjectMilestones(int id) => '$_v1/admin/projects/$id/milestones';
+  static String adminProjectAnalytics(int id) => '$_v1/admin/projects/$id/analytics';
 
   // ── P. Expenses (Admin) ──────────────────────────────────────
-  static const String adminExpenses = '/admin/expenses';
-  static String adminExpenseDetail(int id) => '/admin/expenses/$id';
-  static String adminExpenseApprove(int id) => '/admin/expenses/$id/approve';
-  static String adminExpenseReject(int id) => '/admin/expenses/$id/reject';
+  static const String adminExpenses = '$_v1/admin/expenses';
+  static String adminExpenseDetail(int id) => '$_v1/admin/expenses/$id';
+  static String adminExpenseApprove(int id) => '$_v1/admin/expenses/$id/approve';
+  static String adminExpenseReject(int id) => '$_v1/admin/expenses/$id/reject';
 
   // ── Q. Reports (Admin) ───────────────────────────────────────
-  static const String adminReportsKpis = '/admin/reports/kpis';
-  static const String adminReportsAttendanceTrend = '/admin/reports/attendance-trend';
-  static const String adminReportsLeaveAnalysis = '/admin/reports/leave-analysis';
-  static const String adminReportsTaskCompletion = '/admin/reports/task-completion';
+  static const String adminReportsKpis = '$_v1/admin/reports/kpis';
+  static const String adminReportsAttendanceTrend = '$_v1/admin/reports/attendance-trend';
+  static const String adminReportsLeaveAnalysis = '$_v1/admin/reports/leave-analysis';
+  static const String adminReportsTaskCompletion = '$_v1/admin/reports/task-completion';
 
   // ── R. Tasks (Admin) ───────────────────────────────────────
-  static const String adminTasks = '/admin/tasks';
-  static String adminTaskDetail(int id) => '/admin/tasks/$id';
+  static const String adminTasks = '$_v1/admin/tasks';
+  static String adminTaskDetail(int id) => '$_v1/admin/tasks/$id';
 
   // ── S. Follow-ups (Admin) ──────────────────────────────────
-  static const String adminFollowUps = '/admin/follow-ups';
-  static String adminFollowUpDetail(int id) => '/admin/follow-ups/$id';
-  static String adminFollowUpEscalate(int id) => '/admin/follow-ups/$id/escalate';
+  static const String adminFollowUps = '$_v1/admin/follow-ups';
+  static String adminFollowUpDetail(int id) => '$_v1/admin/follow-ups/$id';
+  static String adminFollowUpEscalate(int id) => '$_v1/admin/follow-ups/$id/escalate';
 
   // ── T. Documents (Admin) ───────────────────────────────────
-  static const String adminDocuments = '/admin/documents';
-  static const String adminDocumentCategories = '/admin/documents/categories';
-  static String adminDocumentDetail(int id) => '/admin/documents/$id';
+  static const String adminDocuments = '$_v1/admin/documents';
+  static const String adminDocumentCategories = '$_v1/admin/documents/categories';
+  static String adminDocumentDetail(int id) => '$_v1/admin/documents/$id';
 }

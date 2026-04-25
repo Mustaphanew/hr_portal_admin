@@ -23,8 +23,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build web (Release - Staging)
-        run: flutter build web --release --dart-define=FLAVOR=staging --base-href "/hr_portal_admin/"
+      # إنتاج: base_url من Firebase Remote Config (مفتاح base_url)
+      - name: Build web (Release - Production)
+        run: flutter build web --release --dart-define=FLAVOR=prod --base-href "/hr_portal_admin/"
 
       - name: Add 404.html for SPA routing
         run: cp build/web/index.html build/web/404.html

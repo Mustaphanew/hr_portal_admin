@@ -1,17 +1,19 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../constants/api_constants.dart';
 import '../errors/exception_mapper.dart';
 import '../errors/exceptions.dart';
 import '../storage/secure_token_storage.dart';
 import 'auth_interceptor.dart';
+import 'debug_http_logger_interceptor.dart';
 import 'base_response.dart';
 import 'session_manager.dart';
 
 /// Configured HTTP client for the HR Admin API.
 ///
 /// All feature repositories use this client. It:
-/// - Points to `ApiConstants.baseUrl`
+/// - `BaseOptions.baseUrl` is [ApiConstants.baseUrl] (جذر فقط)؛ [ApiConstants] paths include `/api/v1/...`.
 /// - Attaches Bearer token via [AuthInterceptor]
 /// - Parses every response into [BaseResponse<T>]
 /// - Converts API error codes into typed Dart exceptions
@@ -55,6 +57,9 @@ class ApiClient {
     _dio.interceptors.add(
       AuthInterceptor(storage: storage, sessionManager: sessionManager),
     );
+    if (kDebugMode) {
+      _dio.interceptors.add(DebugHttpLoggerInterceptor());
+    }
   }
 
   /// Expose Dio for testing or advanced usage.
@@ -125,15 +130,12 @@ class ApiClient {
   }) async {
     try {
       final response = await request();
-      final path = response.requestOptions.path;
       final json = response.data;
 
-      // ── Debug log ──
-      final fullUrl = response.requestOptions.uri.toString();
-      print('┌── API ${response.requestOptions.method} $fullUrl [${response.statusCode}]');
-
       if (json is! Map<String, dynamic>) {
-        print('└── ❌ Response is not JSON: ${json.runtimeType}');
+        if (kDebugMode) {
+          print('└── ❌ Response is not JSON: ${json.runtimeType}');
+        }
         throw const ServerException(
           message: 'Unexpected response format from server.',
         );
@@ -142,11 +144,13 @@ class ApiClient {
       final baseResponse = BaseResponse<T>.fromJson(json, fromJson);
 
       if (baseResponse.isError) {
-        print('├── ❌ API Error: ${baseResponse.code} — ${baseResponse.message}');
-        if (baseResponse.details != null) {
-          print('├── Details: ${baseResponse.details}');
+        if (kDebugMode) {
+          print('├── ❌ API Error: ${baseResponse.code} — ${baseResponse.message}');
+          if (baseResponse.details != null) {
+            print('├── Details: ${baseResponse.details}');
+          }
+          print('└── TraceId: ${baseResponse.traceId}');
         }
-        print('└── TraceId: ${baseResponse.traceId}');
 
         final code = baseResponse.code;
 
@@ -167,17 +171,20 @@ class ApiClient {
         }
 
         throw ServerException(
-          message: baseResponse.message ?? 'Unknown server error.',
+          message: baseResponse.message,
         );
       }
 
-      print('└── ✅ OK');
       return baseResponse;
     } on ApiException catch (e) {
-      print('└── ❌ ApiException: $e');
+      if (kDebugMode) {
+        print('└── ❌ ApiException: $e');
+      }
       rethrow;
     } on DioException catch (e) {
-      print('└── ❌ DioException: ${e.type} ${e.requestOptions.path} — ${e.message}');
+      if (kDebugMode) {
+        print('└── ❌ DioException: ${e.type} ${e.requestOptions.path} — ${e.message}');
+      }
       if (_isTimeout(e.type)) {
         try {
           await sessionManager.onTokenExpired();
@@ -185,8 +192,10 @@ class ApiClient {
       }
       throw _mapDioException(e);
     } catch (e, stack) {
-      print('└── ❌ Unexpected: $e');
-      print('    Stack: ${stack.toString().split('\n').take(5).join('\n    ')}');
+      if (kDebugMode) {
+        print('└── ❌ Unexpected: $e');
+        print('    Stack: ${stack.toString().split('\n').take(5).join('\n    ')}');
+      }
       throw ServerException(message: 'Unexpected error: ${e.toString()}');
     }
   }
