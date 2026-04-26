@@ -137,7 +137,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                   Container(width: 38, height: 38,
                     decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(11)),
-                    child: const Center(child: Text('🔔', style: TextStyle(fontSize: 18)))),
+                    child: const Center(child: Icon(Icons.notifications_rounded, color: Colors.white, size: 20))),
                   if (notifCount > 0) Positioned(top: 5, right: 5,
                     child: Container(width: 14, height: 14,
                       decoration: BoxDecoration(color: AppColors.error, shape: BoxShape.circle,
@@ -151,7 +151,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                 child: Container(width: 38, height: 38,
                   decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(11)),
-                  child: const Center(child: Text('👤', style: TextStyle(fontSize: 18))))),
+                  child: const Center(child: Icon(Icons.person_rounded, color: Colors.white, size: 20)))),
             ]),
             titleSpacing: 18,
           ),
@@ -250,28 +250,32 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                 // ── Quick Actions ──────────────────────────────────
                 SectionHeader(title: 'Quick Actions'.tr(context)),
                 GridView.count(
-                  crossAxisCount: 4, shrinkWrap: true,
+                  crossAxisCount: 3, shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.82,
+                  crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.92,
                   padding: EdgeInsets.zero,
                   children: _getQuickActions(context).map((a) => GestureDetector(
                     onTap: () => context.push(a['r'] as String),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
                       decoration: BoxDecoration(
                         color: c.bgCard,
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: AppShadows.sm),
                       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Container(width: 44, height: 44,
+                        Container(width: 46, height: 46,
                           decoration: BoxDecoration(
                             color: (a['c'] as Color).withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(13)),
-                          child: Center(child: Text(a['i'] as String, style: const TextStyle(fontSize: 20)))),
+                            borderRadius: BorderRadius.circular(13),
+                            border: Border.all(color: (a['c'] as Color).withOpacity(0.18)),
+                          ),
+                          child: Center(child: AppIcon(a['i'] as String, size: 22, color: a['c'] as Color))),
                         const SizedBox(height: 6),
-                        Text(a['l'] as String, style: TextStyle(fontFamily: 'Cairo',
-                          fontSize: 10, fontWeight: FontWeight.w700, color: c.textSecondary),
-                          textAlign: TextAlign.center, maxLines: 2),
+                        Flexible(
+                          child: Text(a['l'] as String, style: TextStyle(fontFamily: 'Cairo',
+                            fontSize: 10.5, height: 1.2, fontWeight: FontWeight.w700, color: c.textSecondary),
+                            textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+                        ),
                       ])),
                   )).toList(),
                 ),
@@ -359,8 +363,8 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
   ]);
 
   Widget _deptChip(String v, String ico, AppColorsExtension c) => Row(mainAxisSize: MainAxisSize.min, children: [
-    Text(ico, style: const TextStyle(fontSize: 10)),
-    const SizedBox(width: 2),
+    AppIcon(ico, size: 12, color: c.textMuted),
+    const SizedBox(width: 4),
     Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w800, color: c.textPrimary)),
   ]);
 

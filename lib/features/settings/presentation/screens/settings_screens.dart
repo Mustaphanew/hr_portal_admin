@@ -775,8 +775,10 @@ class SupportScreen extends StatelessWidget {
       borderRadius: BorderRadius.circular(14), boxShadow: AppShadows.card),
     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       Container(width: 46, height: 46,
-        decoration: BoxDecoration(color: col.withOpacity(0.12), borderRadius: BorderRadius.circular(14)),
-        child: Center(child: Text(ico, style: const TextStyle(fontSize: 22)))),
+        decoration: BoxDecoration(
+          color: col.withOpacity(0.12), borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: col.withOpacity(0.18))),
+        child: Center(child: AppIcon(ico, size: 22, color: col))),
       const SizedBox(height: 6),
       Text(t, style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w700)),
       Text(s, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: c.textMuted)),
@@ -800,8 +802,18 @@ class AboutScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Column(children: [
             AppCard(mb: 14, child: Column(children: [
-              const Text('🏛', style: TextStyle(fontSize: 52)),
-              const SizedBox(height: 12),
+              Container(
+                width: 84, height: 84,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(22),
+                  gradient: AppColors.heroGradient,
+                  border: Border.all(color: AppColors.gold.withOpacity(0.55)),
+                ),
+                child: const Center(
+                  child: Icon(Icons.account_balance_rounded, color: AppColors.goldLight, size: 42),
+                ),
+              ),
+              const SizedBox(height: 14),
               Text('Portal title'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                 fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.navyMid),
                 textAlign: TextAlign.center),

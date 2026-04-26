@@ -67,11 +67,15 @@ class ExpenseAmountCard extends StatelessWidget {
               if (expense.isHighValue) ...[
                 const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
                     color: AppColors.goldSoft, borderRadius: BorderRadius.circular(6)),
-                  child: Text('💰 ${'High amount'.tr(context)}', style: TextStyle(fontFamily: 'Cairo',
-                    fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.goldDark))),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.payments_rounded, color: AppColors.goldDark, size: 12),
+                    const SizedBox(width: 4),
+                    Text('High amount'.tr(context), style: const TextStyle(fontFamily: 'Cairo',
+                      fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.goldDark)),
+                  ])),
               ],
             ]),
             Row(children: [
@@ -124,7 +128,7 @@ class ExpenseAmountCard extends StatelessWidget {
                 Text('No invoice attached'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                   fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.warningDark)),
                 const SizedBox(width: 4),
-                const Text('📎', style: TextStyle(fontSize: 12)),
+                const Icon(Icons.attach_file_rounded, color: AppColors.warningDark, size: 12),
               ])),
           ],
         ]),
@@ -332,7 +336,7 @@ class ExpensesOverviewScreen extends ConsumerWidget {
                   gradient: AppColors.navyGradient,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(6)))),
               const SizedBox(height: 4),
-              Text(catIcons[entry.key] ?? '📦', style: const TextStyle(fontSize: 12)),
+              AppIcon(catIcons[entry.key] ?? '📦', size: 14, color: AppColors.navyMid),
             ]));
         }).toList(),
       )),
@@ -549,8 +553,13 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
             _decision == 'approve' ? Icons.check : Icons.close,
             color: _decision == 'approve' ? AppColors.success : AppColors.error, size: 40))),
         const SizedBox(height: 16),
-        Text(_decision == 'approve' ? '✅ ${'Expense approved'.tr(context)}' : '❌ ${'Expense rejected'.tr(context)}',
-          style: TextStyle(fontFamily: 'Cairo', fontSize: 18, fontWeight: FontWeight.w800)),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(_decision == 'approve' ? Icons.check_circle_rounded : Icons.cancel_rounded,
+            color: _decision == 'approve' ? AppColors.success : AppColors.error, size: 22),
+          const SizedBox(width: 8),
+          Text(_decision == 'approve' ? 'Expense approved'.tr(context) : 'Expense rejected'.tr(context),
+            style: const TextStyle(fontFamily: 'Cairo', fontSize: 18, fontWeight: FontWeight.w800)),
+        ]),
         const SizedBox(height: 6),
         Text('Employee notified'.tr(context), style: TextStyle(fontFamily: 'Cairo',
           fontSize: 13, color: c.textMuted)),
@@ -594,15 +603,28 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                   StatusBadge(text: statusLabel, type: statusType, dot: true),
                   if (e.isHighValue) Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: Colors.white24, borderRadius: BorderRadius.circular(99)),
-                    child: Text('💰 ${'High amount'.tr(context)} — ${'Needs dual approval'.tr(context)}', style: TextStyle(fontFamily: 'Cairo',
-                      fontSize: 10, color: Colors.white, fontWeight: FontWeight.w700))),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.payments_rounded, color: Colors.white, size: 12),
+                      const SizedBox(width: 6),
+                      Text('${'High amount'.tr(context)} — ${'Needs dual approval'.tr(context)}',
+                        style: const TextStyle(fontFamily: 'Cairo',
+                          fontSize: 10, color: Colors.white, fontWeight: FontWeight.w700)),
+                    ])),
                 ]),
                 const SizedBox(height: 14),
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Text(e.categoryIcon ?? '📦', style: const TextStyle(fontSize: 36)),
+                  Container(
+                    width: 56, height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.gold.withOpacity(0.45)),
+                    ),
+                    child: Center(child: AppIcon(e.categoryIcon ?? '📦', size: 28, color: AppColors.goldLight)),
+                  ),
                   Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                     Text(e.category, style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 12, color: Colors.white70)),
@@ -670,7 +692,7 @@ class _ExpDetailState extends ConsumerState<ExpenseRequestDetailScreen> {
                     color: AppColors.navySoft, borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: AppColors.navyBorder)),
                   child: Row(children: [
-                    const Text('📄', style: TextStyle(fontSize: 20)),
+                    const Icon(Icons.description_rounded, color: AppColors.navyMid, size: 20),
                     const SizedBox(width: 10),
                     Text('invoice_EXP-${e.id}.pdf', style: TextStyle(fontFamily: 'Cairo',
                       fontSize: 12, color: AppColors.navyMid, fontWeight: FontWeight.w600)),
@@ -799,8 +821,7 @@ class ExpenseCategoriesScreen extends ConsumerWidget {
                             valueColor: const AlwaysStoppedAnimation(AppColors.navyMid),
                             minHeight: 8))),
                         const SizedBox(width: 8),
-                        SizedBox(width: 28, child: Text(cat.value.icon ?? '📦',
-                          style: const TextStyle(fontSize: 14))),
+                        SizedBox(width: 28, child: AppIcon(cat.value.icon ?? '📦', size: 16, color: AppColors.navyMid)),
                       ])),
                     ),
                   ])),
@@ -819,8 +840,16 @@ class ExpenseCategoriesScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: AppShadows.card),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                          Text(cat.value.icon ?? '📦', style: const TextStyle(fontSize: 28)),
-                          const SizedBox(height: 6),
+                          Container(
+                            width: 44, height: 44,
+                            decoration: BoxDecoration(
+                              color: AppColors.gold.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.gold.withOpacity(0.18)),
+                            ),
+                            child: Center(child: AppIcon(cat.value.icon ?? '📦', size: 22, color: AppColors.gold)),
+                          ),
+                          const SizedBox(height: 8),
                           Text(cat.key, style: TextStyle(fontFamily: 'Cairo',
                             fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.navyMid)),
                           const SizedBox(height: 4),
@@ -950,7 +979,7 @@ class ExpenseAnalyticsScreen extends ConsumerWidget {
                             Row(children: [
                               Text(cat.key, style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: c.textSecondary)),
                               const SizedBox(width: 6),
-                              Text(catIcons[cat.key] ?? '📦', style: const TextStyle(fontSize: 14)),
+                              AppIcon(catIcons[cat.key] ?? '📦', size: 16, color: AppColors.navyMid),
                             ]),
                           ]),
                           const SizedBox(height: 4),
@@ -1111,7 +1140,7 @@ class ExpenseFollowUpScreen extends ConsumerWidget {
                         border: Border.all(color: AppColors.warning.withOpacity(0.4))),
                       child: Row(children: [
                         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          const Text('📎', style: TextStyle(fontSize: 18)),
+                          const Icon(Icons.attach_file_rounded, color: AppColors.warning, size: 18),
                           Text('No invoice'.tr(context), style: TextStyle(fontFamily: 'Cairo',
                             fontSize: 10, color: AppColors.warning, fontWeight: FontWeight.w700)),
                         ]),

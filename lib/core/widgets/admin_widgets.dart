@@ -4,6 +4,107 @@ import '../constants/app_colors.dart';
 import '../constants/app_shadows.dart';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// EMOJI → MATERIAL ICON MAP (visual identity refinement)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/// Returns a Material rounded icon corresponding to a given emoji glyph,
+/// or `null` if the glyph is not in the curated mapping.
+IconData? iconForEmoji(String? input) {
+  if (input == null || input.isEmpty) return null;
+  // Strip common variation selectors so '⚠️' and '⚠' both match.
+  final s = input.replaceAll('\uFE0F', '').trim();
+  switch (s) {
+    // People / org
+    case '👥': return Icons.groups_rounded;
+    case '👤': return Icons.person_rounded;
+    case '🏢': return Icons.apartment_rounded;
+    case '🏛': return Icons.account_balance_rounded;
+
+    // Tasks / requests / status
+    case '📋': return Icons.assignment_outlined;
+    case '✅': return Icons.check_circle_rounded;
+    case '✓':  return Icons.check_rounded;
+    case '❌': return Icons.cancel_rounded;
+    case '⚠':
+    case '⚠️': return Icons.warning_amber_rounded;
+
+    // Time
+    case '⏰': return Icons.access_time_rounded;
+    case '⏱': return Icons.timer_outlined;
+    case '⏳': return Icons.hourglass_bottom_rounded;
+    case '📅': return Icons.event_rounded;
+    case '🚀': return Icons.rocket_launch_rounded;
+
+    // Charts / data
+    case '📊': return Icons.bar_chart_rounded;
+    case '📈': return Icons.trending_up_rounded;
+    case '📉': return Icons.trending_down_rounded;
+
+    // Money
+    case '💰': return Icons.payments_rounded;
+    case '💳': return Icons.credit_card_rounded;
+
+    // Files / docs
+    case '📄': return Icons.description_rounded;
+    case '📂': return Icons.folder_open_rounded;
+    case '📁': return Icons.folder_rounded;
+    case '📦': return Icons.inventory_2_rounded;
+    case '📎': return Icons.attach_file_rounded;
+    case '📤': return Icons.file_upload_rounded;
+    case '📥': return Icons.file_download_rounded;
+
+    // Navigation / actions
+    case '🏠': return Icons.home_rounded;
+    case '🔄': return Icons.sync_rounded;
+    case '🔍': return Icons.search_rounded;
+    case '➕': return Icons.add_rounded;
+    case '✏': case '✏️': return Icons.edit_rounded;
+    case '🖊': return Icons.draw_rounded;
+    case '🗑': case '🗑️': return Icons.delete_rounded;
+
+    // Comms
+    case '📢': return Icons.campaign_rounded;
+    case '🔔': return Icons.notifications_rounded;
+    case '📞': return Icons.call_rounded;
+    case '📧': return Icons.mail_rounded;
+    case '🌐': return Icons.public_rounded;
+    case '🌍': return Icons.language_rounded;
+    case '💻': return Icons.computer_rounded;
+    case '💬': return Icons.chat_rounded;
+
+    // Domain
+    case '🏗': return Icons.architecture_rounded;
+    case '🌴': return Icons.beach_access_rounded;
+    case '💼': return Icons.work_rounded;
+    case '📌': return Icons.push_pin_rounded;
+    case '🏁': return Icons.flag_rounded;
+    case '📱': return Icons.phone_android_rounded;
+    case '⚙': case '⚙️': return Icons.settings_rounded;
+    case '🔐': case '🔒': return Icons.lock_rounded;
+    case '🚪': return Icons.logout_rounded;
+    case '⋯': return Icons.more_horiz_rounded;
+  }
+  return null;
+}
+
+/// Renders the curated Material icon for [emoji] when available; otherwise
+/// falls back to rendering the glyph as text. Keeps the original size feel.
+class AppIcon extends StatelessWidget {
+  final String? emoji;
+  final double size;
+  final Color? color;
+  const AppIcon(this.emoji, {super.key, this.size = 18, this.color});
+  @override
+  Widget build(BuildContext context) {
+    final ic = iconForEmoji(emoji);
+    if (ic == null) {
+      return Text(emoji ?? '', style: TextStyle(fontSize: size, color: color));
+    }
+    return Icon(ic, size: size, color: color);
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // BUTTONS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -35,7 +136,7 @@ class PrimaryBtn extends StatelessWidget {
           : Row(mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
               children: [
-                if (icon != null) ...[Text(icon!, style: TextStyle(fontSize: small?14:16)), const SizedBox(width:6)],
+                if (icon != null) ...[AppIcon(icon, size: small?15:17, color: Colors.white), const SizedBox(width: 8)],
                 Text(text, style: TextStyle(fontFamily: 'Cairo', fontSize: small?12:14, fontWeight: FontWeight.w700, color: Colors.white)),
               ]),
       ),
@@ -57,7 +158,7 @@ class TealBtn extends StatelessWidget {
       child: Row(mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
         children: [
-          if (icon != null) ...[Text(icon!, style: TextStyle(fontSize: small?14:16)), const SizedBox(width:6)],
+          if (icon != null) ...[AppIcon(icon, size: small?15:17, color: Colors.white), const SizedBox(width: 8)],
           Text(text, style: TextStyle(fontFamily: 'Cairo', fontSize: small?12:14, fontWeight: FontWeight.w700, color: Colors.white)),
         ]),
     ),
@@ -78,7 +179,7 @@ class GoldBtn extends StatelessWidget {
       child: Row(mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
         children: [
-          if (icon != null) ...[Text(icon!, style: TextStyle(fontSize: small?14:16)), const SizedBox(width:6)],
+          if (icon != null) ...[AppIcon(icon, size: small?15:17, color: AppColors.navyDeep), const SizedBox(width: 8)],
           Text(text, style: TextStyle(fontFamily: 'Cairo', fontSize: small?12:14, fontWeight: FontWeight.w700, color: AppColors.navyDeep)),
         ]),
     ),
@@ -256,9 +357,9 @@ class KpiCard extends StatelessWidget {
           border: Border(bottom: BorderSide(color: color, width: 3))),
         child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Container(padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(8)),
-              child: Text(icon, style: const TextStyle(fontSize: 18))),
+            Container(padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+              child: AppIcon(icon, size: 20, color: color)),
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
               Text(value, style: TextStyle(fontFamily: 'Cairo', fontSize: 26, fontWeight: FontWeight.w900, color: color, height: 1)),
               Text(label, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: c.textMuted, height: 1.3)),
@@ -292,8 +393,8 @@ class SummaryStatRow extends StatelessWidget {
         border: Border.all(color: color.withOpacity(0.2))),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Row(children: [
-          Text(icon, style: const TextStyle(fontSize: 16)),
-          const SizedBox(width: 6),
+          AppIcon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
           Text(value, style: TextStyle(fontFamily: 'Cairo', fontSize: 18, fontWeight: FontWeight.w900, color: color)),
         ]),
         Text(label, style: TextStyle(fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w600, color: c.textSecondary)),
@@ -367,7 +468,7 @@ class InfoRow extends StatelessWidget {
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Flexible(child: Text(value, style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w600, color: c.textSecondary), textAlign: TextAlign.left, textDirection: TextDirection.ltr)),
         Row(mainAxisSize: MainAxisSize.min, children: [
-          if (icon != null) ...[Text(icon!, style: const TextStyle(fontSize: 14)), const SizedBox(width: 6)],
+          if (icon != null) ...[AppIcon(icon, size: 15, color: c.textMuted), const SizedBox(width: 6)],
           Text(label, style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: c.textMuted)),
         ]),
       ]),
@@ -455,7 +556,8 @@ class DepartmentCard extends StatelessWidget {
   }
 
   Widget _stat(String v, String l, String ico, Color color, Color mutedColor) => Expanded(child: Column(children: [
-    Text(ico, style: const TextStyle(fontSize: 14)),
+    AppIcon(ico, size: 16, color: color),
+    const SizedBox(height: 2),
     Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.w900, color: color, height: 1.1)),
     Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 9, color: mutedColor)),
   ]));
@@ -829,8 +931,16 @@ class EmptyState extends StatelessWidget {
     return Center(child: Padding(
       padding: const EdgeInsets.all(40),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text(icon, style: const TextStyle(fontSize: 48)),
-        const SizedBox(height: 14),
+        Container(
+          width: 84, height: 84,
+          decoration: BoxDecoration(
+            color: AppColors.navySoft,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.navyBorder.withOpacity(0.6)),
+          ),
+          child: Center(child: AppIcon(icon, size: 38, color: AppColors.navyMid)),
+        ),
+        const SizedBox(height: 16),
         Text(title, style: TextStyle(fontFamily: 'Cairo', fontSize: 15, fontWeight: FontWeight.w700, color: c.textSecondary), textAlign: TextAlign.center),
         if (subtitle != null) ...[const SizedBox(height: 8),
           Text(subtitle!, style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: c.textMuted, height: 1.7), textAlign: TextAlign.center)],

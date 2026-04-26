@@ -74,11 +74,15 @@ class ProjectProgressCard extends StatelessWidget {
               if (project.isDelayed) ...[
                 const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
                     color: AppColors.errorSoft, borderRadius: BorderRadius.circular(6)),
-                  child: Text('⏰ ${'Delayed'.tr(context)}', style: TextStyle(fontFamily: 'Cairo',
-                    fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.error))),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.access_time_rounded, color: AppColors.error, size: 12),
+                    const SizedBox(width: 4),
+                    Text('Delayed'.tr(context), style: const TextStyle(fontFamily: 'Cairo',
+                      fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.error)),
+                  ])),
               ],
             ]),
             Flexible(child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -661,7 +665,8 @@ class ProjectDetailScreen extends ConsumerWidget {
   }
 
   Widget _heroStat(String v, String l, String ico) => Column(children: [
-    Text(ico, style: const TextStyle(fontSize: 16)),
+    AppIcon(ico, size: 16, color: AppColors.goldLight),
+    const SizedBox(height: 2),
     Text(v, style: TextStyle(fontFamily: 'Cairo',
       fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white, height: 1.1)),
     Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: Colors.white60)),
@@ -1074,7 +1079,15 @@ class _FollowUpProjectCard extends StatelessWidget {
                 fontSize: 11, color: c.textMuted)),
           ])),
           const SizedBox(width: 8),
-          Text(isDelayed ? '⚠️' : '📋', style: const TextStyle(fontSize: 22)),
+          Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(
+              color: (isDelayed ? AppColors.error : AppColors.navyMid).withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(isDelayed ? Icons.warning_amber_rounded : Icons.assignment_outlined,
+              color: isDelayed ? AppColors.error : AppColors.navyMid, size: 20),
+          ),
         ]),
       ),
     );
@@ -1133,8 +1146,12 @@ class ProjectAnalyticsScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(9)),
-                  child: Text('📤 ${'Export'.tr(context)}', style: TextStyle(fontFamily: 'Cairo',
-                    fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.navyDeep))),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.file_upload_rounded, color: AppColors.navyDeep, size: 14),
+                    const SizedBox(width: 6),
+                    Text('Export'.tr(context), style: const TextStyle(fontFamily: 'Cairo',
+                      fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.navyDeep)),
+                  ])),
               ]),
             ),
             Expanded(child: RefreshIndicator(
@@ -1259,7 +1276,7 @@ class ProjectAnalyticsScreen extends ConsumerWidget {
   Widget _timelineStat(String ico, String label, Color c) => Row(children: [
     Text(label, style: TextStyle(fontFamily: 'Cairo', fontSize: 12,
       fontWeight: FontWeight.w600, color: c)),
-    const SizedBox(width: 4),
-    Text(ico, style: const TextStyle(fontSize: 16)),
+    const SizedBox(width: 6),
+    AppIcon(ico, size: 16, color: c),
   ]);
 }

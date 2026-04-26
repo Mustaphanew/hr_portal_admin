@@ -81,7 +81,7 @@ class DocumentsOverviewScreen extends ConsumerWidget {
                   Text('docs_in_system'.tr(context, params: {'count': '${data.totalDocuments}'}), style: TextStyle(fontFamily: 'Cairo',
                     fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
                   const Spacer(),
-                  const Text('📂', style: TextStyle(fontSize: 16)),
+                  const Icon(Icons.folder_open_rounded, color: Colors.white, size: 18),
                 ])),
               loading: () => const SizedBox.shrink(),
               error: (_, _) => const SizedBox.shrink(),
@@ -272,8 +272,15 @@ class _NotifState extends ConsumerState<NotificationsCenterScreen> {
   Widget _buildBody(List<LocalNotification> notifs, NotificationsState state, AppColorsExtension c) {
     if (notifs.isEmpty && !state.isLoading) {
       return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Text('🔔', style: TextStyle(fontSize: 48)),
-        const SizedBox(height: 12),
+        Container(
+          width: 84, height: 84,
+          decoration: BoxDecoration(
+            color: AppColors.navySoft, shape: BoxShape.circle,
+            border: Border.all(color: AppColors.navyBorder.withOpacity(0.6)),
+          ),
+          child: const Center(child: Icon(Icons.notifications_rounded, color: AppColors.navyMid, size: 38)),
+        ),
+        const SizedBox(height: 14),
         Text('No notifications'.tr(context), style: TextStyle(fontFamily: 'Cairo',
           fontSize: 16, fontWeight: FontWeight.w700, color: c.textMuted)),
         const SizedBox(height: 6),
@@ -359,7 +366,7 @@ class _NotifState extends ConsumerState<NotificationsCenterScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.navyMid.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12)),
-                  child: const Center(child: Text('🔔', style: TextStyle(fontSize: 18)))),
+                  child: const Center(child: Icon(Icons.notifications_rounded, color: AppColors.navyMid, size: 20))),
               ]),
             ),
           ),

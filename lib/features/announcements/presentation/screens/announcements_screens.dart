@@ -181,7 +181,7 @@ class _AnnouncementsState extends ConsumerState<AnnouncementsManagementScreen> {
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 Text(displayDate, style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: c.textMuted)),
                 Row(children: [
-                  const Text('👥', style: TextStyle(fontSize: 12)),
+                  Icon(Icons.groups_rounded, color: c.textMuted, size: 14),
                   const SizedBox(width: 4),
                   Text(a.audience, style: TextStyle(fontFamily: 'Cairo',
                     fontSize: 11, color: c.textMuted)),

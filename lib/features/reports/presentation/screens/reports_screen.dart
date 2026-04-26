@@ -64,10 +64,14 @@ class ReportsKpiScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: AppColors.gold,
                   borderRadius: BorderRadius.circular(9)),
-                child: Text('📤 ${'Export'.tr(context)}',
-                  style: TextStyle(fontFamily: 'Cairo',
-                    fontSize: 12, fontWeight: FontWeight.w700,
-                    color: AppColors.navyDeep))),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.file_upload_rounded, color: AppColors.navyDeep, size: 14),
+                  const SizedBox(width: 6),
+                  Text('Export'.tr(context),
+                    style: const TextStyle(fontFamily: 'Cairo',
+                      fontSize: 12, fontWeight: FontWeight.w700,
+                      color: AppColors.navyDeep)),
+                ])),
             ]),
           ]),
         ),
@@ -418,8 +422,16 @@ class ReportsKpiScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text('🏗', style: TextStyle(fontSize: 24)),
-                        const SizedBox(height: 6),
+                        Container(
+                          width: 44, height: 44,
+                          decoration: BoxDecoration(
+                            color: AppColors.navyMid.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.navyMid.withOpacity(0.18)),
+                          ),
+                          child: const Icon(Icons.architecture_rounded, color: AppColors.navyMid, size: 22),
+                        ),
+                        const SizedBox(height: 8),
                         Text('Projects'.tr(context),
                           style: TextStyle(fontFamily: 'Cairo',
                             fontSize: 14, fontWeight: FontWeight.w800,
@@ -444,8 +456,16 @@ class ReportsKpiScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text('💰', style: TextStyle(fontSize: 24)),
-                        const SizedBox(height: 6),
+                        Container(
+                          width: 44, height: 44,
+                          decoration: BoxDecoration(
+                            color: AppColors.gold.withOpacity(0.14),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.gold.withOpacity(0.22)),
+                          ),
+                          child: const Icon(Icons.payments_rounded, color: AppColors.gold, size: 22),
+                        ),
+                        const SizedBox(height: 8),
                         Text('Expenses'.tr(context),
                           style: TextStyle(fontFamily: 'Cairo',
                             fontSize: 14, fontWeight: FontWeight.w800,
@@ -472,7 +492,7 @@ class ReportsKpiScreen extends ConsumerWidget {
                   boxShadow: AppShadows.sm),
                 child: Row(children: [
                   Row(children: [
-                    const Text('📤', style: TextStyle(fontSize: 16)),
+                    Icon(Icons.file_upload_rounded, color: c.gray400, size: 16),
                     const SizedBox(width: 6),
                     Text('PDF Excel'.tr(context),
                       style: TextStyle(fontFamily: 'Cairo',

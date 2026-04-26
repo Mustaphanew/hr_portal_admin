@@ -1,82 +1,97 @@
 import 'package:flutter/material.dart';
 
 // ═══════════════════════════════════════════════════════════════════
-// Static accent colors (same in light & dark) + backward compat
+// Visual Identity — Navy + Royal Blue + Gold
+// ───────────────────────────────────────────────────────────────────
+// Premium Corporate / Governmental palette. Token names preserved for
+// backward compatibility, but values now reflect the new identity:
+//   • navyDeep / navy / navyMid / navyLight  →  Navy → Royal Blue
+//   • gold*                                  →  Gold accent (D6A646)
 // ═══════════════════════════════════════════════════════════════════
 
 class AppColors {
   AppColors._();
 
-  // ── Primary Navy ─────────────────────────────────────────
-  static const Color navyDeep    = Color(0xFF071526);
-  static const Color navy        = Color(0xFF0D2142);
-  static const Color navyMid     = Color(0xFF163870);
-  static const Color navyLight   = Color(0xFF1E4D9A);
-  static const Color navyBright  = Color(0xFF2563EB);
-  static const Color navySoft    = Color(0xFFE8F0FB);
-  static const Color navyBorder  = Color(0xFFBDD0F0);
-  static const Color navyGhost   = Color(0xFFF2F6FD);
+  // ── Primary (Navy → Royal Blue) ───────────────────────────
+  static const Color navyDeep    = Color(0xFF071B33); // Navy Blue
+  static const Color navy        = Color(0xFF0A2A5E); // Deep Gradient Blue
+  static const Color navyMid     = Color(0xFF1F5FD6); // Royal Blue (Primary action)
+  static const Color navyLight   = Color(0xFF3B82F6); // Royal lighter
+  static const Color navyBright  = Color(0xFF60A5FA); // Royal brightest
+  static const Color navySoft    = Color(0xFFE8EFFC); // Soft tint
+  static const Color navyBorder  = Color(0xFFC2D5F5);
+  static const Color navyGhost   = Color(0xFFF4F7FB);
 
   // ── Gold Accent ───────────────────────────────────────────
-  static const Color gold      = Color(0xFFC69228);
-  static const Color goldLight = Color(0xFFE3AC35);
-  static const Color goldSoft  = Color(0xFFFAF3E0);
-  static const Color goldDark  = Color(0xFF9A6F18);
+  static const Color gold      = Color(0xFFD6A646);
+  static const Color goldLight = Color(0xFFE5BC6B);
+  static const Color goldSoft  = Color(0xFFFBF1DD);
+  static const Color goldDark  = Color(0xFFB58632);
 
-  // ── Teal Accent ───────────────────────────────────────────
-  static const Color teal      = Color(0xFF0B7A65);
-  static const Color tealLight = Color(0xFF18A88C);
-  static const Color tealSoft  = Color(0xFFE2F4F1);
+  // ── Teal Accent (kept for compat) ─────────────────────────
+  static const Color teal      = Color(0xFF0EA5A4);
+  static const Color tealLight = Color(0xFF22D3CE);
+  static const Color tealSoft  = Color(0xFFE6F8F8);
+
+  // ── Indigo / Sky / Coral (additional palette tints) ──────
+  static const Color indigo     = Color(0xFF6366F1);
+  static const Color indigoSoft = Color(0xFFEEF0FF);
+  static const Color sky        = Color(0xFF38BDF8);
+  static const Color skySoft    = Color(0xFFE6F4FF);
+  static const Color coral      = Color(0xFFF87171);
+  static const Color coralSoft  = Color(0xFFFEEFEA);
 
   // ── Semantic ──────────────────────────────────────────────
-  static const Color success     = Color(0xFF059669);
-  static const Color successSoft = Color(0xFFD1FAE5);
+  static const Color success     = Color(0xFF16A34A);
+  static const Color successSoft = Color(0xFFDCFCE7);
   static const Color successDark = Color(0xFF065F46);
 
-  static const Color warning     = Color(0xFFD97706);
-  static const Color warningSoft = Color(0xFFFEF3C7);
-  static const Color warningDark = Color(0xFF92400E);
+  static const Color warning     = Color(0xFFF59E0B);
+  static const Color warningSoft = Color(0xFFFFF6E0);
+  static const Color warningDark = Color(0xFFB45309);
 
   static const Color error     = Color(0xFFDC2626);
-  static const Color errorSoft = Color(0xFFFEE2E2);
+  static const Color errorSoft = Color(0xFFFEE4E2);
   static const Color errorDark = Color(0xFF991B1B);
 
-  static const Color info     = Color(0xFF2563EB);
-  static const Color infoSoft = Color(0xFFDBEAFE);
-  static const Color infoDark = Color(0xFF1E40AF);
+  static const Color info     = Color(0xFF1F5FD6);
+  static const Color infoSoft = Color(0xFFE8EFFC);
+  static const Color infoDark = Color(0xFF0A2A5E);
 
-  // ── Backward-compat: Backgrounds (light-mode defaults) ────
-  static const Color bg        = Color(0xFFEFF2F9);
+  // ── Backgrounds ───────────────────────────────────────────
+  static const Color bg        = Color(0xFFF4F7FB);
   static const Color bgCard    = Color(0xFFFFFFFF);
-  static const Color bgSection = Color(0xFFF6F8FD);
+  static const Color bgSection = Color(0xFFEEF2F7);
 
-  // ── Backward-compat: Grays ────────────────────────────────
-  static const Color g50  = Color(0xFFF9FAFB);
-  static const Color g100 = Color(0xFFF3F4F6);
-  static const Color g200 = Color(0xFFE5E7EB);
-  static const Color g300 = Color(0xFFD1D5DB);
-  static const Color g400 = Color(0xFF9CA3AF);
-  static const Color g500 = Color(0xFF6B7280);
-  static const Color g600 = Color(0xFF4B5563);
-  static const Color g700 = Color(0xFF374151);
-  static const Color g800 = Color(0xFF1F2937);
-  static const Color g900 = Color(0xFF111827);
+  // ── Grays ────────────────────────────────────────────────
+  static const Color g50  = Color(0xFFF8FAFC);
+  static const Color g100 = Color(0xFFF1F5F9);
+  static const Color g200 = Color(0xFFE2E8F0);
+  static const Color g300 = Color(0xFFCBD5E1);
+  static const Color g400 = Color(0xFF94A3B8);
+  static const Color g500 = Color(0xFF64748B);
+  static const Color g600 = Color(0xFF475569);
+  static const Color g700 = Color(0xFF334155);
+  static const Color g800 = Color(0xFF1E293B);
+  static const Color g900 = Color(0xFF0F172A);
 
-  // ── Backward-compat: Text ─────────────────────────────────
-  static const Color tx1 = Color(0xFF111827);
-  static const Color tx2 = Color(0xFF374151);
-  static const Color tx3 = Color(0xFF6B7280);
-  static const Color tx4 = Color(0xFF9CA3AF);
+  // ── Text ─────────────────────────────────────────────────
+  static const Color tx1 = Color(0xFF1E293B); // Text Dark
+  static const Color tx2 = Color(0xFF334155);
+  static const Color tx3 = Color(0xFF94A3B8); // Text Muted
+  static const Color tx4 = Color(0xFFCBD5E1);
 
-  // ── Gradients ─────────────────────────────────────────────
+  // ── Gradients ────────────────────────────────────────────
   static const LinearGradient navyGradient = LinearGradient(
     begin: Alignment.topLeft, end: Alignment.bottomRight,
-    colors: [navyLight, navyDeep],
+    colors: [navyMid, navy, navyDeep],
+    stops: [0, 0.55, 1],
   );
 
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft, end: Alignment.bottomRight,
-    colors: [navyBright, navyDeep],
+    colors: [navyDeep, navy, navyMid],
+    stops: [0, 0.55, 1],
   );
 
   static const LinearGradient goldGradient = LinearGradient(
@@ -91,12 +106,12 @@ class AppColors {
 
   static const LinearGradient successGradient = LinearGradient(
     begin: Alignment.topLeft, end: Alignment.bottomRight,
-    colors: [Color(0xFF10B981), Color(0xFF065F46)],
+    colors: [Color(0xFF22C55E), Color(0xFF065F46)],
   );
 
   static const LinearGradient errorGradient = LinearGradient(
     begin: Alignment.topLeft, end: Alignment.bottomRight,
-    colors: [Color(0xFFEF4444), Color(0xFF991B1B)],
+    colors: [Color(0xFFF87171), Color(0xFF991B1B)],
   );
 
   // ── Convenience: resolve theme-aware colors from context ──
@@ -106,7 +121,7 @@ class AppColors {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Theme-aware colors (change between light & dark)
+// Theme-aware colors
 // ═══════════════════════════════════════════════════════════════════
 
 class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
@@ -148,42 +163,42 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
 
   // ── Light ──
   static const light = AppColorsExtension(
-    bg: Color(0xFFEFF2F9),
+    bg: Color(0xFFF4F7FB),
     bgCard: Color(0xFFFFFFFF),
-    bgSection: Color(0xFFF6F8FD),
-    textPrimary: Color(0xFF111827),
-    textSecondary: Color(0xFF374151),
-    textMuted: Color(0xFF6B7280),
-    textDisabled: Color(0xFF9CA3AF),
-    inputFill: Color(0xFFF9FAFB),
-    inputBorder: Color(0xFFE5E7EB),
-    divider: Color(0xFFF3F4F6),
+    bgSection: Color(0xFFEEF2F7),
+    textPrimary: Color(0xFF1E293B),
+    textSecondary: Color(0xFF334155),
+    textMuted: Color(0xFF94A3B8),
+    textDisabled: Color(0xFFCBD5E1),
+    inputFill: Color(0xFFF8FAFC),
+    inputBorder: Color(0xFFE2E8F0),
+    divider: Color(0xFFEEF2F6),
     cardBorder: Colors.transparent,
-    gray50: Color(0xFFF9FAFB),
-    gray100: Color(0xFFF3F4F6),
-    gray200: Color(0xFFE5E7EB),
-    gray300: Color(0xFFD1D5DB),
-    gray400: Color(0xFF9CA3AF),
+    gray50: Color(0xFFF8FAFC),
+    gray100: Color(0xFFF1F5F9),
+    gray200: Color(0xFFE2E8F0),
+    gray300: Color(0xFFCBD5E1),
+    gray400: Color(0xFF94A3B8),
   );
 
   // ── Dark ──
   static const dark = AppColorsExtension(
-    bg: Color(0xFF0F1117),
-    bgCard: Color(0xFF1A1D27),
-    bgSection: Color(0xFF151821),
+    bg: Color(0xFF050E1F),
+    bgCard: Color(0xFF0F1B33),
+    bgSection: Color(0xFF0A1428),
     textPrimary: Color(0xFFE8ECF4),
     textSecondary: Color(0xFFB0B8C8),
-    textMuted: Color(0xFF727D92),
-    textDisabled: Color(0xFF4A5568),
-    inputFill: Color(0xFF1E2230),
-    inputBorder: Color(0xFF2D3348),
-    divider: Color(0xFF232838),
-    cardBorder: Color(0xFF2D3348),
-    gray50: Color(0xFF1A1D27),
-    gray100: Color(0xFF232838),
-    gray200: Color(0xFF2D3348),
-    gray300: Color(0xFF3D4560),
-    gray400: Color(0xFF5A6478),
+    textMuted: Color(0xFF7B8AA1),
+    textDisabled: Color(0xFF55617A),
+    inputFill: Color(0xFF13203B),
+    inputBorder: Color(0xFF233356),
+    divider: Color(0xFF1B274A),
+    cardBorder: Color(0xFF233356),
+    gray50: Color(0xFF0F1B33),
+    gray100: Color(0xFF13203B),
+    gray200: Color(0xFF233356),
+    gray300: Color(0xFF3D4B6E),
+    gray400: Color(0xFF5A6A8A),
   );
 
   @override
