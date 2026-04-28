@@ -119,39 +119,33 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                 ),
               ),
             ),
-            title: Row(children: [
+            title: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+              // ── User name + role (vertically centered) ──
               Expanded(child: Column(
                 mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 4),
-                Text(adminName, style: TextStyle(fontFamily: 'Cairo',
-                  fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white, height: 1.2)),
-                const SizedBox(height: 8),
-                Text(adminRole, style: TextStyle(fontFamily: 'Cairo',
-                  fontSize: 11, color: AppColors.goldLight, height: 1.2)),
-              ])),
-              GestureDetector(
-                onTap: () => context.push('/notifications'),
-                child: Stack(children: [
-                  Container(width: 38, height: 38,
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(11)),
-                    child: const Center(child: Icon(Icons.notifications_rounded, color: Colors.white, size: 20))),
-                  if (notifCount > 0) Positioned(top: 5, right: 5,
-                    child: Container(width: 14, height: 14,
-                      decoration: BoxDecoration(color: AppColors.error, shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.navyMid, width: 1.5)),
-                      child: Center(child: Text('$notifCount', style: TextStyle(fontFamily: 'Cairo',
-                        fontSize: 8, fontWeight: FontWeight.w900, color: Colors.white))))),
+                  Text(adminName, style: const TextStyle(fontFamily: 'Cairo',
+                    fontSize: 15, fontWeight: FontWeight.w800,
+                    color: Colors.white, height: 1.2, letterSpacing: -0.2),
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 3),
+                  Text(adminRole, style: TextStyle(fontFamily: 'Cairo',
+                    fontSize: 11, color: AppColors.goldLight.withOpacity(0.95),
+                    fontWeight: FontWeight.w500, height: 1.2),
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
                 ])),
+              const SizedBox(width: 10),
+              // ── Action icons (notification + profile) ──
+              _AppBarIconBtn(
+                icon: Icons.notifications_rounded,
+                badgeCount: notifCount,
+                onTap: () => context.push('/notifications')),
               const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => context.push('/admin-profile'),
-                child: Container(width: 38, height: 38,
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(11)),
-                  child: const Center(child: Icon(Icons.person_rounded, color: Colors.white, size: 20)))),
+              _AppBarIconBtn(
+                icon: Icons.person_rounded,
+                onTap: () => context.push('/admin-profile')),
             ]),
             titleSpacing: 18,
           ),
@@ -234,7 +228,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                 GridView.count(
                   crossAxisCount: 2, shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.35,
+                  crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.65,
                   padding: EdgeInsets.zero,
                   children: [
                     KpiCard(label: 'Total Employees'.tr(context), value: '${dash.kpis.totalEmployees}', change: '', icon: '👥', isPositive: true, color: AppColors.navyMid, onTap: () => context.push('/employees')),
@@ -252,31 +246,13 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                 GridView.count(
                   crossAxisCount: 3, shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.92,
+                  crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.95,
                   padding: EdgeInsets.zero,
-                  children: _getQuickActions(context).map((a) => GestureDetector(
+                  children: _getQuickActions(context).map((a) => QuickActionTile(
+                    label: a['l'] as String,
+                    icon: a['i'] as String,
+                    color: a['c'] as Color,
                     onTap: () => context.push(a['r'] as String),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-                      decoration: BoxDecoration(
-                        color: c.bgCard,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: AppShadows.sm),
-                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Container(width: 46, height: 46,
-                          decoration: BoxDecoration(
-                            color: (a['c'] as Color).withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(13),
-                            border: Border.all(color: (a['c'] as Color).withOpacity(0.18)),
-                          ),
-                          child: Center(child: AppIcon(a['i'] as String, size: 22, color: a['c'] as Color))),
-                        const SizedBox(height: 6),
-                        Flexible(
-                          child: Text(a['l'] as String, style: TextStyle(fontFamily: 'Cairo',
-                            fontSize: 10.5, height: 1.2, fontWeight: FontWeight.w700, color: c.textSecondary),
-                            textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
-                        ),
-                      ])),
                   )).toList(),
                 ),
                 const SizedBox(height: 18),
@@ -608,4 +584,57 @@ class _CompanyGroup {
   final BranchCompany company;
   final List<Branch> branches;
   _CompanyGroup({required this.company, required this.branches});
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// AppBar icon button — uniform 38x38 with optional notification badge
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class _AppBarIconBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final int badgeCount;
+  const _AppBarIconBtn({required this.icon, required this.onTap, this.badgeCount = 0});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(11),
+        child: Stack(clipBehavior: Clip.none, children: [
+          Container(
+            width: 38, height: 38,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(11),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.18), width: 1)),
+            alignment: Alignment.center,
+            child: Icon(icon, color: Colors.white, size: 19),
+          ),
+          if (badgeCount > 0)
+            Positioned.directional(
+              textDirection: Directionality.of(context),
+              top: -3, end: -3,
+              child: Container(
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: AppColors.error,
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(color: AppColors.navyDeep, width: 1.5),
+                  boxShadow: [BoxShadow(
+                    color: AppColors.error.withOpacity(0.4),
+                    blurRadius: 6, offset: const Offset(0, 2))]),
+                child: Center(child: Text(
+                  badgeCount > 99 ? '99+' : '$badgeCount',
+                  style: const TextStyle(fontFamily: 'Cairo',
+                    fontSize: 8.5, fontWeight: FontWeight.w900,
+                    color: Colors.white, height: 1))),
+              ),
+            ),
+        ]),
+      ),
+    );
+  }
 }

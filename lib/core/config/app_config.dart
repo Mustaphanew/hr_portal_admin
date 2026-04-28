@@ -54,7 +54,7 @@ class AppConfig {
       default:
         return AppConfig(
           flavor: AppFlavor.dev,
-          baseUrl: 'http://172.16.0.66:8000',
+          baseUrl: 'http://192.168.137.230:8000',
           envName: 'Development',
           enableDebugLogs: true,
           showEnvBanner: true,

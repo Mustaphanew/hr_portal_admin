@@ -24,19 +24,32 @@ String _statusTr(BuildContext context, String s) => switch (s) {
   _            => s,
 };
 
-String _typeTr(BuildContext context, String t) => switch (t) {
-  'leave'              => 'leave_request'.tr(context),
-  'attendance'         => 'attendance_correction'.tr(context),
-  'permission'         => 'leave_permission'.tr(context),
-  'expense'            => 'expense_claim'.tr(context),
-  'salary_advance'     => 'salary_advance'.tr(context),
-  'document'           => 'document_request'.tr(context),
-  'loan'               => 'loan_request'.tr(context),
-  'resignation'        => 'resignation_request'.tr(context),
-  'official_mission'   => 'official_mission'.tr(context),
-  'asset'              => 'asset_request'.tr(context),
-  _                    => t,
-};
+String _typeTr(BuildContext context, String t) {
+  // Short alias map → translation key
+  const aliases = {
+    'leave'        : 'leave_request',
+    'attendance'   : 'attendance_correction',
+    'permission'   : 'leave_permission',
+    'expense'      : 'expense_claim',
+    'document'     : 'document_request',
+    'loan'         : 'loan_request',
+    'resignation'  : 'resignation_request',
+    'asset'        : 'asset_request',
+    'experience'   : 'experience_letter',
+    'certificate'  : 'certificate_request',
+    'training'     : 'training_request',
+    'promotion'    : 'promotion_request',
+    'transfer'     : 'transfer_request',
+  };
+  final key = aliases[t] ?? t;
+  final translated = key.tr(context);
+  // If translation was not found (returns the key itself), prettify the slug.
+  if (translated == key && key.contains('_')) {
+    return key.split('_').map((w) =>
+      w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
+  }
+  return translated;
+}
 
 String _fmtDate(String iso) {
   try {
@@ -80,55 +93,42 @@ class _RequestsMgmtState extends ConsumerState<RequestsManagementScreen> {
         Container(
           decoration: const BoxDecoration(gradient: AppColors.navyGradient),
           padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 12,
-            bottom: 16, left: 18, right: 18),
+            top: MediaQuery.of(context).padding.top + 10,
+            bottom: 14, left: 16, right: 16),
           child: Column(children: [
             Row(children: [
               if (context.canPop()) ...[
-                GestureDetector(
-                  onTap: () => context.pop(),
-                  child: Container(
-                    padding: EdgeInsetsDirectional.only(start: 6),
-                    alignment: AlignmentDirectional.center,
-                    width: 36, height: 36,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 18))),
-                const SizedBox(width: 8),
+                _HeaderIconBtn(
+                  icon: Icons.arrow_back_ios_new_rounded,
+                  onTap: () => context.pop()),
+                const SizedBox(width: 10),
               ],
               Expanded(child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                Text('Request Management'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-                  fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-                Text('Request overview'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-                  fontSize: 11, color: AppColors.goldLight)),
-              ])),
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                GestureDetector(
-                  onTap: _refreshing ? null : _refresh,
-                  child: Container(
-                    width: 36, height: 36,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10)),
-                    child: Center(
-                      child: _refreshing
-                        ? const SizedBox(width: 16, height: 16,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Icon(Icons.refresh, color: Colors.white, size: 18)))),
-              ]),
+                  Text('Request Management'.tr(context), style: const TextStyle(
+                    fontFamily: 'Cairo', fontSize: 17, fontWeight: FontWeight.w800,
+                    color: Colors.white, height: 1.2, letterSpacing: -0.2)),
+                  const SizedBox(height: 2),
+                  Text('Request overview'.tr(context), style: TextStyle(
+                    fontFamily: 'Cairo', fontSize: 11.5,
+                    color: AppColors.goldLight.withOpacity(0.95),
+                    fontWeight: FontWeight.w500, height: 1.2)),
+                ])),
+              _HeaderIconBtn(
+                icon: Icons.refresh_rounded,
+                loading: _refreshing,
+                onTap: _refreshing ? null : _refresh),
             ]),
             const SizedBox(height: 14),
-            // ── Filter pills (scrollable) ──
+            // ── Filter pills (scrollable, modern) ──
             asyncRequests.when(
               data: (paginated) {
                 final all = paginated.items;
-                int _count(String s) => all.where((r) => r.status == s).length;
+                int cnt(String s) => all.where((r) => r.status == s).length;
                 return _buildFilterRow(context, [
-                  _count('pending'), all.length, _count('processing'), _count('approved'),
-                  _count('rejected'), _count('completed'), _count('cancelled'),
+                  cnt('pending'), all.length, cnt('processing'), cnt('approved'),
+                  cnt('rejected'), cnt('completed'), cnt('cancelled'),
                 ]);
               },
               loading: () => _buildFilterRow(context, null),
@@ -170,12 +170,13 @@ class _RequestsMgmtState extends ConsumerState<RequestsManagementScreen> {
                   const SizedBox(height: 12),
                   Text('No requests'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: c.textMuted)),
                 ])),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
                 itemBuilder: (context, r, i) => RequestCard(
                   id: '#${r.id}',
                   empName: r.employee?.name ?? '—',
                   dept: r.employee?.code ?? '',
                   type: _typeTr(context, r.requestType),
+                  typeKey: r.requestType,
                   date: _fmtDate(r.createdAt),
                   status: r.status,
                   priority: 'normal',
@@ -189,41 +190,94 @@ class _RequestsMgmtState extends ConsumerState<RequestsManagementScreen> {
   }
 
   static const _labels = ['Pending', 'All', 'Processing', 'Approved', 'Rejected', 'Completed', 'Cancelled'];
-  static const _colors = [AppColors.warning, AppColors.goldLight, AppColors.navyMid, AppColors.tealLight, AppColors.error, AppColors.success, AppColors.g400];
+  static const _colors = [AppColors.warning, AppColors.goldLight, AppColors.navyBright, AppColors.tealLight, AppColors.coral, AppColors.success, AppColors.g400];
 
   Widget _buildFilterRow(BuildContext context, List<int>? counts) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(children: List.generate(_labels.length, (i) {
-        final v = counts != null ? '${counts[i]}' : '...';
-        return Padding(
-          padding: EdgeInsetsDirectional.only(end: i < _labels.length - 1 ? 6 : 0),
-          child: _filterPill(v, _labels[i].tr(context), _colors[i], i),
-        );
-      })),
+    return SizedBox(
+      height: 38,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: _labels.length,
+        padding: EdgeInsets.zero,
+        separatorBuilder: (_, _) => const SizedBox(width: 7),
+        itemBuilder: (context, i) {
+          final v = counts != null ? '${counts[i]}' : '…';
+          return _filterPill(v, _labels[i].tr(context), _colors[i], i);
+        },
+      ),
     );
   }
 
-  Widget _filterPill(String v, String l, Color accentColor, int index) {
+  Widget _filterPill(String count, String label, Color accentColor, int index) {
     final selected = _tab == index;
     return GestureDetector(
       onTap: () => setState(() => _tab = index),
-      child: Container(
-        width: 80,
-        padding: const EdgeInsets.symmetric(vertical: 9),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? Colors.white.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10),
+          color: selected ? Colors.white : Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(99),
           border: Border.all(
-            color: selected ? Colors.white.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.15),
-            width: selected ? 1.5 : 1)),
-        child: Column(children: [
-          Text(v, style: TextStyle(fontFamily: 'Cairo', fontSize: 20, fontWeight: FontWeight.w900,
-            color: accentColor, height: 1.1)),
-          Text(l, style: TextStyle(fontFamily: 'Cairo', fontSize: 10,
-            color: selected ? Colors.white : Colors.white54)),
+            color: selected ? Colors.white : Colors.white.withValues(alpha: 0.18),
+            width: 1),
+          boxShadow: selected ? [BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 8, offset: const Offset(0, 2))] : null,
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          // Count chip
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+            decoration: BoxDecoration(
+              color: selected ? accentColor.withOpacity(0.16) : accentColor.withOpacity(0.22),
+              borderRadius: BorderRadius.circular(99),
+            ),
+            child: Text(count, style: TextStyle(
+              fontFamily: 'Cairo', fontSize: 12, fontWeight: FontWeight.w800,
+              color: selected ? accentColor : Colors.white,
+              height: 1, letterSpacing: -0.2)),
+          ),
+          const SizedBox(width: 7),
+          // Label
+          Text(label, style: TextStyle(
+            fontFamily: 'Cairo', fontSize: 12.5,
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+            color: selected ? AppColors.navyDeep : Colors.white.withValues(alpha: 0.92),
+            height: 1)),
         ]),
+      ),
+    );
+  }
+}
+
+// ─── Header circular icon button (used in HEADER bar) ────────────────────
+class _HeaderIconBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool loading;
+  const _HeaderIconBtn({required this.icon, this.onTap, this.loading = false});
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(11),
+        child: Ink(
+          width: 38, height: 38,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+          ),
+          child: Center(child: loading
+            ? const SizedBox(width: 16, height: 16,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+            : Icon(icon, color: Colors.white, size: 18)),
+        ),
       ),
     );
   }
@@ -277,6 +331,7 @@ class AllRequestsScreen extends ConsumerWidget {
                     empName: r.employee?.name ?? '—',
                     dept: r.employee?.code ?? '',
                     type: _typeTr(context, r.requestType),
+                    typeKey: r.requestType,
                     date: _fmtDate(r.createdAt),
                     status: r.status,
                     priority: 'normal',

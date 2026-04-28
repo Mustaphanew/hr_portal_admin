@@ -346,33 +346,239 @@ class KpiCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: c.bgCard,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: AppShadows.card,
-          border: Border(bottom: BorderSide(color: color, width: 3))),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Container(padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
-              child: AppIcon(icon, size: 20, color: color)),
-            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text(value, style: TextStyle(fontFamily: 'Cairo', fontSize: 26, fontWeight: FontWeight.w900, color: color, height: 1)),
-              Text(label, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: c.textMuted, height: 1.3)),
-            ]),
+    final isDark = context.isDark;
+    final hasChange = change.trim().isNotEmpty;
+    final trendColor = isPositive ? AppColors.success : AppColors.error;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        splashColor: color.withOpacity(0.08),
+        highlightColor: color.withOpacity(0.04),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: c.bgCard,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark ? c.cardBorder : color.withOpacity(0.10),
+              width: 1),
+            boxShadow: isDark ? null : [
+              BoxShadow(
+                color: color.withOpacity(0.06),
+                blurRadius: 14, offset: const Offset(0, 4)),
+              BoxShadow(
+                color: AppColors.navyDeep.withOpacity(0.03),
+                blurRadius: 4, offset: const Offset(0, 1)),
+            ],
+          ),
+          child: Stack(children: [
+            // ── Soft radial glow (decorative)
+            Positioned.directional(
+              textDirection: Directionality.of(context),
+              top: 0, start: 0,
+              child: IgnorePointer(child: Container(
+                width: 90, height: 90,
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20)),
+                  gradient: RadialGradient(
+                    center: Alignment.topLeft,
+                    radius: 1.0,
+                    colors: [
+                      color.withOpacity(isDark ? 0.14 : 0.06),
+                      color.withOpacity(0),
+                    ],
+                  ),
+                ),
+              )),
+            ),
+            // ── Trend pill (positioned at top-end, only when relevant)
+            if (hasChange)
+              Positioned.directional(
+                textDirection: Directionality.of(context),
+                top: 10, end: 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: trendColor.withOpacity(isDark ? 0.20 : 0.10),
+                    borderRadius: BorderRadius.circular(99),
+                    border: Border.all(
+                      color: trendColor.withOpacity(isDark ? 0.34 : 0.18),
+                      width: 1)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(
+                      isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                      size: 10, color: trendColor),
+                    const SizedBox(width: 2),
+                    Text(change, style: TextStyle(
+                      fontFamily: 'Cairo', fontSize: 9.5,
+                      fontWeight: FontWeight.w800, color: trendColor, height: 1)),
+                  ]),
+                ),
+              ),
+            // ── Main content (balanced horizontal layout) ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                // Icon — vertically centered on the START side
+                Container(
+                  width: 46, height: 46,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft, end: Alignment.bottomRight,
+                      colors: [
+                        color.withOpacity(isDark ? 0.26 : 0.14),
+                        color.withOpacity(isDark ? 0.12 : 0.06),
+                      ]),
+                    borderRadius: BorderRadius.circular(13),
+                    border: Border.all(
+                      color: color.withOpacity(isDark ? 0.34 : 0.18),
+                      width: 1)),
+                  child: Center(child: AppIcon(icon, size: 22, color: color)),
+                ),
+                const SizedBox(width: 10),
+                // Value + label — vertically centered, end-aligned
+                Expanded(child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: Text(value, style: TextStyle(
+                        fontFamily: 'Cairo', fontSize: 28, fontWeight: FontWeight.w900,
+                        color: color, height: 1.0, letterSpacing: -0.5)),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(label, style: TextStyle(
+                      fontFamily: 'Cairo', fontSize: 11,
+                      fontWeight: FontWeight.w600, color: c.textMuted, height: 1.15),
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end),
+                  ],
+                )),
+              ]),
+            ),
+            // ── Bottom accent (gradient bar)
+            Positioned(
+              left: 12, right: 12, bottom: 5,
+              child: Container(
+                height: 2.5,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      color.withOpacity(0.0),
+                      color.withOpacity(isDark ? 0.85 : 0.7),
+                      color.withOpacity(0.0),
+                    ]),
+                  borderRadius: BorderRadius.circular(99)),
+              ),
+            ),
           ]),
-          const SizedBox(height: 8),
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            Text(change, style: TextStyle(fontFamily: 'Cairo', fontSize: 10, color: isPositive ? AppColors.success : AppColors.error, fontWeight: FontWeight.w600)),
-            const SizedBox(width: 4),
-            Icon(isPositive ? Icons.arrow_upward : Icons.arrow_downward,
-              size: 11, color: isPositive ? AppColors.success : AppColors.error),
+        ),
+      ),
+    );
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// QUICK ACTION TILE (modern, theme-aware)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+class QuickActionTile extends StatelessWidget {
+  final String label, icon;
+  final Color color;
+  final VoidCallback? onTap;
+  final int? badge;
+  const QuickActionTile({super.key, required this.label, required this.icon,
+    required this.color, this.onTap, this.badge});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    final isDark = context.isDark;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        splashColor: color.withOpacity(0.10),
+        highlightColor: color.withOpacity(0.05),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: c.bgCard,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? c.cardBorder : c.gray100, width: 1),
+            boxShadow: isDark ? null : AppShadows.sm),
+          padding: const EdgeInsets.fromLTRB(6, 14, 6, 10),
+          child: Stack(clipBehavior: Clip.none, children: [
+            // Fixed-position layout: icon on top, label area at bottom with reserved height
+            // ensures all tiles align perfectly even with 1- or 2-line labels.
+            Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Icon container — gradient + soft glow
+                Container(
+                  width: 48, height: 48,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft, end: Alignment.bottomRight,
+                      colors: [
+                        color.withOpacity(isDark ? 0.26 : 0.16),
+                        color.withOpacity(isDark ? 0.10 : 0.06),
+                      ]),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: color.withOpacity(isDark ? 0.32 : 0.20), width: 1),
+                    boxShadow: isDark ? null : [
+                      BoxShadow(
+                        color: color.withOpacity(0.10),
+                        blurRadius: 8, offset: const Offset(0, 3)),
+                    ]),
+                  child: Center(child: AppIcon(icon, size: 22, color: color))),
+                // Reserved label slot (~2 lines tall) so single- and multi-line labels
+                // share the same baseline across the grid.
+                SizedBox(
+                  height: 30,
+                  child: Center(
+                    child: Text(label, style: TextStyle(
+                      fontFamily: 'Cairo', fontSize: 11, height: 1.2,
+                      fontWeight: FontWeight.w700, color: c.textPrimary,
+                      letterSpacing: -0.1),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis),
+                  ),
+                ),
+              ]),
+            if (badge != null && badge! > 0)
+              Positioned.directional(
+                textDirection: Directionality.of(context),
+                top: -4, end: -4,
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    borderRadius: BorderRadius.circular(99),
+                    border: Border.all(color: c.bgCard, width: 1.5),
+                    boxShadow: [BoxShadow(
+                      color: AppColors.error.withOpacity(0.35),
+                      blurRadius: 6, offset: const Offset(0, 2))]),
+                  child: Center(child: Text(
+                    badge! > 99 ? '99+' : '$badge',
+                    style: const TextStyle(fontFamily: 'Cairo',
+                      fontSize: 9, fontWeight: FontWeight.w800,
+                      color: Colors.white, height: 1))),
+                ),
+              ),
           ]),
-        ]),
+        ),
       ),
     );
   }
@@ -618,55 +824,158 @@ class EmployeeListCard extends StatelessWidget {
 
 class RequestCard extends StatelessWidget {
   final String id, empName, dept, type, date, status, priority;
+  final String? typeKey; // backend slug used for icon detection (optional)
   final VoidCallback? onTap;
   const RequestCard({super.key, required this.id, required this.empName,
     required this.dept, required this.type, required this.date,
-    required this.status, required this.priority, this.onTap});
+    required this.status, required this.priority, this.typeKey, this.onTap});
+
+  // Maps a request type slug → (Material icon, accent color)
+  static (IconData, Color) _typeVisual(String key) {
+    final k = key.toLowerCase();
+    bool has(List<String> needles) => needles.any((n) => k.contains(n));
+    if (has(['leave', 'vacation', 'إجاز']))                                return (Icons.beach_access_rounded, AppColors.teal);
+    if (has(['attendance', 'حضور', 'تصحيح']))                              return (Icons.access_time_rounded, AppColors.navyMid);
+    if (has(['permission', 'departure', 'إذن', 'مغادر']))                  return (Icons.exit_to_app_rounded, AppColors.indigo);
+    if (has(['expense', 'claim', 'مصاريف', 'مطالب']))                      return (Icons.receipt_long_rounded, AppColors.gold);
+    if (has(['salary', 'advance', 'loan', 'قرض', 'سلف']))                  return (Icons.payments_rounded, AppColors.success);
+    if (has(['document', 'letter', 'certificate', 'experience',
+             'وثيق', 'خطاب', 'شهاد', 'خبرة']))                              return (Icons.description_rounded, AppColors.navyLight);
+    if (has(['resignation', 'استقال']))                                    return (Icons.logout_rounded, AppColors.error);
+    if (has(['mission', 'مهم']))                                           return (Icons.flight_takeoff_rounded, AppColors.sky);
+    if (has(['asset', 'equipment', 'أصول', 'معد']))                        return (Icons.inventory_2_rounded, AppColors.warning);
+    if (has(['training', 'تدريب']))                                        return (Icons.school_rounded, AppColors.tealLight);
+    if (has(['promotion', 'ترقي']))                                        return (Icons.trending_up_rounded, AppColors.success);
+    if (has(['transfer', 'نقل']))                                          return (Icons.swap_horiz_rounded, AppColors.indigo);
+    return (Icons.assignment_outlined, AppColors.navyMid);
+  }
+
+  Color _statusColor(AppColorsExtension c) => switch (status) {
+    'pending'    => AppColors.warning,
+    'processing' => AppColors.navyMid,
+    'approved'   => AppColors.success,
+    'rejected'   => AppColors.error,
+    'completed'  => AppColors.teal,
+    'cancelled'  => AppColors.g400,
+    _            => c.gray300,
+  };
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-          color: c.bgCard,
+    final isDark = context.isDark;
+    final (typeIcon, typeColor) = _typeVisual(typeKey ?? type);
+    final statusColor = _statusColor(c);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: AppShadows.card,
-          border: Border(right: BorderSide(
-            color: status == 'pending' ? AppColors.warning
-              : status == 'processing' ? AppColors.navyMid
-              : status == 'approved' ? AppColors.success
-              : status == 'rejected' ? AppColors.error
-              : status == 'completed' ? AppColors.teal
-              : status == 'cancelled' ? AppColors.g400 : c.gray300,
-            width: 3.5))),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-            // START: نصوص الطلب
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(type, style: TextStyle(fontFamily: 'Cairo',
-                fontSize: 13, fontWeight: FontWeight.w700, color: c.textPrimary)),
-              const SizedBox(height: 3),
-              Text('$empName · $dept', style: TextStyle(fontFamily: 'Cairo',
-                fontSize: 11, color: c.textMuted)),
-              const SizedBox(height: 6),
-              Row(children: [
-                Text(date, style: TextStyle(fontFamily: 'Cairo',
-                  fontSize: 11, color: c.textMuted)),
-                const SizedBox(width: 8),
-                Text(id, style: TextStyle(fontFamily: 'Cairo',
-                  fontSize: 10, color: c.gray400)),
+          splashColor: typeColor.withOpacity(0.06),
+          highlightColor: typeColor.withOpacity(0.03),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: c.bgCard,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? c.cardBorder : c.gray100, width: 1),
+              boxShadow: isDark ? null : AppShadows.card,
+            ),
+            child: IntrinsicHeight(
+              child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                // ── Leading status accent strip (RTL-aware) ──
+                Container(
+                  width: 4,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                      colors: [statusColor.withOpacity(0.6), statusColor]),
+                    borderRadius: const BorderRadiusDirectional.horizontal(
+                      start: Radius.circular(16)),
+                  ),
+                ),
+                // ── Body ──
+                Expanded(child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    // Type icon container
+                    Container(
+                      width: 42, height: 42,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft, end: Alignment.bottomRight,
+                          colors: [
+                            typeColor.withOpacity(isDark ? 0.24 : 0.13),
+                            typeColor.withOpacity(isDark ? 0.10 : 0.06),
+                          ]),
+                        borderRadius: BorderRadius.circular(11),
+                        border: Border.all(
+                          color: typeColor.withOpacity(isDark ? 0.34 : 0.18),
+                          width: 1)),
+                      child: Center(child: Icon(typeIcon, size: 20, color: typeColor)),
+                    ),
+                    const SizedBox(width: 12),
+                    // Texts (RTL-friendly: alignment uses Directionality)
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Row(children: [
+                        Expanded(child: Text(type,
+                          style: TextStyle(fontFamily: 'Cairo',
+                            fontSize: 14, fontWeight: FontWeight.w800,
+                            color: c.textPrimary, height: 1.2),
+                          maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        const SizedBox(width: 8),
+                        StatusBadge(
+                          text: _statusTr(context, status),
+                          type: status, dot: true),
+                      ]),
+                      const SizedBox(height: 6),
+                      // Employee + dept line
+                      Row(children: [
+                        Icon(Icons.person_outline_rounded, size: 13, color: c.textMuted),
+                        const SizedBox(width: 4),
+                        Flexible(child: Text(empName,
+                          style: TextStyle(fontFamily: 'Cairo',
+                            fontSize: 12, fontWeight: FontWeight.w600,
+                            color: c.textSecondary, height: 1.2),
+                          maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        if (dept.isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          Container(width: 3, height: 3,
+                            decoration: BoxDecoration(
+                              color: c.gray300, shape: BoxShape.circle)),
+                          const SizedBox(width: 6),
+                          Text(dept, style: TextStyle(fontFamily: 'Cairo',
+                            fontSize: 11, fontWeight: FontWeight.w500,
+                            color: c.textMuted, height: 1.2)),
+                        ],
+                      ]),
+                      const SizedBox(height: 8),
+                      // Date + ID
+                      Row(children: [
+                        Icon(Icons.calendar_today_rounded, size: 11, color: c.gray400),
+                        const SizedBox(width: 4),
+                        Text(date, style: TextStyle(fontFamily: 'Cairo',
+                          fontSize: 11, color: c.textMuted, height: 1)),
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: c.gray100,
+                            borderRadius: BorderRadius.circular(5)),
+                          child: Text(id, style: TextStyle(fontFamily: 'Cairo',
+                            fontSize: 10, fontWeight: FontWeight.w700,
+                            color: c.textMuted, height: 1, letterSpacing: 0.2)),
+                        ),
+                      ]),
+                    ])),
+                  ]),
+                )),
               ]),
-            ])),
-            const SizedBox(width: 12),
-            // END: حالة الطلب
-            StatusBadge(
-              text: _statusTr(context, status),
-              type: status, dot: true),
-          ]),
+            ),
+          ),
         ),
       ),
     );
