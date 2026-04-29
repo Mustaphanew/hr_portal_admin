@@ -158,11 +158,21 @@ class AttendanceHistoryData extends Equatable {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// A single attendance record in the admin attendance view.
+///
+/// Captured 2026-04-29 from real `/admin/attendance` response — the API now
+/// returns nested `{employee, department, company, branch}` objects rather
+/// than flat keys. Backwards-compatible with the old flat-key shape.
 class AdminAttendanceRecord extends Equatable {
+  final int? recordId;
   final int employeeId;
   final String employeeName;
   final String employeeCode;
+  final int? departmentId;
   final String department;
+  final int? companyId;
+  final String? companyName;
+  final int? branchId;
+  final String? branchName;
   final String date;
   final String? checkIn;
   final String? checkOut;
@@ -172,10 +182,16 @@ class AdminAttendanceRecord extends Equatable {
   final int overtimeMinutes;
 
   const AdminAttendanceRecord({
+    this.recordId,
     required this.employeeId,
     required this.employeeName,
     required this.employeeCode,
+    this.departmentId,
     required this.department,
+    this.companyId,
+    this.companyName,
+    this.branchId,
+    this.branchName,
     required this.date,
     this.checkIn,
     this.checkOut,
@@ -186,26 +202,98 @@ class AdminAttendanceRecord extends Equatable {
   });
 
   factory AdminAttendanceRecord.fromJson(Map<String, dynamic> json) {
+    int? asInt(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v);
+      return null;
+    }
+
+    String? asStr(dynamic v) {
+      if (v == null) return null;
+      if (v is String) return v;
+      return v.toString();
+    }
+
+    // Employee may be nested OR flat.
+    int empId = 0;
+    String empName = '';
+    String empCode = '';
+    final empRaw = json['employee'];
+    if (empRaw is Map<String, dynamic>) {
+      empId = asInt(empRaw['id']) ?? 0;
+      empName = asStr(empRaw['name']) ?? '';
+      empCode = asStr(empRaw['employee_number']) ??
+          asStr(empRaw['code']) ??
+          '';
+    } else {
+      empId = asInt(json['employee_id']) ?? 0;
+      empName = asStr(json['employee_name']) ?? '';
+      empCode = asStr(json['employee_code']) ?? '';
+    }
+
+    // Department may be nested OR flat string.
+    int? deptId;
+    String deptName = '';
+    final deptRaw = json['department'];
+    if (deptRaw is Map<String, dynamic>) {
+      deptId = asInt(deptRaw['id']);
+      deptName = asStr(deptRaw['name']) ?? '';
+    } else if (deptRaw is String) {
+      deptName = deptRaw;
+    }
+
+    // Company nested.
+    int? compId;
+    String? compName;
+    final compRaw = json['company'];
+    if (compRaw is Map<String, dynamic>) {
+      compId = asInt(compRaw['id']);
+      compName = asStr(compRaw['name']);
+    }
+
+    // Branch nested.
+    int? brId;
+    String? brName;
+    final brRaw = json['branch'];
+    if (brRaw is Map<String, dynamic>) {
+      brId = asInt(brRaw['id']);
+      brName = asStr(brRaw['name']);
+    }
+
     return AdminAttendanceRecord(
-      employeeId: (json['employee_id'] ?? 0) as int,
-      employeeName: (json['employee_name'] ?? '') as String,
-      employeeCode: (json['employee_code'] ?? '') as String,
-      department: (json['department'] ?? '') as String,
-      date: (json['date'] ?? '') as String,
-      checkIn: json['check_in'] as String?,
-      checkOut: json['check_out'] as String?,
+      recordId: asInt(json['id']),
+      employeeId: empId,
+      employeeName: empName,
+      employeeCode: empCode,
+      departmentId: deptId,
+      department: deptName,
+      companyId: compId,
+      companyName: compName,
+      branchId: brId,
+      branchName: brName,
+      date: asStr(json['date']) ?? '',
+      checkIn: asStr(json['check_in']),
+      checkOut: asStr(json['check_out']),
       workedHours: (json['worked_hours'] as num?)?.toDouble() ?? 0.0,
-      status: (json['status'] ?? 'absent') as String,
-      lateMinutes: (json['late_minutes'] ?? 0) as int,
-      overtimeMinutes: (json['overtime_minutes'] ?? 0) as int,
+      status: asStr(json['status']) ?? 'absent',
+      lateMinutes: asInt(json['late_minutes']) ?? 0,
+      overtimeMinutes: asInt(json['overtime_minutes']) ?? 0,
     );
   }
 
   Map<String, dynamic> toJson() => {
+        if (recordId != null) 'id': recordId,
         'employee_id': employeeId,
         'employee_name': employeeName,
         'employee_code': employeeCode,
+        if (departmentId != null) 'department_id': departmentId,
         'department': department,
+        if (companyId != null) 'company_id': companyId,
+        if (companyName != null) 'company_name': companyName,
+        if (branchId != null) 'branch_id': branchId,
+        if (branchName != null) 'branch_name': branchName,
         'date': date,
         'check_in': checkIn,
         'check_out': checkOut,
@@ -217,10 +305,16 @@ class AdminAttendanceRecord extends Equatable {
 
   @override
   List<Object?> get props => [
+        recordId,
         employeeId,
         employeeName,
         employeeCode,
+        departmentId,
         department,
+        companyId,
+        companyName,
+        branchId,
+        branchName,
         date,
         checkIn,
         checkOut,
@@ -270,30 +364,43 @@ class AdminAttendanceSummary extends Equatable {
 }
 
 /// Data payload returned by GET /admin/attendance (API M1).
+///
+/// Real response shape (captured 2026-04-29):
+/// `{ summary: {total, present, late, absent}, records: [...], meta: {...} }`
 class AdminAttendanceData extends Equatable {
+  /// Optional date filter — populated when scoping to a single day.
   final String date;
   final AdminAttendanceSummary summary;
   final List<AdminAttendanceRecord> records;
   final Pagination pagination;
 
   const AdminAttendanceData({
-    required this.date,
+    this.date = '',
     required this.summary,
     required this.records,
     required this.pagination,
   });
 
   factory AdminAttendanceData.fromJson(Map<String, dynamic> json) {
+    final rawRecords = json['records'];
+    final records = (rawRecords is List)
+        ? rawRecords
+            .whereType<Map<String, dynamic>>()
+            .map(AdminAttendanceRecord.fromJson)
+            .toList()
+        : <AdminAttendanceRecord>[];
+
+    final summaryJson = json['summary'];
+    final summary = (summaryJson is Map<String, dynamic>)
+        ? AdminAttendanceSummary.fromJson(summaryJson)
+        : const AdminAttendanceSummary(
+            total: 0, present: 0, late: 0, absent: 0, onLeave: 0);
+
     return AdminAttendanceData(
       date: (json['date'] as String?) ?? '',
-      summary: AdminAttendanceSummary.fromJson(
-          json['summary'] as Map<String, dynamic>),
-      records: (json['records'] as List<dynamic>)
-          .map((e) =>
-              AdminAttendanceRecord.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      pagination:
-          Pagination.fromParent(json),
+      summary: summary,
+      records: records,
+      pagination: Pagination.fromParent(json),
     );
   }
 

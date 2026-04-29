@@ -52,6 +52,10 @@ String _normalizeStatus(String raw) {
       return 'pending';
     case 'done':
       return 'completed';
+    case 'hold':
+      // The real backend uses HOLD for paused/blocked tasks (captured 2026-04-29).
+      // Surface as `pending` so existing UI filters keep working.
+      return 'pending';
     default:
       return s;
   }
@@ -155,6 +159,11 @@ class TaskProjectRef extends Equatable {
 /// by older screens) and the new Postman 06 schema.
 class AdminTaskItem extends Equatable {
   final int id;
+
+  /// Task code (e.g. "TSK-00012") — may be null for some legacy tasks.
+  /// Captured from real /admin/tasks response 2026-04-29.
+  final String? code;
+
   final String title;
   final String? description;
   final String? type;
@@ -163,7 +172,8 @@ class AdminTaskItem extends Equatable {
   /// `cancelled`, `overdue`).
   final String status;
 
-  /// Status as returned by the backend (e.g. `TODO`, `IN_PROGRESS`, `DONE`).
+  /// Status as returned by the backend (e.g. `TODO`, `IN_PROGRESS`, `DONE`,
+  /// `HOLD`).
   final String rawStatus;
 
   final String priority;
@@ -186,10 +196,24 @@ class AdminTaskItem extends Equatable {
   /// Project id shortcut.
   final int? projectId;
 
+  /// Parent task id for sub-tasks (real response includes `parent_id`).
+  final int? parentId;
+
+  /// Company reference (real response — captured 2026-04-29).
+  final TaskAssignee? company; // reuses {id,name} shape
+  /// Branch reference (real response).
+  final TaskAssignee? branch;
+
   /// Date strings (kept as raw API strings, may be ISO date or datetime).
   final String createdDate;
   final String? startDate;
-  final String dueDate;
+
+  /// Due date — backend may return null for unscheduled tasks.
+  /// (Was previously `required String` which masked nulls as empty strings.)
+  final String? dueDate;
+
+  /// When the task was closed/completed (nullable).
+  final String? closedAt;
 
   final int? estimateMinutes;
   final int? actualMinutes;
@@ -197,10 +221,14 @@ class AdminTaskItem extends Equatable {
   final bool? isBillable;
   final bool? isUrgent;
 
+  /// Convenience flag from the real response (`is_completed`).
+  final bool? isCompleted;
+
   final String? notes;
 
   const AdminTaskItem({
     required this.id,
+    this.code,
     required this.title,
     this.description,
     this.type,
@@ -213,14 +241,19 @@ class AdminTaskItem extends Equatable {
     required this.department,
     this.project,
     this.projectId,
+    this.parentId,
+    this.company,
+    this.branch,
     required this.createdDate,
     this.startDate,
-    required this.dueDate,
+    this.dueDate,
+    this.closedAt,
     this.estimateMinutes,
     this.actualMinutes,
     this.progressPercent,
     this.isBillable,
     this.isUrgent,
+    this.isCompleted,
     this.notes,
   });
 
@@ -257,8 +290,21 @@ class AdminTaskItem extends Equatable {
       project = TaskProjectRef.fromJson(projectRaw);
     }
 
+    // Parse company/branch (both may be objects or null).
+    TaskAssignee? company;
+    final companyRaw = json['company'];
+    if (companyRaw is Map<String, dynamic>) {
+      company = TaskAssignee.fromJson(companyRaw);
+    }
+    TaskAssignee? branch;
+    final branchRaw = json['branch'];
+    if (branchRaw is Map<String, dynamic>) {
+      branch = TaskAssignee.fromJson(branchRaw);
+    }
+
     return AdminTaskItem(
       id: _asInt(json['id']) ?? 0,
+      code: _asString(json['code']),
       title: _asString(json['title']) ?? '',
       description: _asString(json['description']),
       type: _asString(json['type']),
@@ -272,22 +318,28 @@ class AdminTaskItem extends Equatable {
       department: department,
       project: project,
       projectId: _asInt(json['project_id']) ?? project?.id,
+      parentId: _asInt(json['parent_id']),
+      company: company,
+      branch: branch,
       createdDate: _asString(json['created_date']) ??
           _asString(json['created_at']) ??
           '',
       startDate: _asString(json['start_date']),
-      dueDate: _asString(json['due_date']) ?? '',
+      dueDate: _asString(json['due_date']),
+      closedAt: _asString(json['closed_at']),
       estimateMinutes: _asInt(json['estimate_minutes']),
       actualMinutes: _asInt(json['actual_minutes']),
       progressPercent: _asInt(json['progress_percent']),
       isBillable: _asBool(json['is_billable']),
       isUrgent: _asBool(json['is_urgent']),
+      isCompleted: _asBool(json['is_completed']),
       notes: _asString(json['notes']) ?? _asString(json['description']),
     );
   }
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        if (code != null) 'code': code,
         'title': title,
         if (description != null) 'description': description,
         if (type != null) 'type': type,
@@ -301,20 +353,26 @@ class AdminTaskItem extends Equatable {
         'department': department.toJson(),
         if (project != null) 'project': project!.toJson(),
         if (projectId != null) 'project_id': projectId,
+        if (parentId != null) 'parent_id': parentId,
+        if (company != null) 'company': company!.toJson(),
+        if (branch != null) 'branch': branch!.toJson(),
         'created_date': createdDate,
         if (startDate != null) 'start_date': startDate,
-        'due_date': dueDate,
+        if (dueDate != null) 'due_date': dueDate,
+        if (closedAt != null) 'closed_at': closedAt,
         if (estimateMinutes != null) 'estimate_minutes': estimateMinutes,
         if (actualMinutes != null) 'actual_minutes': actualMinutes,
         if (progressPercent != null) 'progress_percent': progressPercent,
         if (isBillable != null) 'is_billable': isBillable,
         if (isUrgent != null) 'is_urgent': isUrgent,
+        if (isCompleted != null) 'is_completed': isCompleted,
         if (notes != null) 'notes': notes,
       };
 
   @override
   List<Object?> get props => [
         id,
+        code,
         title,
         description,
         type,
@@ -327,14 +385,19 @@ class AdminTaskItem extends Equatable {
         department,
         project,
         projectId,
+        parentId,
+        company,
+        branch,
         createdDate,
         startDate,
         dueDate,
+        closedAt,
         estimateMinutes,
         actualMinutes,
         progressPercent,
         isBillable,
         isUrgent,
+        isCompleted,
         notes,
       ];
 }

@@ -221,6 +221,21 @@ class ApiClient {
       case DioExceptionType.receiveTimeout:
         return const TimeoutException();
       case DioExceptionType.connectionError:
+        // Distinguish "connection refused" (server not running / wrong port)
+        // from a genuine no-network situation, so the UI can hint accordingly.
+        final msg = (e.message ?? '').toLowerCase();
+        final osMsg = (e.error?.toString() ?? '').toLowerCase();
+        final refused = msg.contains('refused') ||
+            msg.contains('connection failed') ||
+            osMsg.contains('refused') ||
+            osMsg.contains('econnrefused');
+        if (refused) {
+          return ConnectionRefusedException(
+            message:
+                'Cannot reach ${e.requestOptions.uri.host}:${e.requestOptions.uri.port}. '
+                'Is the backend server running?',
+          );
+        }
         return const NetworkException();
       case DioExceptionType.badResponse:
         // Try to parse the error body.

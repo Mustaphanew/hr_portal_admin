@@ -47,26 +47,66 @@ class ProjectRepository {
   }
 
   /// Fetch all tasks for a specific project.
+  ///
+  /// The real API wraps the list: `{ tasks: [...], summary: {...},
+  /// pagination: {...} }`. We unwrap and return only the list here.
   Future<List<ProjectTask>> getProjectTasks(int id) async {
     final response = await _client.get<List<ProjectTask>>(
       ApiConstants.adminProjectTasks(id),
-      fromJson: (json) => (json as List<dynamic>)
-          .map((e) => ProjectTask.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      fromJson: (json) {
+        // Accept either a bare list (legacy) or the wrapped object.
+        final raw = json is List
+            ? json
+            : (json is Map<String, dynamic>
+                ? (json['tasks'] ?? json['items'] ?? json['data'] ?? const [])
+                : const []);
+        return (raw as List<dynamic>)
+            .whereType<Map<String, dynamic>>()
+            .map(ProjectTask.fromJson)
+            .toList();
+      },
     );
     return response.data!;
   }
 
   /// Fetch all milestones for a specific project.
+  ///
+  /// Real API: `{ milestones: [] }` (also returns `message: "Milestones
+  /// module is not configured."` when the feature is disabled).
   Future<List<ProjectMilestone>> getProjectMilestones(int id) async {
     final response = await _client.get<List<ProjectMilestone>>(
       ApiConstants.adminProjectMilestones(id),
-      fromJson: (json) => (json as List<dynamic>)
-          .map((e) =>
-              ProjectMilestone.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      fromJson: (json) {
+        final raw = json is List
+            ? json
+            : (json is Map<String, dynamic>
+                ? (json['milestones'] ?? json['items'] ?? json['data'] ?? const [])
+                : const []);
+        return (raw as List<dynamic>)
+            .whereType<Map<String, dynamic>>()
+            .map(ProjectMilestone.fromJson)
+            .toList();
+      },
     );
-    return response.data!;
+    return response.data ?? const <ProjectMilestone>[];
+  }
+
+  /// Fetch attachments for a project. Wraps `{ attachments: [...] }`.
+  Future<List<Map<String, dynamic>>> getProjectAttachments(int id) async {
+    final response = await _client.get<List<Map<String, dynamic>>>(
+      ApiConstants.adminProjectAttachments(id),
+      fromJson: (json) {
+        final raw = json is List
+            ? json
+            : (json is Map<String, dynamic>
+                ? (json['attachments'] ?? json['items'] ?? const [])
+                : const []);
+        return (raw as List<dynamic>)
+            .whereType<Map<String, dynamic>>()
+            .toList();
+      },
+    );
+    return response.data ?? const [];
   }
 
   /// Fetch analytics data for a specific project.

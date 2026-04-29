@@ -172,7 +172,7 @@ class _TasksDashboardState extends ConsumerState<TasksDashboardScreen> {
                                   title: t.title,
                                   assignedTo: t.assignedTo.name,
                                   dept: t.department.name,
-                                  dueDate: t.dueDate,
+                                  dueDate: t.dueDate ?? '',
                                   status: t.status,
                                   priority: t.priority,
                                   onTap: () =>
@@ -187,7 +187,7 @@ class _TasksDashboardState extends ConsumerState<TasksDashboardScreen> {
                                   title: t.title,
                                   assignedTo: t.assignedTo.name,
                                   dept: t.department.name,
-                                  dueDate: t.dueDate,
+                                  dueDate: t.dueDate ?? '',
                                   status: t.status,
                                   priority: t.priority,
                                   onTap: () =>
@@ -202,7 +202,7 @@ class _TasksDashboardState extends ConsumerState<TasksDashboardScreen> {
                                   title: t.title,
                                   assignedTo: t.assignedTo.name,
                                   dept: t.department.name,
-                                  dueDate: t.dueDate,
+                                  dueDate: t.dueDate ?? '',
                                   status: t.status,
                                   priority: t.priority,
                                   onTap: () =>
@@ -414,7 +414,7 @@ class _AllTasksState extends ConsumerState<AllTasksScreen> {
                       title: t.title,
                       assignedTo: t.assignedTo.name,
                       dept: t.department.name,
-                      dueDate: t.dueDate,
+                      dueDate: t.dueDate ?? '',
                       status: t.status,
                       priority: t.priority,
                       onTap: () => context.push('/task-detail/${t.id}'));
@@ -765,7 +765,9 @@ class _InfoTab extends StatelessWidget {
                     icon: '🟢'),
               InfoRow(
                   label: 'Deadline'.tr(context),
-                  value: task.dueDate.isEmpty ? '—' : task.dueDate,
+                  value: (task.dueDate == null || task.dueDate!.isEmpty)
+                      ? '—'
+                      : task.dueDate!,
                   icon: '⏰'),
               if (task.estimateMinutes != null)
                 InfoRow(

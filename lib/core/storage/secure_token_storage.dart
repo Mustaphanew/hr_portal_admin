@@ -62,10 +62,44 @@ class SecureTokenStorage {
     return jsonDecode(value) as Map<String, dynamic>;
   }
 
+  // ── Login envelope extras (admin user/access/scope/modules/defaults) ──
+
+  Future<void> saveJsonMap(String key, Map<String, dynamic> data) async {
+    await _storage.write(key: key, value: jsonEncode(data));
+  }
+
+  Future<Map<String, dynamic>?> readJsonMap(String key) async {
+    final value = await _storage.read(key: key);
+    if (value == null || value.isEmpty) return null;
+    try {
+      return jsonDecode(value) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveTokenExpiresAt(String? iso) async {
+    if (iso == null) {
+      await _storage.delete(key: StorageKeys.tokenExpiresAt);
+    } else {
+      await _storage.write(key: StorageKeys.tokenExpiresAt, value: iso);
+    }
+  }
+
+  Future<String?> getTokenExpiresAt() async {
+    return _storage.read(key: StorageKeys.tokenExpiresAt);
+  }
+
   Future<void> clearAll() async {
     await _storage.delete(key: StorageKeys.token);
     await _storage.delete(key: StorageKeys.adminId);
     await _storage.delete(key: StorageKeys.companyId);
     await _storage.delete(key: StorageKeys.employeeProfile);
+    await _storage.delete(key: StorageKeys.adminUser);
+    await _storage.delete(key: StorageKeys.adminAccess);
+    await _storage.delete(key: StorageKeys.adminScope);
+    await _storage.delete(key: StorageKeys.adminModules);
+    await _storage.delete(key: StorageKeys.adminDefaults);
+    await _storage.delete(key: StorageKeys.tokenExpiresAt);
   }
 }

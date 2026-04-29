@@ -9,9 +9,12 @@ import '../../../../core/providers/paginated_providers.dart';
 import '../../../../core/providers/paginated_notifier.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../../../../core/widgets/paginated_list_view.dart';
+import '../../../admin_dashboard/presentation/screens/admin_dashboard_screen.dart'
+    show showBranchSelectorSheet;
 import '../../data/models/attendance_models.dart';
 import '../../data/models/leave_models.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../requests_management/presentation/widgets/decision_action_sheet.dart';
 
 String _leaveStatusTr(BuildContext context, String s) => switch (s) {
   'draft' => 'Draft'.tr(context),
@@ -142,10 +145,12 @@ class _AttMgmtState extends ConsumerState<AttendanceManagementScreen> {
                 total: summary.total,
                 date: data.date,
               ),
+              // Branch + Month filter row
+              _AttendanceFilterBar(),
               // Stats cards
               Container(
                 color: c.bgCard,
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                 child: Row(
                   children: [
                     _smallStat('${summary.total}', 'Total employees stat'.tr(context), AppColors.navyMid, c),
@@ -431,6 +436,151 @@ class _AttMgmtState extends ConsumerState<AttendanceManagementScreen> {
       ),
     ),
   );
+}
+
+// ── Attendance Filter Bar (Branch + Month) ─────────────────
+//
+// Sits between the dark header and the daily stats card. Shows two pills:
+// 1. Branch/Company scope — opens the shared branch selector sheet.
+// 2. Month/Day filter — switches between "today" and a specific YYYY-MM month.
+class _AttendanceFilterBar extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.appColors;
+    final sel = ref.watch(selectedBranchProvider);
+    final companyLabel = sel.companyLabel('All companies'.tr(context));
+    final branchLabel = sel.isBranch ? sel.branchLabel('') : '';
+    final scopeText =
+        branchLabel.isEmpty ? companyLabel : '$companyLabel • $branchLabel';
+
+    final month = ref.watch(adminAttendanceMonthProvider);
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final monthLabel = month == null
+        ? 'Today'.tr(context)
+        : _formatMonthLabel(month, isAr: isAr);
+
+    return Container(
+      color: c.bgCard,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      child: Row(children: [
+        Expanded(
+          child: _filterPill(
+            context: context,
+            icon: Icons.store_rounded,
+            label: scopeText,
+            actionLabel: 'Change'.tr(context),
+            onTap: () => showBranchSelectorSheet(context, ref),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _filterPill(
+            context: context,
+            icon: Icons.calendar_month_rounded,
+            label: monthLabel,
+            actionLabel: month == null
+                ? 'Pick'.tr(context)
+                : 'Reset'.tr(context),
+            onTap: () => _pickMonth(context, ref, month),
+            onSecondary: month == null
+                ? null
+                : () => ref.read(adminAttendanceMonthProvider.notifier).state =
+                    null,
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _filterPill({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required String actionLabel,
+    required VoidCallback onTap,
+    VoidCallback? onSecondary,
+  }) {
+    final c = context.appColors;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(11),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        decoration: BoxDecoration(
+          color: c.bg,
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(color: AppColors.navyMid.withOpacity(0.12)),
+        ),
+        child: Row(children: [
+          Icon(icon, size: 16, color: AppColors.navyMid),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: c.textPrimary,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: onSecondary ?? onTap,
+            child: Text(actionLabel,
+                style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 10.5,
+                  color: AppColors.teal,
+                  fontWeight: FontWeight.w700,
+                )),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Future<void> _pickMonth(
+      BuildContext context, WidgetRef ref, String? current) async {
+    final initial = current == null
+        ? DateTime.now()
+        : DateTime(
+            int.parse(current.split('-').first),
+            int.parse(current.split('-').last),
+          );
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      // Use month-only picker if available; otherwise day pick is fine.
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
+      helpText: 'Pick month'.tr(context),
+    );
+    if (picked == null) return;
+    final monthStr =
+        '${picked.year}-${picked.month.toString().padLeft(2, '0')}';
+    ref.read(adminAttendanceMonthProvider.notifier).state = monthStr;
+  }
+
+  String _formatMonthLabel(String month, {required bool isAr}) {
+    final parts = month.split('-');
+    if (parts.length < 2) return month;
+    final year = parts[0];
+    final m = int.tryParse(parts[1]) ?? 1;
+    const ar = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ];
+    const en = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    final name = (isAr ? ar : en)[(m - 1).clamp(0, 11)];
+    return '$name $year';
+  }
 }
 
 // ── Attendance Detail ─────────────────────────────────────
@@ -969,42 +1119,57 @@ class LeaveDetailAdminScreen extends ConsumerStatefulWidget {
 class _LeaveDetailState extends ConsumerState<LeaveDetailAdminScreen> {
   String? _decision;
   bool _processing = false;
-  final _notesCtrl = TextEditingController();
 
-  @override
-  void dispose() {
-    _notesCtrl.dispose();
-    super.dispose();
-  }
+  /// Open the decision sheet then call the matching API endpoint.
+  /// Uses dedicated approve/reject endpoints (Postman 02).
+  Future<void> _openDecisionSheet({
+    required String decision,
+    required LeaveRequest request,
+  }) async {
+    final summary = [
+      request.leaveType.name,
+      if (request.startDate.isNotEmpty)
+        '${request.startDate} → ${request.endDate}',
+      if (request.totalDays > 0) '${request.totalDays} ${'Days'.tr(context)}',
+    ].join(' — ');
 
-  Future<void> _decide(String status) async {
-    if (status == 'rejected' && _notesCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Rejection reason required'.tr(context), style: const TextStyle(fontFamily: 'Cairo')),
-        ),
-      );
-      return;
-    }
+    final result = await showDecisionSheet(
+      context,
+      decision: decision,
+      requestSummary: summary,
+      employeeName: request.employee?.name ?? '—',
+      notesRequired: decision == 'reject',
+    );
+    if (result == null || !mounted) return;
+
     setState(() => _processing = true);
     try {
-      await ref
-          .read(leaveRepositoryProvider)
-          .decideLeave(widget.leaveId, decision: status, notes: _notesCtrl.text.trim().isNotEmpty ? _notesCtrl.text.trim() : null);
+      final repo = ref.read(leaveRepositoryProvider);
+      if (result.isApprove) {
+        await repo.approveLeave(widget.leaveId, notes: result.notes);
+      } else {
+        await repo.rejectLeave(widget.leaveId, notes: result.notes);
+      }
+      ref.invalidate(paginatedManagerLeavesProvider);
+      ref.invalidate(managerLeaveDetailProvider(widget.leaveId));
+      if (!mounted) return;
       setState(() {
-        _decision = status;
+        _decision = result.isApprove ? 'approved' : 'rejected';
         _processing = false;
       });
-      ref.invalidate(paginatedManagerLeavesProvider);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _processing = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${'Error'.tr(context)}: $e', style: const TextStyle(fontFamily: 'Cairo')),
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${'Error'.tr(context)}: $e',
+              style: const TextStyle(fontFamily: 'Cairo')),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
     }
   }
 
@@ -1230,27 +1395,9 @@ class _LeaveDetailState extends ConsumerState<LeaveDetailAdminScreen> {
                   ),
                 ),
 
-                // ── Notes field (for pending) ──
-                if (leave.status == 'pending' && leave.canDecide == true)
-                  AppCard(
-                    mb: 16,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Notes'.tr(context),
-                          style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _notesCtrl,
-                          maxLines: 3,
-                          style: const TextStyle(fontFamily: 'Cairo', fontSize: 13),
-                          decoration: fieldDec(context, 'Add notes'.tr(context)),
-                        ),
-                      ],
-                    ),
-                  ),
+                // Note: the inline notes field was removed — the response
+                // note is now collected inside the decision sheet for cleaner
+                // UX and better validation (rejection reason is required).
 
                 // ── Rejection reason (if rejected) ──
                 if (leave.status == 'rejected' && leave.rejectionReason != null)
@@ -1290,11 +1437,19 @@ class _LeaveDetailState extends ConsumerState<LeaveDetailAdminScreen> {
                       OutlineBtn(text: 'Close'.tr(context), fullWidth: false, onTap: () => context.pop()),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: DangerBtn(text: '✗ ${'Reject'.tr(context)}', onTap: () => _decide('rejected')),
+                        child: DangerBtn(
+                          text: '✗ ${'Reject'.tr(context)}',
+                          onTap: () => _openDecisionSheet(
+                              decision: 'reject', request: leave),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: TealBtn(text: '✓ ${'Approve'.tr(context)}', onTap: () => _decide('approved')),
+                        child: TealBtn(
+                          text: '✓ ${'Approve'.tr(context)}',
+                          onTap: () => _openDecisionSheet(
+                              decision: 'approve', request: leave),
+                        ),
                       ),
                     ],
                   ),

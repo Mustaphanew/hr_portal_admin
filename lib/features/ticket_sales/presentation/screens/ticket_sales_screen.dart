@@ -311,69 +311,265 @@ class _KpiSection extends StatelessWidget {
   final TicketSalesKpis kpis;
   const _KpiSection({required this.kpis});
 
+  /// Format with thousand separators, no currency suffix (backend returns raw).
+  String _fmt(double v) {
+    if (v.abs() >= 1000000) return '${(v / 1000000).toStringAsFixed(2)}M';
+    final s = v.toStringAsFixed(2);
+    final parts = s.split('.');
+    final intPart = parts[0];
+    final dec = parts.length > 1 ? parts[1] : '00';
+    final buffer = StringBuffer();
+    for (int i = 0; i < intPart.length; i++) {
+      if (i > 0 && (intPart.length - i) % 3 == 0) buffer.write(',');
+      buffer.write(intPart[i]);
+    }
+    return '$buffer.$dec';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final currency = kpis.currency ?? '';
-    String fmt(double v) =>
-        '${v.toStringAsFixed(0)}${currency.isEmpty ? '' : ' $currency'}';
-    return Column(children: [
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      // Headline KPIs
       Row(children: [
         Expanded(
             child: _KpiTile(
                 icon: Icons.confirmation_number_rounded,
                 label: 'Total tickets'.tr(context),
-                value: '${kpis.totalTickets}',
+                value: '${kpis.ticketCount}',
                 color: AppColors.navyMid)),
         const SizedBox(width: 8),
         Expanded(
             child: _KpiTile(
                 icon: Icons.payments_rounded,
-                label: 'Total sales'.tr(context),
-                value: fmt(kpis.totalSales),
+                label: 'Gross sales'.tr(context),
+                value: _fmt(kpis.grossAmount),
                 color: AppColors.success)),
       ]),
       const SizedBox(height: 8),
       Row(children: [
         Expanded(
             child: _KpiTile(
-                icon: Icons.flight_takeoff_rounded,
-                label: 'Issued'.tr(context),
-                value: '${kpis.issued}',
+                icon: Icons.percent_rounded,
+                label: 'Service total'.tr(context),
+                value: _fmt(kpis.serviceTotal),
+                color: AppColors.gold)),
+        const SizedBox(width: 8),
+        Expanded(
+            child: _KpiTile(
+                icon: Icons.bar_chart_rounded,
+                label: 'Avg / ticket'.tr(context),
+                value: _fmt(kpis.averageTicketValue),
                 color: AppColors.teal)),
-        const SizedBox(width: 8),
-        Expanded(
-            child: _KpiTile(
-                icon: Icons.cancel_rounded,
-                label: 'Cancelled'.tr(context),
-                value: '${kpis.cancelled ?? 0}',
-                color: AppColors.error)),
-        const SizedBox(width: 8),
-        Expanded(
-            child: _KpiTile(
-                icon: Icons.swap_horiz_rounded,
-                label: 'Refunded'.tr(context),
-                value: '${kpis.refunded ?? 0}',
-                color: AppColors.warning)),
       ]),
-      if (kpis.totalCommission != null) ...[
+
+      // Status breakdown
+      if (kpis.byStatus.isNotEmpty) ...[
+        const SizedBox(height: 14),
+        _SectionTitle(text: 'By status'.tr(context)),
         const SizedBox(height: 8),
-        Row(children: [
-          Expanded(
-              child: _KpiTile(
-                  icon: Icons.percent_rounded,
-                  label: 'Commission'.tr(context),
-                  value: fmt(kpis.totalCommission!),
-                  color: AppColors.gold)),
-          const SizedBox(width: 8),
-          Expanded(
-              child: _KpiTile(
-                  icon: Icons.account_balance_wallet_rounded,
-                  label: 'Net'.tr(context),
-                  value: fmt(kpis.totalNet ?? 0),
-                  color: AppColors.navyDeep)),
-        ]),
+        _StatusBreakdown(buckets: kpis.byStatus, fmt: _fmt),
+      ],
+
+      // Monthly trend
+      if (kpis.trend.isNotEmpty) ...[
+        const SizedBox(height: 14),
+        _SectionTitle(text: 'Monthly trend'.tr(context)),
+        const SizedBox(height: 8),
+        _TrendList(points: kpis.trend, fmt: _fmt),
       ],
     ]);
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String text;
+  const _SectionTitle({required this.text});
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    return Row(children: [
+      Container(
+        width: 3,
+        height: 14,
+        decoration: BoxDecoration(
+            color: AppColors.teal,
+            borderRadius: BorderRadius.circular(2)),
+      ),
+      const SizedBox(width: 8),
+      Text(text,
+          style: TextStyle(
+            fontFamily: 'Cairo',
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: c.textPrimary,
+          )),
+    ]);
+  }
+}
+
+class _StatusBreakdown extends StatelessWidget {
+  final List<TicketStatusBucket> buckets;
+  final String Function(double) fmt;
+  const _StatusBreakdown({required this.buckets, required this.fmt});
+
+  Color _colorFor(String status) {
+    switch (status) {
+      case 'confirmed':
+      case 'issued':
+        return AppColors.success;
+      case 'void':
+      case 'cancelled':
+        return AppColors.error;
+      case 'refunded':
+        return AppColors.warning;
+      case 'exchanged':
+        return AppColors.teal;
+      default:
+        return AppColors.navyMid;
+    }
+  }
+
+  String _labelFor(BuildContext context, String status) {
+    final key = 'ticket_status.$status';
+    final translated = key.tr(context);
+    return translated == key ? status : translated;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    final total = buckets.fold<int>(0, (sum, b) => sum + b.tickets);
+    return Column(
+      children: buckets.map((b) {
+        final pct = total == 0 ? 0.0 : (b.tickets / total);
+        final color = _colorFor(b.status);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: c.bgCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.g300.withOpacity(0.6)),
+            ),
+            child: Column(children: [
+              Row(children: [
+                Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                        color: color, shape: BoxShape.circle)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(_labelFor(context, b.status),
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: c.textPrimary,
+                      )),
+                ),
+                Text('${b.tickets}',
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                    )),
+                const SizedBox(width: 6),
+                Text('· ${fmt(b.grossAmount)}',
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 11,
+                      color: c.textMuted,
+                    )),
+              ]),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: LinearProgressIndicator(
+                  value: pct,
+                  minHeight: 5,
+                  backgroundColor: AppColors.g100,
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                ),
+              ),
+            ]),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _TrendList extends StatelessWidget {
+  final List<TicketTrendPoint> points;
+  final String Function(double) fmt;
+  const _TrendList({required this.points, required this.fmt});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors;
+    final maxAmount =
+        points.fold<double>(0, (m, p) => p.grossAmount > m ? p.grossAmount : m);
+    return Column(
+      children: points.map((p) {
+        final pct = maxAmount == 0 ? 0.0 : (p.grossAmount / maxAmount);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: c.bgCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.g300.withOpacity(0.6)),
+            ),
+            child: Column(children: [
+              Row(children: [
+                const Icon(Icons.calendar_month_rounded,
+                    size: 14, color: AppColors.navyMid),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(p.month,
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: c.textPrimary,
+                      )),
+                ),
+                Text('${p.tickets}',
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: c.textMuted,
+                    )),
+                const SizedBox(width: 6),
+                Text('· ${fmt(p.grossAmount)}',
+                    style: const TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.navyMid,
+                    )),
+              ]),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: LinearProgressIndicator(
+                  value: pct,
+                  minHeight: 5,
+                  backgroundColor: AppColors.g100,
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(AppColors.teal),
+                ),
+              ),
+            ]),
+          ),
+        );
+      }).toList(),
+    );
   }
 }
 
@@ -435,28 +631,24 @@ class TicketSaleCard extends StatelessWidget {
 
   Color _statusColor() {
     switch (item.status) {
+      case 'void':
       case 'cancelled':
         return AppColors.error;
       case 'refunded':
         return AppColors.warning;
       case 'exchanged':
         return AppColors.navyMid;
+      case 'confirmed':
+      case 'issued':
       default:
         return AppColors.success;
     }
   }
 
   String _statusLabel(BuildContext context) {
-    switch (item.status) {
-      case 'cancelled':
-        return 'Cancelled'.tr(context);
-      case 'refunded':
-        return 'Refunded'.tr(context);
-      case 'exchanged':
-        return 'Exchanged'.tr(context);
-      default:
-        return 'Issued'.tr(context);
-    }
+    final key = 'ticket_status.${item.status}';
+    final translated = key.tr(context);
+    return translated == key ? item.status : translated;
   }
 
   @override
@@ -543,52 +735,74 @@ class TicketSaleCard extends StatelessWidget {
               const SizedBox(height: 4),
               StatusBadge(
                 text: _statusLabel(context),
-                type: item.status == 'cancelled'
+                type: (item.status == 'void' || item.status == 'cancelled')
                     ? 'rejected'
-                    : item.status == 'issued'
+                    : (item.status == 'issued' || item.status == 'confirmed')
                         ? 'approved'
                         : 'pending',
                 dot: true,
               ),
             ]),
           ]),
-          if ((item.routeFrom?.isNotEmpty ?? false) ||
-              (item.routeTo?.isNotEmpty ?? false)) ...[
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: c.bg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(children: [
-                Text(item.routeFrom ?? '-',
-                    style: const TextStyle(
-                        fontFamily: 'Cairo', fontWeight: FontWeight.w700)),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 6),
-                  child: Icon(Icons.arrow_forward_rounded,
-                      size: 14, color: AppColors.g500),
-                ),
-                Text(item.routeTo ?? '-',
-                    style: const TextStyle(
-                        fontFamily: 'Cairo', fontWeight: FontWeight.w700)),
-                const Spacer(),
-                if (item.travelDate?.isNotEmpty ?? false) ...[
-                  const Icon(Icons.event_rounded,
-                      size: 14, color: AppColors.g500),
-                  const SizedBox(width: 4),
-                  Text(item.travelDate!,
-                      style: TextStyle(
-                          fontFamily: 'Cairo',
-                          fontSize: 11,
-                          color: c.textMuted)),
-                ]
-              ]),
+          // ── Detail strip — booking date / invoice / branch ──
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: c.bg,
+              borderRadius: BorderRadius.circular(10),
             ),
-          ],
+            child: Wrap(spacing: 14, runSpacing: 4, children: [
+              if (item.bookingDate?.isNotEmpty ?? false)
+                _miniInfo(
+                    icon: Icons.event_rounded,
+                    label: 'Booking date'.tr(context),
+                    value: item.bookingDate!),
+              if (item.issueDate?.isNotEmpty ?? false)
+                _miniInfo(
+                    icon: Icons.receipt_rounded,
+                    label: 'Issue date'.tr(context),
+                    value: item.issueDate!),
+              if (item.invoiceNo?.isNotEmpty ?? false)
+                _miniInfo(
+                    icon: Icons.tag_rounded,
+                    label: 'Invoice'.tr(context),
+                    value: item.invoiceNo!),
+              if (item.branchName?.isNotEmpty ?? false)
+                _miniInfo(
+                    icon: Icons.store_rounded,
+                    label: 'Branch'.tr(context),
+                    value: item.branchName!),
+              if (item.issuedByName?.isNotEmpty ?? false)
+                _miniInfo(
+                    icon: Icons.person_rounded,
+                    label: 'Issued by'.tr(context),
+                    value: item.issuedByName!),
+            ]),
+          ),
         ]),
       ),
     );
+  }
+
+  Widget _miniInfo(
+      {required IconData icon, required String label, required String value}) {
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Icon(icon, size: 12, color: AppColors.g500),
+      const SizedBox(width: 4),
+      Text('$label: ',
+          style: const TextStyle(
+            fontFamily: 'Cairo',
+            fontSize: 10.5,
+            color: AppColors.g500,
+          )),
+      Text(value,
+          style: const TextStyle(
+            fontFamily: 'Cairo',
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            color: AppColors.navyMid,
+          )),
+    ]);
   }
 }

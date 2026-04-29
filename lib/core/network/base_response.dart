@@ -74,7 +74,28 @@ class BaseResponse<T> {
     Map<String, dynamic> json,
     T Function(Object? json)? fromJsonT,
   ) {
-    final ok = json['ok'] as bool;
+    // Accept both `ok` (legacy contract) and `status` (Backend API Requirements
+    // doc). Some endpoints may also omit it entirely and rely on `code` ranges.
+    bool ok;
+    final rawOk = json['ok'];
+    final rawStatus = json['status'];
+    if (rawOk is bool) {
+      ok = rawOk;
+    } else if (rawStatus is bool) {
+      ok = rawStatus;
+    } else if (rawStatus is String) {
+      ok = rawStatus.toLowerCase() == 'true' ||
+          rawStatus.toLowerCase() == 'success';
+    } else {
+      // Fallback: treat HTTP-like 2xx code as success.
+      final code = json['code'];
+      if (code is int) {
+        ok = code >= 200 && code < 300;
+      } else {
+        ok = !json.containsKey('error') && !json.containsKey('errors');
+      }
+    }
+
     final message = json['message'] as String? ?? '';
     final traceId = json['trace_id'] as String? ?? '';
 
@@ -90,14 +111,34 @@ class BaseResponse<T> {
       );
     } else {
       // ── Error envelope ──
+      // `code` may arrive as a string error code (e.g. "VALIDATION_FAILED")
+      // OR as an int HTTP status (e.g. 422). Prefer the string form when
+      // present (`error_code`), fall back to stringifying `code`.
+      String? codeStr;
+      final rawCode = json['code'];
+      final rawErrCode = json['error_code'];
+      if (rawErrCode is String && rawErrCode.isNotEmpty) {
+        codeStr = rawErrCode;
+      } else if (rawCode is String) {
+        codeStr = rawCode;
+      } else if (rawCode is int) {
+        codeStr = rawCode.toString();
+      }
+
+      // `details` may live under `details` or `errors` (validation maps).
+      Map<String, dynamic>? details;
+      if (json['details'] is Map) {
+        details = Map<String, dynamic>.from(json['details'] as Map);
+      } else if (json['errors'] is Map) {
+        details = {'errors': Map<String, dynamic>.from(json['errors'] as Map)};
+      }
+
       return BaseResponse<T>(
         ok: false,
         message: message,
         traceId: traceId,
-        code: json['code'] as String?,
-        details: json['details'] is Map
-            ? Map<String, dynamic>.from(json['details'] as Map)
-            : null,
+        code: codeStr,
+        details: details,
       );
     }
   }
