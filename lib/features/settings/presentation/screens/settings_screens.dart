@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/localization/app_localizations.dart';
@@ -24,6 +26,7 @@ class AdminSettingsScreen extends ConsumerWidget {
     final c = context.appColors;
     final themeMode = ref.watch(themeModeProvider);
     final localeMode = ref.watch(localeModeProvider);
+    final baseUrl = appConfigInstance?.baseUrl ?? AppConfig.devBaseUrl;
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -85,6 +88,17 @@ class AdminSettingsScreen extends ConsumerWidget {
             ]),
             const SizedBox(height: 20),
 
+            // ── Website Section ────────────────────────────────
+            _SectionHeader(icon: Icons.public, title: 'Website'.tr(context)),
+            _OptionCard(children: [
+              _SettingsTile(icon: 'URL', label: 'Base URL'.tr(context),
+                desc: baseUrl,
+                onTap: () => _openBaseUrl(context, baseUrl),
+                trailing: Icon(Icons.open_in_new, color: c.gray400, size: 18),
+                isLast: true),
+            ]),
+            const SizedBox(height: 20),
+
             // ── System Section ─────────────────────────────────
             _SectionHeader(icon: Icons.info_outline, title: 'System section'.tr(context)),
             _OptionCard(children: [
@@ -97,6 +111,27 @@ class AdminSettingsScreen extends ConsumerWidget {
         )),
       ]),
     );
+  }
+
+  Future<void> _openBaseUrl(BuildContext context, String baseUrl) async {
+    final uri = Uri.tryParse(baseUrl);
+    if (uri == null || !uri.hasScheme) {
+      _showOpenUrlError(context);
+      return;
+    }
+
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication)
+        .catchError((_) => false);
+    if (!opened && context.mounted) {
+      _showOpenUrlError(context);
+    }
+  }
+
+  void _showOpenUrlError(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Could not open website'.tr(context),
+        style: const TextStyle(fontFamily: 'Cairo')),
+      backgroundColor: AppColors.error));
   }
 }
 
@@ -219,7 +254,7 @@ class _SettingsTile extends StatelessWidget {
               fontSize: 14, fontWeight: FontWeight.w600,
               color: danger ? AppColors.error : c.textPrimary)),
             if (desc != null) Text(desc!, style: TextStyle(fontFamily: 'Cairo',
-              fontSize: 11, color: c.textMuted)),
+              fontSize: 11, color: c.textMuted), maxLines: 1, overflow: TextOverflow.ellipsis),
           ])),
           // END: سهم التنقل
           trailing ?? Icon(

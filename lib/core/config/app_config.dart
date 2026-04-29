@@ -7,6 +7,8 @@ enum AppFlavor { dev, staging, prod }
 AppConfig? appConfigInstance;
 
 class AppConfig {
+  static const String devBaseUrl = 'http://172.16.0.66:8000';
+  static const String prodFallbackBaseUrl = 'https://account.alzajeltravel.com';
   final AppFlavor flavor;
   final String envName;
   final bool enableDebugLogs;
@@ -14,7 +16,8 @@ class AppConfig {
   final int connectTimeoutMs;
   final int receiveTimeoutMs;
 
-  /// For [AppFlavor.prod] this is filled by [loadRemoteConfig]; empty means invalid.
+  /// For [AppFlavor.prod], [loadRemoteConfig] replaces this with Remote Config
+  /// when available; otherwise it stays on the production fallback URL.
   String baseUrl;
 
   AppConfig({
@@ -33,7 +36,7 @@ class AppConfig {
       case 'prod':
         return AppConfig(
           flavor: AppFlavor.prod,
-          baseUrl: '',
+          baseUrl: prodFallbackBaseUrl,
           envName: 'Production',
           enableDebugLogs: false,
           showEnvBanner: false,
@@ -43,7 +46,7 @@ class AppConfig {
       case 'staging':
         return AppConfig(
           flavor: AppFlavor.staging,
-          baseUrl: 'https://account.alzajeltravel.com',
+          baseUrl: prodFallbackBaseUrl,
           envName: 'Staging',
           enableDebugLogs: true,
           showEnvBanner: true,
@@ -88,25 +91,23 @@ class AppConfig {
         ),
       );
       // Matches Console default; also used if fetch fails before activate.
-      await remoteConfig.setDefaults(
-        {_remoteKeyBaseUrl: 'https://account.alzajeltravel.com'},
-      );
+      await remoteConfig.setDefaults({_remoteKeyBaseUrl: prodFallbackBaseUrl});
       try {
         await remoteConfig.fetchAndActivate();
       } catch (_) {
         // Still read in-app / last activated values via getString.
       }
       final raw = remoteConfig.getString(_remoteKeyBaseUrl);
-      baseUrl = _normalizeRootBaseUrl(raw);
+      baseUrl = _normalizeRootBaseUrl(raw, fallback: prodFallbackBaseUrl);
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[AppConfig] loadRemoteConfig error: $e');
       }
       try {
         final raw = FirebaseRemoteConfig.instance.getString(_remoteKeyBaseUrl);
-        baseUrl = _normalizeRootBaseUrl(raw);
+        baseUrl = _normalizeRootBaseUrl(raw, fallback: prodFallbackBaseUrl);
       } catch (_) {
-        baseUrl = '';
+        baseUrl = prodFallbackBaseUrl;
       }
     }
   }
@@ -114,9 +115,9 @@ class AppConfig {
   static const String _remoteKeyBaseUrl = 'base_url';
 
   /// جذر الخادم فقط (بدون `/api/v1`). مسارات [ApiConstants] تتضمّن `/api/v1/...`.
-  static String _normalizeRootBaseUrl(String raw) {
+  static String _normalizeRootBaseUrl(String raw, {required String fallback}) {
     var s = raw.trim();
-    if (s.isEmpty) return '';
+    if (s.isEmpty) return fallback;
     s = s.replaceAll(RegExp(r'/+$'), '');
     if (!s.startsWith('http://') && !s.startsWith('https://')) {
       s = 'https://$s';
@@ -125,7 +126,7 @@ class AppConfig {
       s = s.substring(0, s.length - '/api/v1'.length);
       s = s.replaceAll(RegExp(r'/+$'), '');
     }
-    return s;
+    return s.isEmpty ? fallback : s;
   }
 
   bool get isProduction => flavor == AppFlavor.prod;
