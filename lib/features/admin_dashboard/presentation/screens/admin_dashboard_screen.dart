@@ -57,6 +57,10 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
     {'l': 'Expenses'.tr(context),        'i':'💰', 'r':'/expenses',      'c': AppColors.gold},
     {'l': 'Track Projects'.tr(context), 'i':'🔄', 'r':'/project-follow-up','c': AppColors.teal},
     {'l': 'Expense Approval'.tr(context),'i':'💳', 'r':'/expense-follow-up','c': AppColors.success},
+    {'l': 'Payroll'.tr(context),         'i':'💼', 'r':'/payroll',        'c': AppColors.navyMid},
+    {'l': 'Allowances'.tr(context),      'i':'➕', 'r':'/allowances',     'c': AppColors.success},
+    {'l': 'Deductions'.tr(context),      'i':'📉', 'r':'/deductions',     'c': AppColors.error},
+    {'l': 'Ticket Sales'.tr(context),    'i':'🎫', 'r':'/ticket-sales',   'c': AppColors.teal},
   ];
 
   @override

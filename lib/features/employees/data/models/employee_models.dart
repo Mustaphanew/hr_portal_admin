@@ -186,7 +186,7 @@ class AdminEmployee extends Equatable {
   factory AdminEmployee.fromJson(Map<String, dynamic> json) {
     return AdminEmployee(
       id: json['id'] as int,
-      code: json['code'] as String,
+      code: (json['employee_number'] ?? json['code'] ?? '') as String,
       name: json['name'] as String,
       nameEn: json['name_en'] as String?,
       jobTitle: json['job_title'] as String?,
@@ -194,7 +194,7 @@ class AdminEmployee extends Equatable {
           ? EmployeeDepartment.fromJson(
               json['department'] as Map<String, dynamic>)
           : null,
-      mobile: json['mobile'] as String?,
+      mobile: json['mobile']?.toString(),
       email: json['email'] as String?,
       employmentStatus: (json['employment_status'] ?? json['status'] ?? '') as String,
       attendanceStatus: json['attendance_status'] as String?,
@@ -290,7 +290,7 @@ class EmployeeDetail extends AdminEmployee {
   factory EmployeeDetail.fromJson(Map<String, dynamic> json) {
     return EmployeeDetail(
       id: json['id'] as int,
-      code: json['code'] as String,
+      code: (json['employee_number'] ?? json['code'] ?? '') as String,
       name: json['name'] as String,
       nameEn: json['name_en'] as String?,
       jobTitle: json['job_title'] as String?,
@@ -298,7 +298,7 @@ class EmployeeDetail extends AdminEmployee {
           ? EmployeeDepartment.fromJson(
               json['department'] as Map<String, dynamic>)
           : null,
-      mobile: json['mobile'] as String?,
+      mobile: json['mobile']?.toString(),
       email: json['email'] as String?,
       employmentStatus: (json['employment_status'] ?? json['status'] ?? '') as String,
       attendanceStatus: json['attendance_status'] as String?,
@@ -306,15 +306,15 @@ class EmployeeDetail extends AdminEmployee {
       hireDate: json['hire_date'] as String?,
       pendingRequests: (json['pending_requests'] ?? 0) as int,
       activeTasks: (json['active_tasks'] ?? 0) as int,
-      phone: json['phone'] as String?,
+      phone: json['phone']?.toString(),
       address: json['address'] as String?,
       photoUrl: json['photo_url'] as String?,
       gender: json['gender'] as String?,
       nationality: json['nationality'] as String?,
       dateOfBirth: json['date_of_birth'] as String?,
-      idNumber: json['id_number'] as String?,
+      idNumber: json['id_number']?.toString(),
       emergencyContactName: json['emergency_contact_name'] as String?,
-      emergencyContactPhone: json['emergency_contact_phone'] as String?,
+      emergencyContactPhone: json['emergency_contact_phone']?.toString(),
       manager: json['manager'] is Map
           ? (json['manager'] as Map<String, dynamic>)['name'] as String?
           : json['manager'] as String?,

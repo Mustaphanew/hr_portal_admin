@@ -16,11 +16,13 @@ import '../../features/documents/data/repositories/notification_repository.dart'
 import '../../features/employees/data/repositories/employee_repository.dart';
 import '../../features/expenses/data/repositories/expense_repository.dart';
 import '../../features/follow_up/data/repositories/follow_up_repository.dart';
+import '../../features/payroll/data/repositories/payroll_repository.dart';
 import '../../features/projects/data/repositories/project_repository.dart';
 import '../../features/reports/data/repositories/report_repository.dart';
 import '../../features/requests_management/data/repositories/request_repository.dart';
 import '../../features/settings/data/repositories/profile_repository.dart';
 import '../../features/tasks/data/repositories/task_repository.dart';
+import '../../features/ticket_sales/data/repositories/ticket_sales_repository.dart';
 
 // ── Core ──
 final sessionManagerProvider = Provider<SessionManager>((_) => sl<SessionManager>());
@@ -43,3 +45,5 @@ final notificationRepositoryProvider = Provider<NotificationRepository>((_) => s
 final taskRepositoryProvider = Provider<TaskRepository>((_) => sl<TaskRepository>());
 final followUpRepositoryProvider = Provider<FollowUpRepository>((_) => sl<FollowUpRepository>());
 final documentRepositoryProvider = Provider<DocumentRepository>((_) => sl<DocumentRepository>());
+final payrollRepositoryProvider = Provider<PayrollRepository>((_) => sl<PayrollRepository>());
+final ticketSalesRepositoryProvider = Provider<TicketSalesRepository>((_) => sl<TicketSalesRepository>());

@@ -53,16 +53,34 @@ final paginatedManagerLeavesProvider = AsyncNotifierProvider.autoDispose<
 class PaginatedRequestsNotifier extends PaginatedNotifier<EmployeeRequest> {
   @override
   Future<PaginatedState<EmployeeRequest>> build() async {
-    ref.watch(managerRequestsStatusFilter);
+    ref.watch(employeeRequestsFiltersProvider);
+    ref.watch(managerRequestsStatusFilter); // legacy bridge
+    ref.watch(selectedBranchProvider);
     return super.build();
   }
 
   @override
   FetchPage<EmployeeRequest> get fetchPage => (page, perPage) async {
-    final status = ref.read(managerRequestsStatusFilter);
-    final response = await ref.read(requestRepositoryProvider).getManagerRequests(
-      status: status, perPage: perPage, page: page,
-    );
+    final f = ref.read(employeeRequestsFiltersProvider);
+    final legacyStatus = ref.read(managerRequestsStatusFilter);
+    final sel = ref.read(selectedBranchProvider);
+    final response =
+        await ref.read(requestRepositoryProvider).getAdminEmployeeRequests(
+              companyId: sel.companyId,
+              branchId: sel.branchId,
+              departmentId: f.departmentId,
+              employeeId: f.employeeId,
+              status: f.status ?? legacyStatus,
+              requestType: f.requestType,
+              requestTypeId: f.requestTypeId,
+              dateFrom: f.dateFrom,
+              dateTo: f.dateTo,
+              amountMin: f.amountMin,
+              amountMax: f.amountMax,
+              search: (f.search?.isEmpty ?? true) ? null : f.search,
+              perPage: perPage,
+              page: page,
+            );
     final data = response.data!;
     return PaginatedResponse(items: data.requests, pagination: data.pagination);
   };
@@ -83,18 +101,33 @@ class PaginatedTasksNotifier extends PaginatedNotifier<AdminTaskItem> {
 
   @override
   Future<PaginatedState<AdminTaskItem>> build() async {
-    ref.watch(tasksStatusFilter);
-    ref.watch(tasksPriorityFilter);
+    ref.watch(tasksFiltersProvider);
+    ref.watch(tasksStatusFilter); // legacy bridge
+    ref.watch(tasksPriorityFilter); // legacy bridge
+    ref.watch(selectedBranchProvider);
     return super.build();
   }
 
   @override
   FetchPage<AdminTaskItem> get fetchPage => (page, perPage) async {
-    final status = ref.read(tasksStatusFilter);
-    final priority = ref.read(tasksPriorityFilter);
+    final f = ref.read(tasksFiltersProvider);
+    final legacyStatus = ref.read(tasksStatusFilter);
+    final legacyPriority = ref.read(tasksPriorityFilter);
+    final sel = ref.read(selectedBranchProvider);
     final data = await ref.read(taskRepositoryProvider).getTasks(
-      status: status, priority: priority, perPage: perPage, page: page,
-    );
+          companyId: sel.companyId,
+          branchId: sel.branchId,
+          status: f.status ?? legacyStatus,
+          priority: f.priority ?? legacyPriority,
+          type: f.type,
+          projectId: f.projectId,
+          assigneeEmployeeId: f.assigneeEmployeeId,
+          dueFrom: f.dueFrom,
+          dueTo: f.dueTo,
+          search: (f.search?.isEmpty ?? true) ? null : f.search,
+          perPage: perPage,
+          page: page,
+        );
     if (page == 1) _stats = data.stats;
     return PaginatedResponse(items: data.tasks, pagination: data.pagination);
   };

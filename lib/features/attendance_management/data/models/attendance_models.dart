@@ -285,7 +285,7 @@ class AdminAttendanceData extends Equatable {
 
   factory AdminAttendanceData.fromJson(Map<String, dynamic> json) {
     return AdminAttendanceData(
-      date: json['date'] as String,
+      date: (json['date'] as String?) ?? '',
       summary: AdminAttendanceSummary.fromJson(
           json['summary'] as Map<String, dynamic>),
       records: (json['records'] as List<dynamic>)

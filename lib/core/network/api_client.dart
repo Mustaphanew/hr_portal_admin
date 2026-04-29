@@ -108,6 +108,19 @@ class ApiClient {
     return response;
   }
 
+  /// HTTP PATCH that returns parsed [BaseResponse<T>].
+  Future<BaseResponse<T>> patch<T>(
+    String path, {
+    T Function(Object? json)? fromJson,
+    Map<String, dynamic>? data,
+  }) async {
+    final response = await _execute<T>(
+      () => _dio.patch(path, data: data),
+      fromJson: fromJson,
+    );
+    return response;
+  }
+
   /// HTTP DELETE that returns parsed [BaseResponse<T>].
   Future<BaseResponse<T>> delete<T>(
     String path, {

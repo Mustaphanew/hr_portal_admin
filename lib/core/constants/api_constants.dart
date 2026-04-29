@@ -27,6 +27,13 @@ class ApiConstants {
   static const String logoutAll = '$_v1/auth/logout-all';
   static const String changePassword = '$_v1/change-password';
 
+  // ── A2. Admin Auth (Postman canonical) ──────────────────────
+  static const String adminLogin = '$_v1/admin/auth/login';
+  static const String adminLogout = '$_v1/admin/auth/logout';
+  static const String adminLogoutAll = '$_v1/admin/auth/logout-all';
+  static const String adminMe = '$_v1/admin/auth/me';
+  static const String adminCompanies = '$_v1/admin/companies';
+
   // ── B. Profile ───────────────────────────────────────────────
   static const String profile = '$_v1/profile';
 
@@ -50,8 +57,19 @@ class ApiConstants {
 
   // ── F2. Admin Leave Requests (new) ──────────────────────────
   static const String adminLeaveRequests = '$_v1/admin/leave-requests';
+  static const String adminLeaveRequestsSummary = '$_v1/admin/leave-requests/summary';
   static String adminLeaveRequestDetail(int id) => '$_v1/admin/leave-requests/$id';
   static String adminLeaveRequestDecide(int id) => '$_v1/admin/leave-requests/$id/decide';
+  static String adminLeaveRequestApprove(int id) => '$_v1/admin/leave-requests/$id/approve';
+  static String adminLeaveRequestReject(int id) => '$_v1/admin/leave-requests/$id/reject';
+
+  // ── F3. Admin Employee Requests (Postman 01) ────────────────
+  static const String adminEmployeeRequests = '$_v1/admin/employee-requests';
+  static const String adminEmployeeRequestsSummary = '$_v1/admin/employee-requests/summary';
+  static String adminEmployeeRequestDetail(int id) => '$_v1/admin/employee-requests/$id';
+  static String adminEmployeeRequestDecide(int id) => '$_v1/admin/employee-requests/$id/decide';
+  static String adminEmployeeRequestApprove(int id) => '$_v1/admin/employee-requests/$id/approve';
+  static String adminEmployeeRequestReject(int id) => '$_v1/admin/employee-requests/$id/reject';
 
   // ── G. Attendance (Employee) ─────────────────────────────────
   static const String attendanceHistory = '$_v1/attendance/history';
@@ -73,6 +91,7 @@ class ApiConstants {
   // ── K. Employees (Admin) ─────────────────────────────────────
   static const String adminEmployees = '$_v1/admin/employees';
   static String adminEmployeeDetail(int id) => '$_v1/admin/employees/$id';
+  static String adminEmployeeStatus(int id) => '$_v1/admin/employees/$id/status';
 
   // ── L. Departments (Admin) ───────────────────────────────────
   static const String adminDepartments = '$_v1/admin/departments';
@@ -109,6 +128,15 @@ class ApiConstants {
   // ── R. Tasks (Admin) ───────────────────────────────────────
   static const String adminTasks = '$_v1/admin/tasks';
   static String adminTaskDetail(int id) => '$_v1/admin/tasks/$id';
+  static String adminTaskTimeLogs(int taskId) => '$_v1/admin/tasks/$taskId/time-logs';
+  static String adminTaskTimeLogDetail(int taskId, int timeLogId) =>
+      '$_v1/admin/tasks/$taskId/time-logs/$timeLogId';
+  static String adminTaskComments(int taskId) => '$_v1/admin/tasks/$taskId/comments';
+  static String adminTaskCommentDetail(int taskId, int commentId) =>
+      '$_v1/admin/tasks/$taskId/comments/$commentId';
+  static String adminTaskAttachments(int taskId) => '$_v1/admin/tasks/$taskId/attachments';
+  static String adminTaskAttachmentDetail(int taskId, int attachmentId) =>
+      '$_v1/admin/tasks/$taskId/attachments/$attachmentId';
 
   // ── S. Follow-ups (Admin) ──────────────────────────────────
   static const String adminFollowUps = '$_v1/admin/follow-ups';
@@ -119,4 +147,21 @@ class ApiConstants {
   static const String adminDocuments = '$_v1/admin/documents';
   static const String adminDocumentCategories = '$_v1/admin/documents/categories';
   static String adminDocumentDetail(int id) => '$_v1/admin/documents/$id';
+
+  // ── U. Payroll (Admin — Postman 03) ────────────────────────
+  static const String adminPayroll = '$_v1/admin/payroll';
+  static String adminPayrollItem(int id) => '$_v1/admin/payroll/$id';
+
+  // ── V. Allowances (Admin — Postman 04) ─────────────────────
+  static const String adminAllowances = '$_v1/admin/allowances';
+  static String adminAllowanceDetail(int id) => '$_v1/admin/allowances/$id';
+
+  // ── W. Deductions (Admin — Postman 04) ─────────────────────
+  static const String adminDeductions = '$_v1/admin/deductions';
+  static String adminDeductionDetail(int id) => '$_v1/admin/deductions/$id';
+
+  // ── X. Ticket Sales Reports (Admin — Postman 07) ───────────
+  static const String adminTicketSalesReports = '$_v1/admin/ticket-sales-reports';
+  static const String adminTicketSalesReportsKpis =
+      '$_v1/admin/ticket-sales-reports/kpis';
 }

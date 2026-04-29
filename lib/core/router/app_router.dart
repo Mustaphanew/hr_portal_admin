@@ -44,6 +44,14 @@ import '../../features/projects/presentation/screens/projects_screens.dart';
 // ── Expenses ───────────────────────────────────────────────
 import '../../features/expenses/presentation/screens/expenses_screens.dart';
 
+// ── Payroll / Allowances / Deductions ──────────────────────
+import '../../features/payroll/presentation/screens/allowances_screen.dart';
+import '../../features/payroll/presentation/screens/deductions_screen.dart';
+import '../../features/payroll/presentation/screens/payroll_screen.dart';
+
+// ── Ticket Sales Reports ───────────────────────────────────
+import '../../features/ticket_sales/presentation/screens/ticket_sales_screen.dart';
+
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 int _extractId(GoRouterState state, [String param = 'id']) {
@@ -208,5 +216,13 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: '/expense-categories', builder: (_, _) => const ExpenseCategoriesScreen()),
     GoRoute(path: '/expense-analytics', builder: (_, _) => const ExpenseAnalyticsScreen()),
     GoRoute(path: '/expense-follow-up', builder: (_, _) => const ExpenseFollowUpScreen()),
+
+    // ── Payroll ───────────────────────────────────────────
+    GoRoute(path: '/payroll', builder: (_, _) => const PayrollScreen()),
+    GoRoute(path: '/allowances', builder: (_, _) => const AllowancesScreen()),
+    GoRoute(path: '/deductions', builder: (_, _) => const DeductionsScreen()),
+
+    // ── Ticket Sales Reports ──────────────────────────────
+    GoRoute(path: '/ticket-sales', builder: (_, _) => const TicketSalesScreen()),
   ],
 );

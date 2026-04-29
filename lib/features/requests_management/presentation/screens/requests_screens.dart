@@ -6,11 +6,11 @@ import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/providers/admin_providers.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/providers/paginated_providers.dart';
-import '../../../../core/providers/paginated_notifier.dart';
 import '../../../../core/widgets/paginated_list_view.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../../data/models/request_models.dart';
+import '../widgets/requests_filters_sheet.dart';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -67,23 +67,35 @@ class RequestsManagementScreen extends ConsumerStatefulWidget {
 }
 
 class _RequestsMgmtState extends ConsumerState<RequestsManagementScreen> {
-  int _tab = 0; // 0=pending (default)
   bool _refreshing = false;
 
-  // pending, all, processing, approved, rejected, completed, cancelled
-  static const _statusMap = ['pending', null, 'processing', 'approved', 'rejected', 'completed', 'cancelled'];
+  // tab → status mapping (null = all)
+  static const _statusMap = <String?>[
+    'pending', null, 'processing', 'approved', 'rejected', 'completed', 'cancelled',
+  ];
 
   Future<void> _refresh() async {
     setState(() => _refreshing = true);
     ref.invalidate(paginatedRequestsProvider);
-    try { await ref.read(paginatedRequestsProvider.future); } catch (_) {}
+    ref.invalidate(employeeRequestsSummaryProvider);
+    try {
+      await ref.read(paginatedRequestsProvider.future);
+    } catch (_) {}
     if (mounted) setState(() => _refreshing = false);
+  }
+
+  int _selectedTabIndex(EmployeeRequestsFilters f) {
+    final idx = _statusMap.indexOf(f.status);
+    return idx < 0 ? 1 : idx; // unknown → All
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
     final asyncRequests = ref.watch(paginatedRequestsProvider);
+    final filters = ref.watch(employeeRequestsFiltersProvider);
+    final summary = ref.watch(employeeRequestsSummaryProvider);
+    final selectedTab = _selectedTabIndex(filters);
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -121,21 +133,32 @@ class _RequestsMgmtState extends ConsumerState<RequestsManagementScreen> {
                 onTap: _refreshing ? null : _refresh),
             ]),
             const SizedBox(height: 14),
-            // ── Filter pills (scrollable, modern) ──
-            asyncRequests.when(
-              data: (paginated) {
-                final all = paginated.items;
-                int cnt(String s) => all.where((r) => r.status == s).length;
-                return _buildFilterRow(context, [
-                  cnt('pending'), all.length, cnt('processing'), cnt('approved'),
-                  cnt('rejected'), cnt('completed'), cnt('cancelled'),
-                ]);
-              },
-              loading: () => _buildFilterRow(context, null),
-              error: (_, __) => _buildFilterRow(context, null),
+            // ── Filter pills (server-side counts via summary) ──
+            _buildFilterRow(
+              context,
+              summary.maybeWhen(
+                data: (s) => [
+                  s.pending,
+                  s.total,
+                  s.processing ?? 0,
+                  s.approved,
+                  s.rejected,
+                  s.completed ?? 0,
+                  s.cancelled ?? 0,
+                ],
+                orElse: () => null,
+              ),
+              selectedTab,
             ),
           ]),
         ),
+
+        // ── SEARCH + ADVANCED FILTERS BAR ───────────────
+        _buildSearchAndFilters(context, filters),
+
+        // ── ACTIVE FILTER CHIPS ─────────────────────────
+        if (filters.hasAnyAdvanced)
+          _buildActiveFilterChips(context, filters),
 
         // ── BODY ─────────────────────────────────────────────
         Expanded(child: asyncRequests.when(
@@ -151,18 +174,16 @@ class _RequestsMgmtState extends ConsumerState<RequestsManagementScreen> {
               label: Text('Retry'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 13))),
           ])),
           data: (paginated) {
-            final filtered = _statusMap[_tab] == null
-              ? paginated.items
-              : paginated.items.where((r) => r.status == _statusMap[_tab]).toList();
             return RefreshIndicator(
               onRefresh: () async {
                 ref.invalidate(paginatedRequestsProvider);
+                ref.invalidate(employeeRequestsSummaryProvider);
                 await ref.read(paginatedRequestsProvider.future);
               },
               child: PaginatedListView<EmployeeRequest>(
-                items: filtered,
+                items: paginated.items,
                 isLoadingMore: paginated.isLoadingMore,
-                hasMore: _tab == 1 ? paginated.hasMore : false,
+                hasMore: paginated.hasMore,
                 loadMoreError: paginated.loadMoreError,
                 onFetchMore: () => ref.read(paginatedRequestsProvider.notifier).fetchMore(),
                 emptyWidget: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -170,7 +191,7 @@ class _RequestsMgmtState extends ConsumerState<RequestsManagementScreen> {
                   const SizedBox(height: 12),
                   Text('No requests'.tr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 14, color: c.textMuted)),
                 ])),
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
                 itemBuilder: (context, r, i) => RequestCard(
                   id: '#${r.id}',
                   empName: r.employee?.name ?? '—',
@@ -189,10 +210,181 @@ class _RequestsMgmtState extends ConsumerState<RequestsManagementScreen> {
     );
   }
 
+  // ── Search + filters bar (under gradient header) ─────────────
+  Widget _buildSearchAndFilters(
+      BuildContext context, EmployeeRequestsFilters filters) {
+    final c = context.appColors;
+    final hasAdvanced = filters.hasAnyAdvanced;
+    return Container(
+      color: c.bgCard,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+      child: Row(children: [
+        Expanded(
+          child: TextField(
+            controller: TextEditingController(text: filters.search ?? '')
+              ..selection = TextSelection.collapsed(
+                  offset: (filters.search ?? '').length),
+            onSubmitted: (v) => ref
+                .read(employeeRequestsFiltersProvider.notifier)
+                .update((s) => s.copyWith(search: v.isEmpty ? null : v)),
+            style: const TextStyle(fontFamily: 'Cairo', fontSize: 13),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: 'Search by subject / description'.tr(context),
+              hintStyle: TextStyle(
+                  fontFamily: 'Cairo', fontSize: 12, color: c.textMuted),
+              prefixIcon: const Icon(Icons.search_rounded,
+                  size: 18, color: AppColors.g500),
+              suffixIcon: (filters.search?.isNotEmpty ?? false)
+                  ? IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 16),
+                      onPressed: () => ref
+                          .read(employeeRequestsFiltersProvider.notifier)
+                          .update((s) => s.copyWith(search: null)),
+                      splashRadius: 18,
+                    )
+                  : null,
+              filled: true,
+              fillColor: c.bg,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Tooltip(
+          message: 'More filters'.tr(context),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () async {
+              final newFilters = await showRequestsFiltersSheet(context,
+                  initial: filters);
+              if (newFilters != null) {
+                ref
+                    .read(employeeRequestsFiltersProvider.notifier)
+                    .state = newFilters;
+              }
+            },
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: hasAdvanced
+                    ? AppColors.tealLight.withOpacity(0.2)
+                    : c.bg,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                    color: hasAdvanced ? AppColors.teal : AppColors.g300),
+              ),
+              child: Icon(Icons.tune_rounded,
+                  size: 18,
+                  color: hasAdvanced ? AppColors.teal : AppColors.g500),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildActiveFilterChips(
+      BuildContext context, EmployeeRequestsFilters f) {
+    final c = context.appColors;
+    final chips = <Widget>[];
+    void add({required String label, required IconData icon, required VoidCallback onClear}) {
+      chips.add(Padding(
+        padding: const EdgeInsetsDirectional.only(end: 6),
+        child: _ChipPill(icon: icon, label: label, onClear: onClear),
+      ));
+    }
+
+    if (f.requestType != null) {
+      add(
+        label: _typeTr(context, f.requestType!),
+        icon: Icons.assignment_outlined,
+        onClear: () => ref
+            .read(employeeRequestsFiltersProvider.notifier)
+            .update((s) => s.copyWith(requestType: null)),
+      );
+    }
+    if (f.dateFrom != null || f.dateTo != null) {
+      final dr = '${f.dateFrom ?? '…'} → ${f.dateTo ?? '…'}';
+      add(
+        label: dr,
+        icon: Icons.event_rounded,
+        onClear: () => ref.read(employeeRequestsFiltersProvider.notifier)
+            .update((s) => s.copyWith(dateFrom: null, dateTo: null)),
+      );
+    }
+    if (f.amountMin != null || f.amountMax != null) {
+      final mn = f.amountMin?.toStringAsFixed(0) ?? '0';
+      final mx = f.amountMax?.toStringAsFixed(0) ?? '∞';
+      add(
+        label: '$mn — $mx',
+        icon: Icons.payments_rounded,
+        onClear: () => ref.read(employeeRequestsFiltersProvider.notifier)
+            .update((s) => s.copyWith(amountMin: null, amountMax: null)),
+      );
+    }
+    if (f.departmentId != null) {
+      add(
+        label: 'Dept #${f.departmentId}',
+        icon: Icons.apartment_rounded,
+        onClear: () => ref.read(employeeRequestsFiltersProvider.notifier)
+            .update((s) => s.copyWith(departmentId: null)),
+      );
+    }
+    if (f.employeeId != null) {
+      add(
+        label: 'Employee #${f.employeeId}',
+        icon: Icons.person_rounded,
+        onClear: () => ref.read(employeeRequestsFiltersProvider.notifier)
+            .update((s) => s.copyWith(employeeId: null)),
+      );
+    }
+    chips.add(GestureDetector(
+      onTap: () => ref.read(employeeRequestsFiltersProvider.notifier).state =
+          EmployeeRequestsFilters(status: f.status),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.errorSoft,
+          borderRadius: BorderRadius.circular(99),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.clear_all_rounded,
+              size: 13, color: AppColors.errorDark),
+          const SizedBox(width: 4),
+          Text('Clear all'.tr(context),
+              style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.errorDark)),
+        ]),
+      ),
+    ));
+
+    return Container(
+      color: c.bgCard,
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+      child: SizedBox(
+        height: 30,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: chips,
+        ),
+      ),
+    );
+  }
+
   static const _labels = ['Pending', 'All', 'Processing', 'Approved', 'Rejected', 'Completed', 'Cancelled'];
   static const _colors = [AppColors.warning, AppColors.goldLight, AppColors.navyBright, AppColors.tealLight, AppColors.coral, AppColors.success, AppColors.g400];
 
-  Widget _buildFilterRow(BuildContext context, List<int>? counts) {
+  Widget _buildFilterRow(BuildContext context, List<int>? counts, int selectedTab) {
     return SizedBox(
       height: 38,
       child: ListView.separated(
@@ -203,16 +395,18 @@ class _RequestsMgmtState extends ConsumerState<RequestsManagementScreen> {
         separatorBuilder: (_, _) => const SizedBox(width: 7),
         itemBuilder: (context, i) {
           final v = counts != null ? '${counts[i]}' : '…';
-          return _filterPill(v, _labels[i].tr(context), _colors[i], i);
+          return _filterPill(v, _labels[i].tr(context), _colors[i], i, selectedTab);
         },
       ),
     );
   }
 
-  Widget _filterPill(String count, String label, Color accentColor, int index) {
-    final selected = _tab == index;
+  Widget _filterPill(String count, String label, Color accentColor, int index, int selectedTab) {
+    final selected = selectedTab == index;
     return GestureDetector(
-      onTap: () => setState(() => _tab = index),
+      onTap: () => ref
+          .read(employeeRequestsFiltersProvider.notifier)
+          .update((s) => s.copyWith(status: _statusMap[index])),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
@@ -249,6 +443,56 @@ class _RequestsMgmtState extends ConsumerState<RequestsManagementScreen> {
             height: 1)),
         ]),
       ),
+    );
+  }
+}
+
+// ─── Active filter chip pill ─────────────────────────────────────────────
+class _ChipPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onClear;
+  const _ChipPill(
+      {required this.icon, required this.label, required this.onClear});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.only(left: 4, right: 10, top: 4, bottom: 4),
+      decoration: BoxDecoration(
+        color: AppColors.tealSoft,
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        GestureDetector(
+          onTap: onClear,
+          child: Container(
+            width: 18,
+            height: 18,
+            decoration: const BoxDecoration(
+              color: AppColors.teal,
+              shape: BoxShape.circle,
+            ),
+            child:
+                const Icon(Icons.close_rounded, size: 12, color: Colors.white),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Icon(icon, size: 13, color: AppColors.teal),
+        const SizedBox(width: 4),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 180),
+          child: Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: AppColors.teal),
+          ),
+        ),
+      ]),
     );
   }
 }
@@ -374,6 +618,7 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
         responseNotes: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
       );
       ref.invalidate(paginatedRequestsProvider);
+      ref.invalidate(employeeRequestsSummaryProvider);
       ref.invalidate(managerRequestDetailProvider(widget.requestId));
       if (mounted) setState(() { _decision = status; _processing = false; });
     } catch (e) {

@@ -16,11 +16,13 @@ import 'features/documents/data/repositories/notification_repository.dart';
 import 'features/employees/data/repositories/employee_repository.dart';
 import 'features/expenses/data/repositories/expense_repository.dart';
 import 'features/follow_up/data/repositories/follow_up_repository.dart';
+import 'features/payroll/data/repositories/payroll_repository.dart';
 import 'features/projects/data/repositories/project_repository.dart';
 import 'features/reports/data/repositories/report_repository.dart';
 import 'features/requests_management/data/repositories/request_repository.dart';
 import 'features/settings/data/repositories/profile_repository.dart';
 import 'features/tasks/data/repositories/task_repository.dart';
+import 'features/ticket_sales/data/repositories/ticket_sales_repository.dart';
 
 final sl = GetIt.instance;
 
@@ -88,5 +90,11 @@ Future<void> initDependencies() async {
   );
   sl.registerLazySingleton<DocumentRepository>(
     () => DocumentRepository(client: sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<PayrollRepository>(
+    () => PayrollRepository(client: sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<TicketSalesRepository>(
+    () => TicketSalesRepository(client: sl<ApiClient>()),
   );
 }

@@ -50,4 +50,23 @@ class EmployeeRepository {
     );
     return response.data!;
   }
+
+  /// Update the employment status of a specific employee
+  /// (e.g. `core_employee`, `trainee`, `terminated`).
+  ///
+  /// Backed by `PATCH /admin/employees/{id}/status` (Postman 03).
+  Future<EmployeeDetail> updateEmployeeStatus(
+    int id, {
+    required String employmentStatus,
+  }) async {
+    final response = await _client.patch<EmployeeDetail>(
+      ApiConstants.adminEmployeeStatus(id),
+      data: {
+        'employment_status': employmentStatus,
+      },
+      fromJson: (json) =>
+          EmployeeDetail.fromJson(json as Map<String, dynamic>),
+    );
+    return response.data!;
+  }
 }

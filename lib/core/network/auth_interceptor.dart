@@ -24,8 +24,27 @@ class AuthInterceptor extends Interceptor {
     final token = await _storage.getToken();
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
+    } else if (_isProtected(options.path)) {
+      // Calling a protected endpoint with no token typically means the splash
+      // tried to restore a session that doesn't exist (e.g. fresh install or
+      // cleared storage). Log it loudly so the cause is obvious.
+      AppLogger.w(
+        'No bearer token in storage while calling protected endpoint '
+        '${options.path}. The user may need to log in again.',
+        tag: 'Auth',
+      );
     }
     handler.next(options);
+  }
+
+  /// Whether the [path] requires authentication.
+  bool _isProtected(String path) {
+    // Public routes that explicitly do NOT need a bearer token.
+    const publicSuffixes = <String>[
+      '/auth/login',
+      '/admin/auth/login',
+    ];
+    return !publicSuffixes.any(path.endsWith);
   }
 
   @override

@@ -18,8 +18,10 @@ class ProfileDepartment extends Equatable {
 
   factory ProfileDepartment.fromJson(Map<String, dynamic> json) {
     return ProfileDepartment(
-      id: json['id'] as int,
-      name: json['name'] as String,
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      name: (json['name'] as String?) ?? '',
       nameEn: json['name_en'] as String?,
     );
   }
@@ -48,9 +50,13 @@ class ProfileCompany extends Equatable {
 
   factory ProfileCompany.fromJson(Map<String, dynamic> json) {
     return ProfileCompany(
-      id: json['id'] as int,
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
       name: json['name'] as String?,
-      companyCode: json['company_code'] as String,
+      companyCode: (json['company_code'] as String?) ??
+          (json['code'] as String?) ??
+          '',
     );
   }
 
@@ -80,10 +86,14 @@ class ProfileManager extends Equatable {
 
   factory ProfileManager.fromJson(Map<String, dynamic> json) {
     return ProfileManager(
-      id: json['id'] as int,
-      code: json['code'] as String,
-      name: json['name'] as String,
-      jobTitle: json['job_title'] as String,
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      code: (json['employee_number'] as String?) ??
+          (json['code'] as String?) ??
+          '',
+      name: (json['name'] as String?) ?? '',
+      jobTitle: (json['job_title'] as String?) ?? '',
     );
   }
 
@@ -166,34 +176,55 @@ class EmployeeProfile extends Equatable {
       isManager = false;
     }
 
+    String? asStr(dynamic v) {
+      if (v == null) return null;
+      if (v is String) return v;
+      return v.toString();
+    }
+
+    // The admin login endpoint returns a slimmer "company" representation:
+    // sometimes a nested object, sometimes only `company_id`.
+    ProfileCompany? company;
+    final rawCompany = json['company'];
+    if (rawCompany is Map<String, dynamic>) {
+      company = ProfileCompany.fromJson(rawCompany);
+    } else if (json['company_id'] != null) {
+      company = ProfileCompany(
+        id: (json['company_id'] is int)
+            ? json['company_id'] as int
+            : int.tryParse(json['company_id'].toString()) ?? 0,
+        name: asStr(json['company_name']),
+        companyCode: asStr(json['company_code']) ?? '',
+      );
+    }
+
     return EmployeeProfile(
       id: json['id'] as int,
-      code: json['code'] as String,
-      name: json['name'] as String,
-      nameEn: json['name_en'] as String?,
-      email: json['email'] as String?,
-      phone: json['phone'] as String?,
-      mobile: json['mobile'] as String?,
-      address: json['address'] as String?,
-      photoUrl: json['photo_url'] as String?,
-      initials: json['initials'] as String?,
-      employmentStatus: json['employment_status'] as String,
-      jobTitle: json['job_title'] as String?,
-      hireDate: json['hire_date'] as String?,
-      gender: json['gender'] as String?,
-      nationality: json['nationality'] as String?,
-      dateOfBirth: json['date_of_birth'] as String?,
-      idNumber: json['id_number'] as String?,
-      emergencyContactName: json['emergency_contact_name'] as String?,
-      emergencyContactPhone: json['emergency_contact_phone'] as String?,
-      department: json['department'] != null
+      // Accept `employee_number` (admin login) or `code` (employee API).
+      code: asStr(json['employee_number']) ?? asStr(json['code']) ?? '',
+      name: asStr(json['name']) ?? '',
+      nameEn: asStr(json['name_en']),
+      email: asStr(json['email']),
+      phone: asStr(json['phone']),
+      mobile: asStr(json['mobile']),
+      address: asStr(json['address']),
+      photoUrl: asStr(json['photo_url']),
+      initials: asStr(json['initials']),
+      employmentStatus: asStr(json['employment_status']) ?? 'unknown',
+      jobTitle: asStr(json['job_title']),
+      hireDate: asStr(json['hire_date']),
+      gender: asStr(json['gender']),
+      nationality: asStr(json['nationality']),
+      dateOfBirth: asStr(json['date_of_birth']),
+      idNumber: asStr(json['id_number']),
+      emergencyContactName: asStr(json['emergency_contact_name']),
+      emergencyContactPhone: asStr(json['emergency_contact_phone']),
+      department: json['department'] is Map<String, dynamic>
           ? ProfileDepartment.fromJson(
               json['department'] as Map<String, dynamic>)
           : null,
-      company: json['company'] != null
-          ? ProfileCompany.fromJson(json['company'] as Map<String, dynamic>)
-          : null,
-      manager: json['manager'] != null
+      company: company,
+      manager: json['manager'] is Map<String, dynamic>
           ? ProfileManager.fromJson(json['manager'] as Map<String, dynamic>)
           : null,
       isManager: isManager,

@@ -512,3 +512,38 @@ class ManagerLeavesData extends Equatable {
   @override
   List<Object?> get props => [leaves, pagination];
 }
+
+// ── LeaveRequestsSummary ─────────────────────────────────────────────────────
+
+/// Summary KPIs returned by GET /admin/leave-requests/summary (Postman 02).
+class LeaveRequestsSummary extends Equatable {
+  final int total;
+  final int pending;
+  final int approved;
+  final int rejected;
+  final int? cancelled;
+  final int? totalDays;
+
+  const LeaveRequestsSummary({
+    required this.total,
+    required this.pending,
+    required this.approved,
+    required this.rejected,
+    this.cancelled,
+    this.totalDays,
+  });
+
+  factory LeaveRequestsSummary.fromJson(Map<String, dynamic> json) {
+    return LeaveRequestsSummary(
+      total: (json['total'] ?? 0) as int,
+      pending: (json['pending'] ?? 0) as int,
+      approved: (json['approved'] ?? 0) as int,
+      rejected: (json['rejected'] ?? 0) as int,
+      cancelled: json['cancelled'] as int?,
+      totalDays: (json['total_days'] as num?)?.toInt(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [total, pending, approved, rejected, cancelled, totalDays];
+}

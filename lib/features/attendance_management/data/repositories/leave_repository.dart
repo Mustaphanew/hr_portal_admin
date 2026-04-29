@@ -120,7 +120,7 @@ class LeaveRepository {
     );
   }
 
-  /// F3 — Approve or reject a leave request.
+  /// F3 — Approve or reject a leave request via the generic decide endpoint.
   Future<BaseResponse<LeaveRequest>> decideLeave(
     int id, {
     required String decision,
@@ -134,6 +134,54 @@ class LeaveRepository {
       },
       fromJson: (json) =>
           LeaveRequest.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// F4 — Approve a leave request (Postman 02).
+  Future<BaseResponse<LeaveRequest>> approveLeave(
+    int id, {
+    String? notes,
+  }) async {
+    return _apiClient.post<LeaveRequest>(
+      ApiConstants.adminLeaveRequestApprove(id),
+      data: {
+        'notes': ?notes,
+      },
+      fromJson: (json) =>
+          LeaveRequest.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// F5 — Reject a leave request (Postman 02).
+  Future<BaseResponse<LeaveRequest>> rejectLeave(
+    int id, {
+    String? notes,
+  }) async {
+    return _apiClient.post<LeaveRequest>(
+      ApiConstants.adminLeaveRequestReject(id),
+      data: {
+        'notes': ?notes,
+      },
+      fromJson: (json) =>
+          LeaveRequest.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// F6 — Summary KPIs for admin leave requests (Postman 02).
+  Future<BaseResponse<LeaveRequestsSummary>> getLeaveRequestsSummary({
+    int? companyId,
+    int? branchId,
+  }) async {
+    final queryParameters = <String, dynamic>{
+      'company_id': ?companyId,
+      'branch_id': ?branchId,
+    };
+
+    return _apiClient.get<LeaveRequestsSummary>(
+      ApiConstants.adminLeaveRequestsSummary,
+      queryParameters: queryParameters,
+      fromJson: (json) =>
+          LeaveRequestsSummary.fromJson(json as Map<String, dynamic>),
     );
   }
 }

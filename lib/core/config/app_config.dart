@@ -52,9 +52,17 @@ class AppConfig {
         );
       case 'dev':
       default:
+        /// افتراضي: خادم API على هذا الجهاز (المحاكي Android ← `localhost` الجهاز = `10.0.2.2`).
+        /// لتجربة staging/الاستضافة: `flutter run --dart-define=API_BASE_URL=https://account.alzajeltravel.com`
+        /// لتشغّل الويب على نفس الجهاز: `--dart-define=API_BASE_URL=http://localhost:8000`
+        const devRoot = String.fromEnvironment(
+          'API_BASE_URL',
+          defaultValue: 'http://10.0.2.2:8000',
+        );
+        const devFallback = 'http://10.0.2.2:8000';
         return AppConfig(
           flavor: AppFlavor.dev,
-          baseUrl: 'http://192.168.137.230:8000',
+          baseUrl: devRoot.trim().isEmpty ? devFallback : devRoot.trim(),
           envName: 'Development',
           enableDebugLogs: true,
           showEnvBanner: true,
