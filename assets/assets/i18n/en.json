@@ -351,6 +351,7 @@
   "Mark all read": "Mark all read",
   "No notifications": "No notifications",
   "Notifications will appear here": "Notifications will appear here",
+<<<<<<< Updated upstream
   "unread_notifications": "{count} unread",
   "Active projects": "Active projects",
   "Add your comment": "Add your comment...",
@@ -454,4 +455,10 @@
   "requests_no_attachments": "{count} requests without attachments",
   "requests_this_month": "{count} requests this month",
   "requests_total": "{count} total requests"
+=======
+  "Website": "Website",
+  "Base URL": "Base URL",
+  "Could not open website": "Could not open website",
+  "unread_notifications": "{count} unread"
+>>>>>>> Stashed changes
 }
