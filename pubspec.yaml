@@ -72,8 +72,8 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
 
-#   flutter_native_splash:
-# flutter_native_splash:
+#  flutter_native_splash:
+#flutter_native_splash:
 #  color: "#e2e7e9"
 #  color_dark: "#161618"
 #  image: "assets/images/secondary_logo.png"
@@ -87,8 +87,8 @@ dev_dependencies:
 #    icon_background_color_dark: "#161618"
 #  # dart run flutter_native_splash:create
 
-#   flutter_launcher_icons:
-# flutter_icons:
+#  flutter_launcher_icons:
+#flutter_icons:
 #   android: "ic_launcher"
 #   ios: true
 #   image_path: "assets/images/icon.png"
