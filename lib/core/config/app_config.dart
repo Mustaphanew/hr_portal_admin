@@ -65,7 +65,11 @@ class AppConfig {
         const devFallback = 'http://10.0.2.2:8000';
         return AppConfig(
           flavor: AppFlavor.dev,
-          baseUrl: devRoot.trim().isEmpty ? devFallback : devRoot.trim(),
+<<<<<<< Updated upstream
+=======
+          // baseUrl: 'http://192.168.137.230:8000',
+>>>>>>> Stashed changes
+          baseUrl: devBaseUrl,
           envName: 'Development',
           enableDebugLogs: true,
           showEnvBanner: true,
