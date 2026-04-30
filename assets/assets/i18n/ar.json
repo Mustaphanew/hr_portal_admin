@@ -465,6 +465,9 @@
   "requests_no_attachments": "{count} طلب بدون مرفقات",
   "requests_this_month": "{count} طلب هذا الشهر",
   "requests_total": "{count} طلب إجمالي",
+  "Website": "الموقع الإلكتروني",
+  "Base URL": "الرابط الأساسي",
+  "Could not open website": "تعذر فتح الموقع الإلكتروني",
   "request_type.salary_certificate": "شهادة راتب",
   "request_type.experience_letter": "خطاب خبرة",
   "request_type.vacation_settlement": "تسوية إجازة",
@@ -580,6 +583,5 @@
   "Notes (optional)": "ملاحظات (اختياري)",
   "Reason for rejection": "سبب الرفض",
   "Notes required": "الملاحظة مطلوبة",
-  "Required": "مطلوب",
-  "Days": "أيام"
+  "Required": "مطلوب"
 }
