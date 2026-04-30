@@ -17,32 +17,8 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
-  late Timer _timer;
-  DateTime _now = DateTime.now();
   @override
-  void initState() { super.initState(); _timer = Timer.periodic(const Duration(seconds:1), (_){ if(mounted) setState(()=>_now=DateTime.now()); }); }
-  @override void dispose() { _timer.cancel(); super.dispose(); }
-
-  String _timeStr(BuildContext context) {
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    final hour = _now.hour % 12 == 0 ? 12 : _now.hour % 12;
-    final min = _now.minute.toString().padLeft(2, '0');
-    final period = isAr ? (_now.hour < 12 ? 'ص' : 'م') : (_now.hour < 12 ? 'AM' : 'PM');
-    return '$hour:$min $period';
-  }
-
-  String _dateStr(BuildContext context) {
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    if (isAr) {
-      const days = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-      const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-      return '${days[_now.weekday % 7]}، ${_now.day} ${months[_now.month - 1]} ${_now.year}';
-    } else {
-      const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      return '${days[_now.weekday % 7]}, ${_now.day} ${months[_now.month - 1]} ${_now.year}';
-    }
-  }
+  void initState() { super.initState(); }
 
   List<Map<String, dynamic>> _getQuickActions(BuildContext context) => [
     {'l': 'Request Management'.tr(context),  'i':'📋', 'r':'/requests',     'c': AppColors.navyMid},
@@ -100,13 +76,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
                       color: Colors.white10, borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: Colors.white12)),
                     child: Row(children: [
-                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Text(_timeStr(context), style: TextStyle(fontFamily: 'Cairo',
-                          fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1, height: 1.2)),
-                        const SizedBox(height: 8),
-                        Text(_dateStr(context), style: TextStyle(fontFamily: 'Cairo', fontSize: 11, color: Colors.white60, height: 1.2)),
-                      ])),
+                      Expanded(                  child: const _ClockWidget()),
                       dashAsync.when(
                         data: (dash) => Column(crossAxisAlignment: CrossAxisAlignment.end,
                           mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -365,6 +335,67 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _BranchSelectorSheet(parentRef: ref),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Isolated clock widget — owns its own Timer so rebuilds only itself
+// ═══════════════════════════════════════════════════════════════════
+class _ClockWidget extends StatefulWidget {
+  const _ClockWidget();
+  @override
+  State<_ClockWidget> createState() => _ClockWidgetState();
+}
+
+class _ClockWidgetState extends State<_ClockWidget> {
+  late Timer _timer;
+  DateTime _now = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() { _timer.cancel(); super.dispose(); }
+
+  String _timeStr(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final hour = _now.hour % 12 == 0 ? 12 : _now.hour % 12;
+    final min = _now.minute.toString().padLeft(2, '0');
+    final period = isAr ? (_now.hour < 12 ? 'ص' : 'م') : (_now.hour < 12 ? 'AM' : 'PM');
+    return '$hour:$min $period';
+  }
+
+  String _dateStr(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    if (isAr) {
+      const days = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+      const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+      return '${days[_now.weekday % 7]}، ${_now.day} ${months[_now.month - 1]} ${_now.year}';
+    } else {
+      const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return '${days[_now.weekday % 7]}, ${_now.day} ${months[_now.month - 1]} ${_now.year}';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(_timeStr(context), style: const TextStyle(fontFamily: 'Cairo',
+          fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1, height: 1.2)),
+        const SizedBox(height: 8),
+        Text(_dateStr(context), style: const TextStyle(fontFamily: 'Cairo',
+          fontSize: 11, color: Colors.white60, height: 1.2)),
+      ],
     );
   }
 }
