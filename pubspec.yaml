@@ -1,7 +1,12 @@
 name: hr_portal_admin
-description: "HR Portal Admin Management App"
+description: "HR Portal Admin — تطبيق إدارة الموارد البشرية لمجموعة الراشد القابضة"
 publish_to: 'none'
 
+# ── Versioning ──────────────────────────────────────────────────
+# Format: <major>.<minor>.<patch>+<build>
+# - major.minor.patch is shown to users in the Play Store.
+# - +build (versionCode) MUST monotonically increase with every upload.
+# Increment for every Play Store release.
 version: 1.0.0+1
 
 environment:
@@ -37,6 +42,8 @@ dependencies:
   firebase_core: ^4.4.0
   firebase_messaging: ^16.1.1
   firebase_remote_config: ^6.3.0
+  firebase_crashlytics: ^5.0.1
+  firebase_analytics: ^12.0.1
 
   # ── Notifications ──
   awesome_notifications: ^0.11.0

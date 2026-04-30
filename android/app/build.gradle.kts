@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -8,9 +11,19 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// ── Load release signing config from android/key.properties ─────────
+//
+// File NOT committed to git. Generate the keystore once with:
+//   keytool -genkeypair -v -keystore android/keys/release.jks ...
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "com.newhorizon.hr_portal_admin"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -23,21 +36,54 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.newhorizon.hr_portal_admin"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        // Min Android 7.0 (API 24) — covers ~99% of devices and required by
+        // several plugins (firebase, awesome_notifications).
+        minSdk = 24
+        // Required by Google Play in 2024+: target API 34 (Android 14).
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Locale used by the launcher icon's app_name (string resource).
+        resourceConfigurations.addAll(listOf("ar", "en"))
+    }
+
+    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
+        }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Use release keystore when key.properties is present, otherwise
+            // fall back to debug keys so `flutter run --release` keeps working.
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+
+            // Shrinking + obfuscation. Reduces APK size & makes reverse
+            // engineering harder. Tweak proguard-rules.pro if a plugin breaks.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+
+        debug {
+            // Keep debug builds easy to attach to.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

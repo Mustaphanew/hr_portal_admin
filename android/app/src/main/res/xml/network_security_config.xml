@@ -1,22 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Allows cleartext (HTTP) traffic to the development backend on the
-    Android emulator (10.0.2.2 is how the emulator reaches the host machine).
+    Production / release network security policy.
 
-    HTTPS remains the default everywhere else (production endpoints).
+    HTTPS-only: cleartext traffic is BLOCKED everywhere. The debug build
+    overrides this via android/app/src/debug/res/xml/network_security_config_debug.xml
+    so the emulator can reach the local Laravel server.
 -->
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <!-- Android emulator → host machine -->
-        <domain includeSubdomains="true">10.0.2.2</domain>
-        <!-- Local loopback (USB/wifi debugging on physical device with adb reverse) -->
-        <domain includeSubdomains="true">localhost</domain>
-        <domain includeSubdomains="true">127.0.0.1</domain>
-        <!-- Local network IP example (uncomment & adjust if you serve from LAN) -->
-        <!-- <domain includeSubdomains="true">192.168.1.10</domain> -->
-        <!-- Original LAN IP referenced by AppConfig.devBaseUrl -->
-        <domain includeSubdomains="true">172.16.0.66</domain>
-    </domain-config>
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system" />
