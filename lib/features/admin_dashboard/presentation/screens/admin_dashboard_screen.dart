@@ -330,13 +330,19 @@ class _AdminDashboardState extends ConsumerState<AdminDashboardScreen> {
   ));
 
   void _showBranchSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _BranchSelectorSheet(parentRef: ref),
-    );
+    showBranchSelectorSheet(context, ref);
   }
+}
+
+/// Public helper — opens the branch/company selector bottom sheet.
+/// Reusable from any screen that needs to scope by company/branch.
+Future<void> showBranchSelectorSheet(BuildContext context, WidgetRef ref) {
+  return showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => _BranchSelectorSheet(parentRef: ref),
+  );
 }
 
 // ═══════════════════════════════════════════════════════════════════

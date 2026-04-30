@@ -18,8 +18,62 @@ class EmployeeDepartment extends Equatable {
 
   factory EmployeeDepartment.fromJson(Map<String, dynamic> json) {
     return EmployeeDepartment(
-      id: json['id'] as int,
-      name: json['name'] as String,
+      id: (json['id'] as num).toInt(),
+      name: (json['name'] as String?) ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+      };
+
+  @override
+  List<Object?> get props => [id, name];
+}
+
+/// Company reference embedded in an employee record.
+/// Captured from real /admin/employees response 2026-04-29.
+class EmployeeCompany extends Equatable {
+  final int id;
+  final String name;
+  final String? nameEn;
+
+  const EmployeeCompany({
+    required this.id,
+    required this.name,
+    this.nameEn,
+  });
+
+  factory EmployeeCompany.fromJson(Map<String, dynamic> json) {
+    return EmployeeCompany(
+      id: (json['id'] as num).toInt(),
+      name: (json['name'] as String?) ?? '',
+      nameEn: json['name_en'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'name_en': nameEn,
+      };
+
+  @override
+  List<Object?> get props => [id, name, nameEn];
+}
+
+/// Branch reference embedded in an employee record.
+class EmployeeBranch extends Equatable {
+  final int id;
+  final String name;
+
+  const EmployeeBranch({required this.id, required this.name});
+
+  factory EmployeeBranch.fromJson(Map<String, dynamic> json) {
+    return EmployeeBranch(
+      id: (json['id'] as num).toInt(),
+      name: (json['name'] as String?) ?? '',
     );
   }
 
@@ -157,6 +211,8 @@ class AdminEmployee extends Equatable {
   final String? nameEn;
   final String? jobTitle;
   final EmployeeDepartment? department;
+  final EmployeeCompany? company;
+  final EmployeeBranch? branch;
   final String? mobile;
   final String? email;
   final String employmentStatus;
@@ -173,6 +229,8 @@ class AdminEmployee extends Equatable {
     this.nameEn,
     this.jobTitle,
     this.department,
+    this.company,
+    this.branch,
     this.mobile,
     this.email,
     required this.employmentStatus,
@@ -185,23 +243,31 @@ class AdminEmployee extends Equatable {
 
   factory AdminEmployee.fromJson(Map<String, dynamic> json) {
     return AdminEmployee(
-      id: json['id'] as int,
-      code: (json['employee_number'] ?? json['code'] ?? '') as String,
-      name: json['name'] as String,
+      id: (json['id'] as num).toInt(),
+      code: (json['employee_number'] ?? json['code'] ?? '').toString(),
+      name: (json['name'] as String?) ?? '',
       nameEn: json['name_en'] as String?,
       jobTitle: json['job_title'] as String?,
-      department: json['department'] != null
+      department: json['department'] is Map<String, dynamic>
           ? EmployeeDepartment.fromJson(
               json['department'] as Map<String, dynamic>)
           : null,
+      company: json['company'] is Map<String, dynamic>
+          ? EmployeeCompany.fromJson(
+              json['company'] as Map<String, dynamic>)
+          : null,
+      branch: json['branch'] is Map<String, dynamic>
+          ? EmployeeBranch.fromJson(
+              json['branch'] as Map<String, dynamic>)
+          : null,
       mobile: json['mobile']?.toString(),
       email: json['email'] as String?,
-      employmentStatus: (json['employment_status'] ?? json['status'] ?? '') as String,
+      employmentStatus: (json['employment_status'] ?? json['status'] ?? '').toString(),
       attendanceStatus: json['attendance_status'] as String?,
       initials: json['initials'] as String?,
       hireDate: json['hire_date'] as String?,
-      pendingRequests: (json['pending_requests'] ?? 0) as int,
-      activeTasks: (json['active_tasks'] ?? 0) as int,
+      pendingRequests: (json['pending_requests'] as num?)?.toInt() ?? 0,
+      activeTasks: (json['active_tasks'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -212,6 +278,8 @@ class AdminEmployee extends Equatable {
         'name_en': nameEn,
         'job_title': jobTitle,
         'department': department?.toJson(),
+        'company': company?.toJson(),
+        'branch': branch?.toJson(),
         'mobile': mobile,
         'email': email,
         'employment_status': employmentStatus,
@@ -230,6 +298,8 @@ class AdminEmployee extends Equatable {
         nameEn,
         jobTitle,
         department,
+        company,
+        branch,
         mobile,
         email,
         employmentStatus,
@@ -253,7 +323,10 @@ class EmployeeDetail extends AdminEmployee {
   final String? emergencyContactName;
   final String? emergencyContactPhone;
   final String? manager;
-  final String? company;
+  /// Legacy string form of the company name (when API returns a plain string
+  /// rather than the structured `EmployeeCompany`). Use [company] (from the
+  /// parent class) for the structured form.
+  final String? companyLabel;
   final AttendanceSummaryData? attendanceSummary;
   final LeaveSummaryData? leaveSummary;
 
@@ -264,6 +337,8 @@ class EmployeeDetail extends AdminEmployee {
     super.nameEn,
     super.jobTitle,
     super.department,
+    super.company,
+    super.branch,
     super.mobile,
     super.email,
     required super.employmentStatus,
@@ -282,30 +357,47 @@ class EmployeeDetail extends AdminEmployee {
     this.emergencyContactName,
     this.emergencyContactPhone,
     this.manager,
-    this.company,
+    this.companyLabel,
     this.attendanceSummary,
     this.leaveSummary,
   });
 
   factory EmployeeDetail.fromJson(Map<String, dynamic> json) {
+    // The detail endpoint may return `company` as a string OR an object —
+    // accept both for backwards compatibility.
+    String? companyLabel;
+    EmployeeCompany? companyObj;
+    final rawCompany = json['company'];
+    if (rawCompany is Map<String, dynamic>) {
+      companyObj = EmployeeCompany.fromJson(rawCompany);
+      companyLabel = companyObj.name;
+    } else if (rawCompany is String) {
+      companyLabel = rawCompany;
+    }
+
     return EmployeeDetail(
-      id: json['id'] as int,
-      code: (json['employee_number'] ?? json['code'] ?? '') as String,
-      name: json['name'] as String,
+      id: (json['id'] as num).toInt(),
+      code: (json['employee_number'] ?? json['code'] ?? '').toString(),
+      name: (json['name'] as String?) ?? '',
       nameEn: json['name_en'] as String?,
       jobTitle: json['job_title'] as String?,
-      department: json['department'] != null
+      department: json['department'] is Map<String, dynamic>
           ? EmployeeDepartment.fromJson(
               json['department'] as Map<String, dynamic>)
           : null,
+      company: companyObj,
+      branch: json['branch'] is Map<String, dynamic>
+          ? EmployeeBranch.fromJson(json['branch'] as Map<String, dynamic>)
+          : null,
       mobile: json['mobile']?.toString(),
       email: json['email'] as String?,
-      employmentStatus: (json['employment_status'] ?? json['status'] ?? '') as String,
+      employmentStatus:
+          (json['employment_status'] ?? json['status'] ?? '').toString(),
       attendanceStatus: json['attendance_status'] as String?,
       initials: json['initials'] as String?,
       hireDate: json['hire_date'] as String?,
-      pendingRequests: (json['pending_requests'] ?? 0) as int,
-      activeTasks: (json['active_tasks'] ?? 0) as int,
+      pendingRequests: (json['pending_requests'] as num?)?.toInt() ?? 0,
+      activeTasks: (json['active_tasks'] as num?)?.toInt() ?? 0,
       phone: json['phone']?.toString(),
       address: json['address'] as String?,
       photoUrl: json['photo_url'] as String?,
@@ -318,12 +410,12 @@ class EmployeeDetail extends AdminEmployee {
       manager: json['manager'] is Map
           ? (json['manager'] as Map<String, dynamic>)['name'] as String?
           : json['manager'] as String?,
-      company: json['company'] as String?,
-      attendanceSummary: json['attendance_summary'] != null
+      companyLabel: companyLabel,
+      attendanceSummary: json['attendance_summary'] is Map<String, dynamic>
           ? AttendanceSummaryData.fromJson(
               json['attendance_summary'] as Map<String, dynamic>)
           : null,
-      leaveSummary: json['leave_summary'] != null
+      leaveSummary: json['leave_summary'] is Map<String, dynamic>
           ? LeaveSummaryData.fromJson(
               json['leave_summary'] as Map<String, dynamic>)
           : null,
@@ -343,7 +435,9 @@ class EmployeeDetail extends AdminEmployee {
         'emergency_contact_name': emergencyContactName,
         'emergency_contact_phone': emergencyContactPhone,
         'manager': manager,
-        'company': company,
+        // 'company' (structured) is already serialised by super.toJson().
+        // companyLabel is the legacy plain-string form.
+        if (companyLabel != null) 'company_label': companyLabel,
         'attendance_summary': attendanceSummary?.toJson(),
         'leave_summary': leaveSummary?.toJson(),
       };
@@ -361,7 +455,7 @@ class EmployeeDetail extends AdminEmployee {
         emergencyContactName,
         emergencyContactPhone,
         manager,
-        company,
+        companyLabel,
         attendanceSummary,
         leaveSummary,
       ];

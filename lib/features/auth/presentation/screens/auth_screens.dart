@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 import 'dart:math' as math;
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +10,7 @@ import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
+import '../../../../core/errors/exceptions.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../providers/auth_providers.dart';
@@ -313,14 +315,28 @@ class _LoginState extends ConsumerState<LoginScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _loading = false);
+        final msg = _formatLoginError(context, e);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              e.toString().contains('401')
-                  ? 'Invalid credentials'.tr(context)
-                  : 'Connection failed'.tr(context),
-              style: const TextStyle(fontFamily: 'Cairo'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(msg, style: const TextStyle(fontFamily: 'Cairo')),
+                if (kDebugMode) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'baseUrl: ${ApiConstants.baseUrl}',
+                    style: const TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 10,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ],
             ),
+            duration: const Duration(seconds: 5),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -328,6 +344,49 @@ class _LoginState extends ConsumerState<LoginScreen> {
         );
       }
     }
+  }
+
+  /// Translate any thrown exception into a user-friendly Arabic/English message.
+  String _formatLoginError(BuildContext context, Object e) {
+    if (e is ValidationException) {
+      // Surface the first validation error if available.
+      final fieldErrs = e.fieldErrors;
+      if (fieldErrs.isNotEmpty) {
+        return fieldErrs.values.first.first;
+      }
+      return e.message;
+    }
+    if (e is AuthRequiredException ||
+        e is TokenInvalidException ||
+        (e is ApiException && e.statusCode == 401)) {
+      return 'Invalid credentials'.tr(context);
+    }
+    if (e is AccessDeniedException || e is InsufficientPermissionsException) {
+      return 'Access denied'.tr(context);
+    }
+    if (e is ResourceNotFoundException) {
+      return 'Login endpoint not found on server'.tr(context);
+    }
+    if (e is RateLimitedException) {
+      return 'Too many attempts. Try again later'.tr(context);
+    }
+    if (e is TimeoutException) {
+      return 'Connection timed out'.tr(context);
+    }
+    if (e is ConnectionRefusedException) {
+      // Show the actual host:port so the user can diagnose immediately.
+      return '${'Server is not responding'.tr(context)} (${e.message})';
+    }
+    if (e is NetworkException) {
+      return 'No connection to server'.tr(context);
+    }
+    if (e is ServerException) {
+      return e.message.isNotEmpty ? e.message : 'Server error'.tr(context);
+    }
+    if (e is ApiException) {
+      return e.message.isNotEmpty ? e.message : 'Connection failed'.tr(context);
+    }
+    return 'Connection failed'.tr(context);
   }
 
   @override

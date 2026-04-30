@@ -5,10 +5,14 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_shadows.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/providers/admin_providers.dart';
 import '../../../../core/widgets/admin_widgets.dart';
 import '../../../../core/widgets/async_value_widget.dart';
+import '../../../admin_dashboard/presentation/screens/admin_dashboard_screen.dart'
+    show showBranchSelectorSheet;
 import '../../data/models/payroll_models.dart';
 import '../providers/payroll_providers.dart';
+import '../widgets/payroll_branch_chip.dart';
 import '../widgets/payroll_filters_bar.dart';
 
 class PayrollScreen extends ConsumerWidget {
@@ -20,11 +24,13 @@ class PayrollScreen extends ConsumerWidget {
     final filters = ref.watch(payrollFiltersProvider);
     final async = ref.watch(adminPayrollProvider);
 
+    // Real values from `payroll_run_items.status` enum:
+    // included | excluded | accrued | paid
     final statusOptions = <({String value, String label})>[
-      (value: 'draft', label: 'Draft'.tr(context)),
-      (value: 'approved', label: 'Approved'.tr(context)),
-      (value: 'paid', label: 'Paid'.tr(context)),
-      (value: 'cancelled', label: 'Cancelled'.tr(context)),
+      (value: 'included', label: 'payroll_status.included'.tr(context)),
+      (value: 'excluded', label: 'payroll_status.excluded'.tr(context)),
+      (value: 'accrued', label: 'payroll_status.accrued'.tr(context)),
+      (value: 'paid', label: 'payroll_status.paid'.tr(context)),
     ];
 
     return Scaffold(
@@ -36,6 +42,15 @@ class PayrollScreen extends ConsumerWidget {
             title: 'Payroll'.tr(context),
             subtitle: 'Monthly salary records'.tr(context),
             onBack: () => context.pop(),
+          ),
+          // Branch / Company scope chip
+          const PayrollBranchChip(),
+          // Summary KPIs (count, gross, net, paid)
+          async.maybeWhen(
+            data: (d) => d.summary != null
+                ? PayrollSummaryStrip(summary: d.summary!)
+                : const SizedBox.shrink(),
+            orElse: () => const SizedBox.shrink(),
           ),
           PayrollFiltersBar(
             month: filters.month,
@@ -102,32 +117,55 @@ class PayrollItemCard extends StatelessWidget {
   final PayrollItem item;
   const PayrollItemCard({super.key, required this.item});
 
+  /// Color matches the real payroll_run_items.status enum:
+  /// included → orange (default state)
+  /// excluded → grey/error
+  /// accrued  → teal (calculated)
+  /// paid     → green
   Color _statusColor() {
     switch (item.status) {
       case 'paid':
         return AppColors.success;
-      case 'approved':
+      case 'accrued':
         return AppColors.teal;
-      case 'cancelled':
+      case 'excluded':
         return AppColors.error;
+      case 'included':
       default:
         return AppColors.warning;
     }
   }
 
   String _statusLabel(BuildContext context) {
-    switch (item.status) {
-      case 'paid':
-        return 'Paid'.tr(context);
-      case 'approved':
-        return 'Approved'.tr(context);
-      case 'cancelled':
-        return 'Cancelled'.tr(context);
-      case 'draft':
-        return 'Draft'.tr(context);
-      default:
-        return item.status;
+    final key = 'payroll_status.${item.status}';
+    final translated = key.tr(context);
+    return translated == key ? item.status : translated;
+  }
+
+  /// Display "2026-04-01 → 2026-04-30" if both dates exist; otherwise fall
+  /// back to whichever single date is available.
+  String _periodLabel() {
+    final start = item.periodStart;
+    final end = item.periodEnd;
+    if (start != null && end != null) return '$start → $end';
+    if (start != null) return start;
+    if (end != null) return end;
+    if (item.month != null) return item.month!;
+    return '-';
+  }
+
+  /// Format an amount with thousand separators.
+  String _money(double v) {
+    final s = v.toStringAsFixed(2);
+    final parts = s.split('.');
+    final intPart = parts[0];
+    final dec = parts.length > 1 ? parts[1] : '00';
+    final buffer = StringBuffer();
+    for (int i = 0; i < intPart.length; i++) {
+      if (i > 0 && (intPart.length - i) % 3 == 0) buffer.write(',');
+      buffer.write(intPart[i]);
     }
+    return '$buffer.$dec';
   }
 
   @override
@@ -175,9 +213,11 @@ class PayrollItemCard extends StatelessWidget {
               text: _statusLabel(context),
               type: item.status == 'paid'
                   ? 'approved'
-                  : item.status == 'cancelled'
+                  : item.status == 'excluded'
                       ? 'rejected'
-                      : 'pending',
+                      : item.status == 'accrued'
+                          ? 'leave'
+                          : 'pending',
               dot: true,
             ),
           ]),
@@ -190,23 +230,45 @@ class PayrollItemCard extends StatelessWidget {
             ),
             child: Column(
               children: [
-                _row(context, 'Period'.tr(context),
-                    item.month ?? item.periodStart ?? '-'),
+                _row(context, 'Period'.tr(context), _periodLabel()),
+                if (item.payDate != null)
+                  _row(context, 'Pay date'.tr(context), item.payDate!),
                 _row(context, 'Basic salary'.tr(context),
-                    item.basicSalary.toStringAsFixed(2)),
-                _row(context, 'Allowances'.tr(context),
-                    '+ ${item.totalAllowances.toStringAsFixed(2)}',
-                    valueColor: AppColors.success),
-                _row(context, 'Deductions'.tr(context),
-                    '− ${item.totalDeductions.toStringAsFixed(2)}',
-                    valueColor: AppColors.error),
+                    _money(item.basicSalary)),
+                if (item.totalAllowances > 0)
+                  _row(context, 'Allowances'.tr(context),
+                      '+ ${_money(item.totalAllowances)}',
+                      valueColor: AppColors.success),
+                if (item.totalDeductions > 0)
+                  _row(context, 'Deductions'.tr(context),
+                      '− ${_money(item.totalDeductions)}',
+                      valueColor: AppColors.error),
                 const Divider(height: 16),
                 _row(context, 'Net salary'.tr(context),
-                    item.netSalary.toStringAsFixed(2),
+                    _money(item.totalNet),
                     valueColor: _statusColor(), bold: true),
+                if (item.paidAmount > 0)
+                  _row(context, 'Paid amount'.tr(context),
+                      _money(item.paidAmount),
+                      valueColor: AppColors.success),
               ],
             ),
           ),
+          if (item.runNo != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.receipt_long_rounded, size: 13, color: c.textMuted),
+                const SizedBox(width: 4),
+                Text(item.runNo!,
+                    style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 11,
+                        color: c.textMuted,
+                        fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ],
           if (item.notes?.isNotEmpty ?? false) ...[
             const SizedBox(height: 10),
             Text(item.notes!,

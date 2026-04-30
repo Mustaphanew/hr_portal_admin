@@ -9,7 +9,11 @@ import '../../../../core/providers/paginated_providers.dart';
 import '../../../../core/widgets/paginated_list_view.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/admin_widgets.dart';
+import '../../../admin_dashboard/presentation/screens/admin_dashboard_screen.dart'
+    show showBranchSelectorSheet;
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/models/request_models.dart';
+import '../widgets/decision_action_sheet.dart';
 import '../widgets/requests_filters_sheet.dart';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -24,8 +28,26 @@ String _statusTr(BuildContext context, String s) => switch (s) {
   _            => s,
 };
 
-String _typeTr(BuildContext context, String t) {
-  // Short alias map → translation key
+/// Translate a request_type code to a human-readable label.
+///
+/// Resolution order:
+/// 1. If [serverLabel] is provided (from `request_type_label` field), use it
+///    directly — the backend already returns it localised in Arabic.
+/// 2. Map the type code to the modern `request_type.<code>` translation key.
+/// 3. Map legacy short aliases (`loan` → `loan_request`).
+/// 4. Prettify the slug as a last resort.
+String _typeTr(BuildContext context, String t, [String? serverLabel]) {
+  // 1) Prefer the server-provided label when present and non-empty.
+  if (serverLabel != null && serverLabel.trim().isNotEmpty) {
+    return serverLabel;
+  }
+
+  // 2) Modern keys from hr_employee_request_types table.
+  final modernKey = 'request_type.$t';
+  final modern = modernKey.tr(context);
+  if (modern != modernKey) return modern;
+
+  // 3) Legacy short alias map → old translation keys.
   const aliases = {
     'leave'        : 'leave_request',
     'attendance'   : 'attendance_correction',
@@ -43,7 +65,8 @@ String _typeTr(BuildContext context, String t) {
   };
   final key = aliases[t] ?? t;
   final translated = key.tr(context);
-  // If translation was not found (returns the key itself), prettify the slug.
+
+  // 4) Prettify the slug if no translation was found.
   if (translated == key && key.contains('_')) {
     return key.split('_').map((w) =>
       w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
@@ -132,7 +155,10 @@ class _RequestsMgmtState extends ConsumerState<RequestsManagementScreen> {
                 loading: _refreshing,
                 onTap: _refreshing ? null : _refresh),
             ]),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
+            // ── Branch / Company scope chip ────────────────
+            _BranchScopeChip(),
+            const SizedBox(height: 10),
             // ── Filter pills (server-side counts via summary) ──
             _buildFilterRow(
               context,
@@ -196,7 +222,7 @@ class _RequestsMgmtState extends ConsumerState<RequestsManagementScreen> {
                   id: '#${r.id}',
                   empName: r.employee?.name ?? '—',
                   dept: r.employee?.code ?? '',
-                  type: _typeTr(context, r.requestType),
+                  type: _typeTr(context, r.requestType, r.requestTypeLabel),
                   typeKey: r.requestType,
                   date: _fmtDate(r.createdAt),
                   status: r.status,
@@ -527,6 +553,64 @@ class _HeaderIconBtn extends StatelessWidget {
   }
 }
 
+// ── Branch / Company scope chip ─────────────────────────────────────────────
+//
+// Compact in-header pill that shows the currently-selected company/branch and
+// opens the shared bottom sheet for changing it.
+class _BranchScopeChip extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sel = ref.watch(selectedBranchProvider);
+    final companyLabel = sel.companyLabel('All companies'.tr(context));
+    final branchLabel = sel.isBranch ? sel.branchLabel('') : '';
+    final subtitle = branchLabel.isEmpty ? '' : ' • $branchLabel';
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => showBranchSelectorSheet(context, ref),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+          ),
+          child: Row(children: [
+            const Icon(Icons.store_rounded, color: Colors.white70, size: 16),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '$companyLabel$subtitle',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text('Change'.tr(context),
+                style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 11,
+                  color: AppColors.goldLight,
+                  fontWeight: FontWeight.w600,
+                )),
+            const SizedBox(width: 4),
+            const Icon(Icons.unfold_more_rounded,
+                color: AppColors.goldLight, size: 16),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
 // ── All Requests List ───────────────────────────────────────────────────────
 class AllRequestsScreen extends ConsumerWidget {
   const AllRequestsScreen({super.key});
@@ -574,7 +658,7 @@ class AllRequestsScreen extends ConsumerWidget {
                     id: '#${r.id}',
                     empName: r.employee?.name ?? '—',
                     dept: r.employee?.code ?? '',
-                    type: _typeTr(context, r.requestType),
+                    type: _typeTr(context, r.requestType, r.requestTypeLabel),
                     typeKey: r.requestType,
                     date: _fmtDate(r.createdAt),
                     status: r.status,
@@ -601,32 +685,66 @@ class RequestDetailScreen extends ConsumerStatefulWidget {
 class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
   String? _decision;
   bool _processing = false;
-  final _noteCtrl = TextEditingController();
 
-  @override
-  void dispose() {
-    _noteCtrl.dispose();
-    super.dispose();
-  }
+  /// Open the decision sheet then call the matching API endpoint.
+  ///
+  /// [decision] is `'approve'` or `'reject'`.
+  Future<void> _openDecisionSheet({
+    required String decision,
+    required EmployeeRequest request,
+  }) async {
+    final summary = [
+      _typeTr(context, request.requestType, request.requestTypeLabel),
+      if (request.subject.isNotEmpty) request.subject,
+      if (request.amount != null)
+        '${request.amount!.toStringAsFixed(0)} ${request.currency?.displaySymbol ?? ''}',
+    ].join(' — ');
 
-  Future<void> _decide(String status) async {
+    final result = await showDecisionSheet(
+      context,
+      decision: decision,
+      requestSummary: summary,
+      employeeName: request.employee?.name ?? '—',
+      notesRequired: decision == 'reject',
+    );
+    if (result == null || !mounted) return;
+
     setState(() => _processing = true);
     try {
-      await ref.read(requestRepositoryProvider).decideRequest(
-        widget.requestId,
-        status: status,
-        responseNotes: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
-      );
+      final repo = ref.read(requestRepositoryProvider);
+      if (result.isApprove) {
+        await repo.approveAdminEmployeeRequest(
+          widget.requestId,
+          notes: result.notes,
+        );
+      } else {
+        await repo.rejectAdminEmployeeRequest(
+          widget.requestId,
+          notes: result.notes,
+        );
+      }
+      // Invalidate caches so the list/summary refresh.
       ref.invalidate(paginatedRequestsProvider);
       ref.invalidate(employeeRequestsSummaryProvider);
       ref.invalidate(managerRequestDetailProvider(widget.requestId));
-      if (mounted) setState(() { _decision = status; _processing = false; });
+      if (!mounted) return;
+      setState(() {
+        _decision = result.isApprove ? 'approved' : 'rejected';
+        _processing = false;
+      });
     } catch (e) {
-      if (mounted) {
-        setState(() => _processing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${'Error'.tr(context)}: $e'), backgroundColor: AppColors.error));
-      }
+      if (!mounted) return;
+      setState(() => _processing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${'Error'.tr(context)}: $e',
+              style: const TextStyle(fontFamily: 'Cairo')),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
     }
   }
 
@@ -700,7 +818,7 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
                         Text(r.employee?.code ?? '', style: TextStyle(fontFamily: 'Cairo',
                           fontSize: 12, color: Colors.white60)),
                         const SizedBox(height: 6),
-                        Text(_typeTr(context,r.requestType), style: TextStyle(fontFamily: 'Cairo',
+                        Text(_typeTr(context,r.requestType, r.requestTypeLabel), style: TextStyle(fontFamily: 'Cairo',
                           fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.goldLight)),
                       ])),
                       const SizedBox(width: 10),
@@ -717,10 +835,24 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
                       style: TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.w800))),
                     const SizedBox(height: 10),
                     InfoRow(label: 'Request ID'.tr(context),       value: '#${r.id}',               icon: '🔖'),
-                    InfoRow(label: 'Request type'.tr(context),       value: _typeTr(context,r.requestType),   icon: '📋'),
+                    InfoRow(label: 'Request type'.tr(context),       value: _typeTr(context,r.requestType, r.requestTypeLabel),   icon: '📋'),
                     InfoRow(label: 'Subject'.tr(context),          value: r.subject,                icon: '📝'),
                     InfoRow(label: 'Submission date'.tr(context),   value: _fmtDate(r.createdAt),    icon: '📅'),
+                    if (r.date != null && r.date!.isNotEmpty)
+                      InfoRow(label: 'Request date'.tr(context),   value: _fmtDate(r.date!),        icon: '🗓️'),
                     InfoRow(label: 'Employee'.tr(context),           value: r.employee?.name ?? '—',  icon: '🏢'),
+                    if (r.employee?.jobTitle != null && r.employee!.jobTitle!.isNotEmpty)
+                      InfoRow(label: 'Job Title'.tr(context),       value: r.employee!.jobTitle!,    icon: '💼'),
+                    if (r.amount != null)
+                      InfoRow(
+                        label: 'Amount'.tr(context),
+                        value: r.currency?.symbol != null
+                            ? '${r.amount!.toStringAsFixed(0)} ${r.currency!.displaySymbol}'
+                            : r.amount!.toStringAsFixed(0),
+                        icon: '💰',
+                      ),
+                    if (r.branch != null)
+                      InfoRow(label: 'Branch'.tr(context),          value: r.branch!.name,           icon: '🏪'),
                     if (r.description != null && r.description!.isNotEmpty)
                       InfoRow(label: 'Details'.tr(context), value: r.description!, icon: '📄', border: false),
                   ])),
@@ -752,34 +884,44 @@ class _RequestDetailState extends ConsumerState<RequestDetailScreen> {
                           fontSize: 13, color: c.textMuted))),
                     ])),
 
-                  // ── note input (only for pending) ──
-                  if (r.status == 'pending')
-                    AppCard(mb: 14, child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      Text('Comment note'.tr(context), style: TextStyle(fontFamily: 'Cairo',
-                        fontSize: 14, fontWeight: FontWeight.w800)),
-                      const SizedBox(height: 10),
-                      TextField(controller: _noteCtrl, maxLines: 3,
-                        
-                        style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
-                        decoration: fieldDec(context, 'Add your comment'.tr(context))),
-                    ])),
+                  // Note: the inline comment field was removed — admins now
+                  // enter the response note directly inside the decision sheet
+                  // when approving / rejecting (cleaner UX).
                 ]),
               ),
             )),
 
             // ── action bar (only for pending) ──
             if (r.status == 'pending')
-              StickyBar(child: _processing
-                ? const Center(child: Padding(
-                    padding: EdgeInsets.all(8),
-                    child: CircularProgressIndicator()))
-                : Row(children: [
-                    Expanded(child: DangerBtn(text: 'Rejected'.tr(context),
-                      onTap: () => _decide('rejected'))),
-                    const SizedBox(width: 10),
-                    Expanded(child: TealBtn(text: 'Approved'.tr(context),
-                      onTap: () => _decide('approved'))),
-                  ])),
+              // Hide action bar when admin lacks the approval permission.
+              if (ref
+                      .watch(moduleAccessProvider('employee_requests'))
+                      .canApprove ||
+                  r.canApprove == true)
+                StickyBar(
+                  child: _processing
+                      ? const Center(
+                          child: Padding(
+                              padding: EdgeInsets.all(8),
+                              child: CircularProgressIndicator()))
+                      : Row(children: [
+                          Expanded(
+                            child: DangerBtn(
+                              text: 'Reject'.tr(context),
+                              onTap: () => _openDecisionSheet(
+                                  decision: 'reject', request: r),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TealBtn(
+                              text: 'Approve'.tr(context),
+                              onTap: () => _openDecisionSheet(
+                                  decision: 'approve', request: r),
+                            ),
+                          ),
+                        ]),
+                ),
           ]);
         },
       ),
@@ -856,7 +998,7 @@ class ApprovalsScreen extends ConsumerWidget {
                             decoration: BoxDecoration(color: c.bg,
                               borderRadius: BorderRadius.circular(10)),
                             child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                              Text(_typeTr(context,r.requestType), style: TextStyle(fontFamily: 'Cairo',
+                              Text(_typeTr(context,r.requestType, r.requestTypeLabel), style: TextStyle(fontFamily: 'Cairo',
                                 fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.navyMid)),
                               Text(r.subject, style: TextStyle(fontFamily: 'Cairo',
                                 fontSize: 11, color: c.textMuted)),

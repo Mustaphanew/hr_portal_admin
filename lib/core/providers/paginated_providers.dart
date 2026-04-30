@@ -148,17 +148,23 @@ class PaginatedEmployeesNotifier extends PaginatedNotifier<AdminEmployee> {
     ref.watch(employeesSearchProvider);
     ref.watch(employeesStatusProvider);
     ref.watch(selectedBranchProvider);
+    ref.watch(employeesDepartmentFilterProvider);
+    ref.watch(employeesEmploymentStatusFilterProvider);
     return super.build();
   }
 
   @override
   FetchPage<AdminEmployee> get fetchPage => (page, perPage) async {
     final search = ref.read(employeesSearchProvider);
-    final status = ref.read(employeesStatusProvider);
+    final attStatus = ref.read(employeesStatusProvider);
+    final empStatus = ref.read(employeesEmploymentStatusFilterProvider);
+    final deptId = ref.read(employeesDepartmentFilterProvider);
     final sel = ref.read(selectedBranchProvider);
     final data = await ref.read(employeeRepositoryProvider).getEmployees(
       search: search.isNotEmpty ? search : null,
-      status: status,
+      attendanceStatus: attStatus,
+      status: empStatus,
+      departmentId: deptId,
       companyId: sel.isBranch ? null : sel.companyId,
       branchId: sel.branchId,
       perPage: perPage,

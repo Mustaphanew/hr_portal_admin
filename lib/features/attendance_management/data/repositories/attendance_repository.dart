@@ -36,10 +36,18 @@ class AttendanceRepository {
     return response.data!;
   }
 
-  /// Fetch all employees' attendance for a given date (admin view).
+  /// Fetch all employees' attendance with optional filters (admin view).
+  ///
+  /// All filters are server-side query parameters. Pass `null` to skip a filter.
+  /// Aligned with Postman 03 contract:
+  /// `?company_id=&branch_id=&department_id=&employee_id=&month=&status=&search=&per_page=`
   Future<AdminAttendanceData> getAdminAttendance({
     String? date,
+    String? month, // YYYY-MM
+    int? companyId,
+    int? branchId,
     int? departmentId,
+    int? employeeId,
     String? status,
     String? search,
     int? perPage,
@@ -51,7 +59,11 @@ class AttendanceRepository {
           AdminAttendanceData.fromJson(json as Map<String, dynamic>),
       queryParameters: {
         'date': ?date,
+        'month': ?month,
+        'company_id': ?companyId,
+        'branch_id': ?branchId,
         'department_id': ?departmentId,
+        'employee_id': ?employeeId,
         'status': ?status,
         'search': ?search,
         'per_page': ?perPage,

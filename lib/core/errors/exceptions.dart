@@ -178,6 +178,15 @@ class NetworkException extends ApiException {
   }) : super(code: 'NETWORK_ERROR', statusCode: null);
 }
 
+/// Server actively rejected the connection (server not running or wrong port).
+/// Distinct from [NetworkException] (no network at all) so the UI can give a
+/// more actionable hint, e.g. "is your dev server running?".
+class ConnectionRefusedException extends ApiException {
+  const ConnectionRefusedException({
+    super.message = 'Server refused the connection.',
+  }) : super(code: 'CONNECTION_REFUSED', statusCode: null);
+}
+
 class TimeoutException extends ApiException {
   const TimeoutException({
     super.message = 'Connection timed out.',

@@ -69,6 +69,15 @@ final dashboardProvider = FutureProvider.autoDispose<DashboardData>((ref) {
 final employeesSearchProvider = StateProvider.autoDispose<String>((_) => '');
 final employeesStatusProvider = StateProvider.autoDispose<String?>((_) => null);
 
+/// Department filter for the employees list (null = all departments).
+final employeesDepartmentFilterProvider =
+    StateProvider.autoDispose<int?>((_) => null);
+
+/// Employment status filter (`core_employee`, `trainee`, `terminated`, ...).
+/// Distinct from [employeesStatusProvider] which is the legacy attendance filter.
+final employeesEmploymentStatusFilterProvider =
+    StateProvider.autoDispose<String?>((_) => null);
+
 final employeesProvider = FutureProvider.autoDispose<AdminEmployeesData>((ref) {
   final search = ref.watch(employeesSearchProvider);
   final status = ref.watch(employeesStatusProvider);
@@ -101,20 +110,65 @@ final departmentDetailProvider =
 // Attendance (Admin)
 // ═══════════════════════════════════════════════════════════════════════════
 
+/// Selected date for the daily attendance view (defaults to today, YYYY-MM-DD).
+///
+/// Note: only used when [adminAttendanceMonthProvider] is null AND the user
+/// has explicitly picked a single day. The default behaviour is now monthly
+/// (more useful — most days have no records yet on a fresh DB).
 final adminAttendanceDateProvider = StateProvider.autoDispose<String>((_) {
   final now = DateTime.now();
   return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 });
 
+/// Selected month for the attendance view (YYYY-MM).
+///
+/// Defaults to the **current month** so the screen shows useful data on first
+/// open. The user can pick another month from the filter bar, or set this to
+/// null to fall back to the daily date filter.
+final adminAttendanceMonthProvider = StateProvider.autoDispose<String?>((_) {
+  final now = DateTime.now();
+  return '${now.year}-${now.month.toString().padLeft(2, '0')}';
+});
+
+/// Optional employee filter (when null, list all employees).
+final adminAttendanceEmployeeFilterProvider =
+    StateProvider.autoDispose<int?>((_) => null);
+
+/// Optional status filter (`present`, `late`, `absent`, `leave`).
+final adminAttendanceStatusFilterProvider =
+    StateProvider.autoDispose<String?>((_) => null);
+
+/// Optional free-text search.
+final adminAttendanceSearchProvider =
+    StateProvider.autoDispose<String?>((_) => null);
+
 final adminAttendanceProvider =
     FutureProvider.autoDispose<AdminAttendanceData>((ref) {
-  final date = ref.watch(adminAttendanceDateProvider);
-  return ref.watch(attendanceRepositoryProvider).getAdminAttendance(date: date);
+  final month = ref.watch(adminAttendanceMonthProvider);
+  // When a month is selected, use it; otherwise fall back to the daily date.
+  final date = month == null ? ref.watch(adminAttendanceDateProvider) : null;
+  final sel = ref.watch(selectedBranchProvider);
+  final employeeId = ref.watch(adminAttendanceEmployeeFilterProvider);
+  final status = ref.watch(adminAttendanceStatusFilterProvider);
+  final search = ref.watch(adminAttendanceSearchProvider);
+  return ref.watch(attendanceRepositoryProvider).getAdminAttendance(
+        date: date,
+        month: month,
+        companyId: sel.companyId,
+        branchId: sel.branchId,
+        employeeId: employeeId,
+        status: status,
+        search: (search?.isEmpty ?? true) ? null : search,
+        perPage: 50,
+      );
 });
 
 final employeeAttendanceProvider =
     FutureProvider.autoDispose.family<EmployeeAttendanceData, int>((ref, id) {
-  return ref.watch(attendanceRepositoryProvider).getEmployeeAttendance(id);
+  final month = ref.watch(adminAttendanceMonthProvider);
+  return ref
+      .watch(attendanceRepositoryProvider)
+      .getEmployeeAttendance(id, month: month);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -299,6 +353,11 @@ final projectMilestonesProvider =
 final projectAnalyticsProvider =
     FutureProvider.autoDispose.family<ProjectAnalytics, int>((ref, id) {
   return ref.watch(projectRepositoryProvider).getProjectAnalytics(id);
+});
+
+final projectAttachmentsProvider = FutureProvider.autoDispose
+    .family<List<Map<String, dynamic>>, int>((ref, id) {
+  return ref.watch(projectRepositoryProvider).getProjectAttachments(id);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════

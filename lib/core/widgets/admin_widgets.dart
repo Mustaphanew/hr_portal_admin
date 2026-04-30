@@ -782,9 +782,56 @@ class EmployeeListCard extends StatelessWidget {
     required this.title, required this.dept, required this.id,
     required this.status, required this.attendanceStatus, this.onTap});
 
+  /// Attendance badge config — returns null when there is NO attendance data
+  /// for this employee (so the card simply hides the badge instead of
+  /// hard-coding "غائب" for everyone).
+  ({String text, String type})? _attendanceBadge() {
+    switch (attendanceStatus) {
+      case 'حاضر':
+      case 'present':
+        return (text: 'حاضر', type: 'success');
+      case 'متأخر':
+      case 'late':
+        return (text: 'متأخر', type: 'late');
+      case 'إجازة':
+      case 'leave':
+      case 'on_leave':
+        return (text: 'إجازة', type: 'leave');
+      case 'غائب':
+      case 'absent':
+        return (text: 'غائب', type: 'absent');
+      default:
+        return null;
+    }
+  }
+
+  /// Employment-status badge (shown as a fallback when attendance is unknown
+  /// — the directory list rarely includes attendance, so we surface
+  /// employment_status instead so the card isn't blank).
+  ({String text, String type}) _employmentBadge() {
+    switch (status) {
+      case 'core_employee':
+        return (text: 'موظف دائم', type: 'success');
+      case 'trainee':
+        return (text: 'متدرب', type: 'late');
+      case 'contractor':
+        return (text: 'متعاقد', type: 'navy');
+      case 'terminated':
+        return (text: 'منتهي خدمة', type: 'absent');
+      case 'resigned':
+        return (text: 'مستقيل', type: 'absent');
+      case 'suspended':
+        return (text: 'موقوف', type: 'late');
+      default:
+        return (text: status.isEmpty ? 'موظف' : status, type: 'navy');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
+    final att = _attendanceBadge();
+    final emp = _employmentBadge();
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -795,15 +842,14 @@ class EmployeeListCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           boxShadow: AppShadows.card),
         child: Row(children: [
+          // When attendance is known we show it; otherwise fall back to
+          // employment status so the card always carries a meaningful badge.
           Row(children: [
             StatusBadge(
-              text: attendanceStatus == 'حاضر' ? 'حاضر'
-                : attendanceStatus == 'متأخر' ? 'متأخر'
-                : attendanceStatus == 'إجازة' ? 'إجازة' : 'غائب',
-              type: attendanceStatus == 'حاضر' ? 'success'
-                : attendanceStatus == 'متأخر' ? 'late'
-                : attendanceStatus == 'إجازة' ? 'leave' : 'absent',
-              dot: true),
+              text: (att?.text) ?? emp.text,
+              type: (att?.type) ?? emp.type,
+              dot: true,
+            ),
           ]),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Text(name, style: TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.w700)),

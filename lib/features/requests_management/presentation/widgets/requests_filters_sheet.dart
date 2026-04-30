@@ -37,20 +37,17 @@ class _RequestsFiltersSheetState extends State<_RequestsFiltersSheet> {
   DateTime? _dateFrom;
   DateTime? _dateTo;
 
+  // Real request type codes from `hr_employee_request_types` table.
+  // The labels are translation keys (see ar.json / en.json).
   static const _types = <({String value, String label})>[
-    (value: 'leave', label: 'Leave'),
-    (value: 'permission', label: 'Permission'),
-    (value: 'attendance', label: 'Attendance correction'),
-    (value: 'expense', label: 'Expense claim'),
-    (value: 'document', label: 'Document'),
-    (value: 'loan', label: 'Loan'),
-    (value: 'resignation', label: 'Resignation'),
-    (value: 'asset', label: 'Asset'),
-    (value: 'experience', label: 'Experience letter'),
-    (value: 'certificate', label: 'Certificate'),
-    (value: 'training', label: 'Training'),
-    (value: 'promotion', label: 'Promotion'),
-    (value: 'transfer', label: 'Transfer'),
+    (value: 'salary_certificate',  label: 'request_type.salary_certificate'),
+    (value: 'experience_letter',   label: 'request_type.experience_letter'),
+    (value: 'vacation_settlement', label: 'request_type.vacation_settlement'),
+    (value: 'loan_request',        label: 'request_type.loan_request'),
+    (value: 'expense_claim',       label: 'request_type.expense_claim'),
+    (value: 'training_request',    label: 'request_type.training_request'),
+    (value: 'leace_application',   label: 'request_type.leave_application'),
+    (value: 'other',               label: 'request_type.other'),
   ];
 
   @override

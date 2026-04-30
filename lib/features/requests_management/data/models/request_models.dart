@@ -9,11 +9,15 @@ class RequestEmployee extends Equatable {
   final int id;
   final String name;
   final String code;
+  final String? jobTitle;
+  final int? departmentId;
 
   const RequestEmployee({
     required this.id,
     required this.name,
     required this.code,
+    this.jobTitle,
+    this.departmentId,
   });
 
   factory RequestEmployee.fromJson(Map<String, dynamic> json) {
@@ -36,6 +40,12 @@ class RequestEmployee extends Equatable {
       code: asStr(json['employee_number']).isNotEmpty
           ? asStr(json['employee_number'])
           : asStr(json['code']),
+      jobTitle: (json['job_title'] as String?)?.trim().isNotEmpty == true
+          ? json['job_title'] as String
+          : null,
+      departmentId: json['department_id'] is num
+          ? (json['department_id'] as num).toInt()
+          : null,
     );
   }
 
@@ -43,10 +53,95 @@ class RequestEmployee extends Equatable {
         'id': id,
         'name': name,
         'code': code,
+        if (jobTitle != null) 'job_title': jobTitle,
+        if (departmentId != null) 'department_id': departmentId,
       };
 
   @override
-  List<Object?> get props => [id, name, code];
+  List<Object?> get props => [id, name, code, jobTitle, departmentId];
+}
+
+// ── RequestCurrency ──────────────────────────────────────────────────────────
+
+/// Currency reference embedded in employee requests (real response includes
+/// `currency: {id, code, name, symbol}`). Captured 2026-04-29.
+class RequestCurrency extends Equatable {
+  final int id;
+  final String code;
+  final String? name;
+  final String? symbol;
+
+  const RequestCurrency({
+    required this.id,
+    required this.code,
+    this.name,
+    this.symbol,
+  });
+
+  factory RequestCurrency.fromJson(Map<String, dynamic> json) {
+    return RequestCurrency(
+      id: (json['id'] as num).toInt(),
+      code: (json['code'] as String?) ?? '',
+      name: json['name'] as String?,
+      symbol: json['symbol'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'code': code,
+        if (name != null) 'name': name,
+        if (symbol != null) 'symbol': symbol,
+      };
+
+  /// Display string preferring `symbol` (`ر.ي`) over `code` (`YER`).
+  String get displaySymbol => (symbol?.isNotEmpty == true) ? symbol! : code;
+
+  @override
+  List<Object?> get props => [id, code, name, symbol];
+}
+
+// ── RequestCompany / RequestBranch ───────────────────────────────────────────
+
+class RequestCompany extends Equatable {
+  final int id;
+  final String name;
+  final String? nameEn;
+
+  const RequestCompany({required this.id, required this.name, this.nameEn});
+
+  factory RequestCompany.fromJson(Map<String, dynamic> json) {
+    return RequestCompany(
+      id: (json['id'] as num).toInt(),
+      name: (json['name'] as String?) ?? '',
+      nameEn: json['name_en'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() =>
+      {'id': id, 'name': name, if (nameEn != null) 'name_en': nameEn};
+
+  @override
+  List<Object?> get props => [id, name, nameEn];
+}
+
+class RequestBranch extends Equatable {
+  final int id;
+  final String name;
+
+  const RequestBranch({required this.id, required this.name});
+
+  factory RequestBranch.fromJson(Map<String, dynamic> json) {
+    return RequestBranch(
+      id: (json['id'] as num).toInt(),
+      name: (json['name'] as String?) ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {'id': id, 'name': name};
+
+  @override
+  List<Object?> get props => [id, name];
 }
 
 // ── EmployeeRequest ──────────────────────────────────────────────────────────
@@ -82,6 +177,32 @@ class EmployeeRequest extends Equatable {
   /// Whether the current admin/manager can approve/reject this request.
   final bool? canApprove;
 
+  // ── Fields captured from real response 2026-04-29 ──
+
+  /// Currency for [amount]. Use [currency.displaySymbol] in the UI.
+  final RequestCurrency? currency;
+
+  /// Company that owns this request.
+  final RequestCompany? company;
+
+  /// Branch that owns this request.
+  final RequestBranch? branch;
+
+  /// Total approval levels (e.g. 3 means "Step 1/3").
+  final int? totalLevels;
+
+  /// Snapshot of who must approve next (raw object for now).
+  final Map<String, dynamic>? nextApprover;
+
+  /// Detailed approval history entries (kept as raw maps until we need typed).
+  final List<Map<String, dynamic>>? approvalHistory;
+
+  /// Public URL of the attached file (already absolute on the backend).
+  final String? attachmentUrl;
+
+  /// Backend storage path (rarely shown to users; useful for support).
+  final String? attachmentPath;
+
   const EmployeeRequest({
     required this.id,
     required this.requestType,
@@ -102,6 +223,14 @@ class EmployeeRequest extends Equatable {
     this.approvalChain,
     this.attachments,
     this.canApprove,
+    this.currency,
+    this.company,
+    this.branch,
+    this.totalLevels,
+    this.nextApprover,
+    this.approvalHistory,
+    this.attachmentUrl,
+    this.attachmentPath,
   });
 
   factory EmployeeRequest.fromJson(Map<String, dynamic> json) {
@@ -141,6 +270,15 @@ class EmployeeRequest extends Equatable {
       requestTypeLabel = asStr(json['request_type_name']);
     }
 
+    // Approval history: keep as List<Map<String, dynamic>> so the UI can
+    // render a timeline without needing a typed model right away.
+    List<Map<String, dynamic>>? approvalHistory;
+    if (json['approval_history'] is List) {
+      approvalHistory = (json['approval_history'] as List<dynamic>)
+          .whereType<Map<String, dynamic>>()
+          .toList();
+    }
+
     return EmployeeRequest(
       id: asInt(json['id']) ?? 0,
       requestType: requestType,
@@ -163,7 +301,10 @@ class EmployeeRequest extends Equatable {
           asStr(json['created_at']) ??
           '',
       amount: asDouble(json['amount']) ?? asDouble(json['total_amount']),
-      date: asStr(json['date']) ?? asStr(json['requested_date']),
+      // Accept all three name variants (the real API uses `request_date`).
+      date: asStr(json['request_date']) ??
+          asStr(json['requested_date']) ??
+          asStr(json['date']),
       employee: json['employee'] is Map<String, dynamic>
           ? RequestEmployee.fromJson(json['employee'] as Map<String, dynamic>)
           : null,
@@ -174,6 +315,23 @@ class EmployeeRequest extends Equatable {
           ? json['attachments'] as List<dynamic>
           : null,
       canApprove: json['can_approve'] is bool ? json['can_approve'] as bool : null,
+      // ── New fields from real response ──
+      currency: json['currency'] is Map<String, dynamic>
+          ? RequestCurrency.fromJson(json['currency'] as Map<String, dynamic>)
+          : null,
+      company: json['company'] is Map<String, dynamic>
+          ? RequestCompany.fromJson(json['company'] as Map<String, dynamic>)
+          : null,
+      branch: json['branch'] is Map<String, dynamic>
+          ? RequestBranch.fromJson(json['branch'] as Map<String, dynamic>)
+          : null,
+      totalLevels: asInt(json['total_levels']),
+      nextApprover: json['next_approver'] is Map<String, dynamic>
+          ? json['next_approver'] as Map<String, dynamic>
+          : null,
+      approvalHistory: approvalHistory,
+      attachmentUrl: asStr(json['attachment_url']),
+      attachmentPath: asStr(json['attachment_path']),
     );
   }
 
@@ -181,21 +339,29 @@ class EmployeeRequest extends Equatable {
         'id': id,
         'request_type': requestType,
         if (requestTypeId != null) 'request_type_id': requestTypeId,
-        if (requestTypeLabel != null) 'request_type_name': requestTypeLabel,
+        if (requestTypeLabel != null) 'request_type_label': requestTypeLabel,
         'subject': subject,
         'description': description,
         'status': status,
         'current_approval_level': currentApprovalLevel,
+        if (totalLevels != null) 'total_levels': totalLevels,
         'response_notes': responseNotes,
         'responded_by': respondedBy,
         'responded_at': respondedAt,
         'created_at': createdAt,
         'updated_at': updatedAt,
         if (amount != null) 'amount': amount,
-        if (date != null) 'date': date,
+        if (currency != null) 'currency': currency!.toJson(),
+        if (date != null) 'request_date': date,
         if (employee != null) 'employee': employee!.toJson(),
+        if (company != null) 'company': company!.toJson(),
+        if (branch != null) 'branch': branch!.toJson(),
         if (approvalChain != null) 'approval_chain': approvalChain,
+        if (approvalHistory != null) 'approval_history': approvalHistory,
+        if (nextApprover != null) 'next_approver': nextApprover,
         if (attachments != null) 'attachments': attachments,
+        if (attachmentUrl != null) 'attachment_url': attachmentUrl,
+        if (attachmentPath != null) 'attachment_path': attachmentPath,
         if (canApprove != null) 'can_approve': canApprove,
       };
 
@@ -209,16 +375,24 @@ class EmployeeRequest extends Equatable {
         description,
         status,
         currentApprovalLevel,
+        totalLevels,
         responseNotes,
         respondedBy,
         respondedAt,
         createdAt,
         updatedAt,
         amount,
+        currency,
         date,
         employee,
+        company,
+        branch,
         approvalChain,
+        approvalHistory,
+        nextApprover,
         attachments,
+        attachmentUrl,
+        attachmentPath,
         canApprove,
       ];
 }

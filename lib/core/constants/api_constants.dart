@@ -112,6 +112,9 @@ class ApiConstants {
   static String adminProjectTasks(int id) => '$_v1/admin/projects/$id/tasks';
   static String adminProjectMilestones(int id) => '$_v1/admin/projects/$id/milestones';
   static String adminProjectAnalytics(int id) => '$_v1/admin/projects/$id/analytics';
+  static String adminProjectAttachments(int id) => '$_v1/admin/projects/$id/attachments';
+  static String adminProjectAttachmentDetail(int projectId, int attachmentId) =>
+      '$_v1/admin/projects/$projectId/attachments/$attachmentId';
 
   // ── P. Expenses (Admin) ──────────────────────────────────────
   static const String adminExpenses = '$_v1/admin/expenses';
